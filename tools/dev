@@ -33,6 +33,7 @@ MAP="vlm_gate/scripts:$ROOT/vlm_gate/
 vlm_gate/run_scripts:$ROOT/vlm_gate/
 vlm_gate/analysis:$ROOT/vlm_gate/
 vlm_gate/local:$ROOT/vlm_gate/
+vlm_gate/n17:$ROOT/vlm_gate/
 gr00t:$ROOT/Isaac-GR00T/
 tools:$ROOT/"
 

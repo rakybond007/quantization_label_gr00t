@@ -1,0 +1,19 @@
+{
+  "state": {
+    "arm_pos": {"start": 0, "end": 3},
+    "arm_rot": {"start": 3, "end": 7, "rotation_type": "quaternion"},
+    "hand":    {"start": 7, "end": 23}
+  },
+  "action": {
+    "arm_pos": {"start": 0, "end": 3, "absolute": true},
+    "arm_rot": {"start": 3, "end": 6, "absolute": true, "rotation_type": "axis_angle"},
+    "hand":    {"start": 6, "end": 22, "absolute": true}
+  },
+  "video": {
+    "front": {"original_key": "observation.images.front"},
+    "wrist": {"original_key": "observation.images.wrist"}
+  },
+  "annotation": {
+    "human.action.task_description": {"original_key": "task_index"}
+  }
+}

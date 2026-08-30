@@ -7,19 +7,16 @@ decided, what is in flight, and what is still open.
 
 ## Read this first: the repository is the source of truth
 
-Files created in `~/quantization_agent_workspace/vlm_gate/` have disappeared
-twice today, and been silently rewritten by something outside this session a
-third time. The LIBERO guidance and question files vanished entirely — never
-committed, so nothing could recover them and the wording had to be rewritten.
-`libero_task_index.py` and its JSON vanished the same way and were restored
-from the repository. On the third occasion the files came back with a
-different umask (`-rw-r--r--` where this session writes `-rw-rw-r--`), which
-says another process edits this tree.
+Files kept disappearing from `~/quantization_agent_workspace/vlm_gate/` on
+8/31. The cause was `tools/dev`: its sync used `rsync --delete`, so every
+`dev run` removed whatever was on the server and not in the Mac clone — which
+is exactly the set of files created on the server and not yet committed. The
+sync is now upload-only; mirroring is opt-in via `dev sync --prune`.
 
-So: **commit anything you create before you rely on it**, and when the
-workspace and the repository disagree, check the repository first rather than
-assuming the workspace is current. The one uncommitted prompt in this project
-is the one that was lost.
+The LIBERO prompts had to be rewritten from scratch, and
+`tools/build_n17_env.sh` and `tools/fetch_dexjoco.sh` are gone for good.
+So: **commit anything you create before you rely on it**, and assume anything
+uncommitted that sat in those directories before 8/31 04:05 is already lost.
 
 ## What the project is
 
@@ -73,9 +70,16 @@ intermediate targets dropped. `qgate actions` diagnoses which.
 
 | what | id | state |
 |---|---|---|
-| N1.7 joint training, gate | 145335 | 60k / batch 64, continuous labels, loss split logged |
-| N1.7 joint training, baseline | 145336 | matched |
+| N1.7 joint training, gate | 145369 | 60k / batch 64, continuous labels, loss split logged |
+| N1.7 joint training, baseline | 145370 | matched |
 | LIBERO dense labelling, 16 shards | 145246 | every frame, ~274k chunks |
+
+**Give every new variant a fresh `OUT_SUFFIX`.** `Gr00tTrainer.train` resumes
+from whatever checkpoint sits in the output directory, and resume cannot work
+here at all — transformers 4.57.3 refuses `torch.load` under torch 2.6 and this
+environment is on 2.5.1. Reusing a directory is how 145335/145336 died: they
+picked up the cancelled binary-label run and then failed loading its optimizer.
+An empty directory is fine; the trainer warns and starts clean.
 
 When LIBERO labels arrive: `qgate labels libero_dense_s16` for integrity, then
 `qgate labelcheck` against the measured per-task K=2 damage. The second one
