@@ -16,5 +16,6 @@ GATE_SYSTEM=aligned $HOME/quantization_agent_workspace/cosmos_judge_venv/bin/pyt
 JP=$!
 for i in $(seq 1 120); do sleep 20; grep -q "JUDGE READY" output/_gate_distill/v6b_judge$S.log && break; done
 grep -q "JUDGE READY" output/_gate_distill/v6b_judge$S.log || { tail -20 output/_gate_distill/v6b_judge$S.log; exit 1; }
-$HOME/miniconda3/envs/quant_gate_eval/bin/python -u scripts/cosmos_1call_v6.py $PORT $S 16
+GUIDANCE=phase5 \
+  $HOME/miniconda3/envs/quant_gate_eval/bin/python -u scripts/cosmos_1call_v6.py $PORT $S 16
 kill $JP 2>/dev/null

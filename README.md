@@ -121,6 +121,18 @@ benchmark currently stands — prompt, labelling, student, evaluation, one row
 per run — is [docs/STATUS.md](docs/STATUS.md). Trained weights and their
 HuggingFace locations are in [docs/CHECKPOINTS.md](docs/CHECKPOINTS.md).
 
+## If you are picking this up cold
+
+Read in this order:
+
+| | |
+|---|---|
+| [docs/HANDOFF.md](docs/HANDOFF.md) | what is decided, what is running, what is open |
+| [docs/WORKSPACE_MAP.md](docs/WORKSPACE_MAP.md) | where everything lives on the cluster, and which side of the repo line it is on |
+| [docs/REMOTE_AGENT.md](docs/REMOTE_AGENT.md) | driving the cluster from a laptop |
+| [docs/STATUS.md](docs/STATUS.md) | one row per run: prompt, labelling, student, evaluation |
+| [docs/TOOLKIT.md](docs/TOOLKIT.md) | the measurements and the traps in them |
+
 ## Not included
 
 Evaluation results, label parquets, trained weights, logs. The weights are

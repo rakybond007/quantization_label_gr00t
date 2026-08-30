@@ -31,6 +31,13 @@ _GF=("robocasa_guidance_phase_v5.txt" if os.environ.get("GUIDANCE","")=="phase6"
      else "robocasa_guidance_phase_v2.txt" if os.environ.get("GUIDANCE","")=="phase4"
      else "robocasa_guidance_phase_v1.txt" if os.environ.get("GUIDANCE","").startswith("phase")
      else "robocasa_cosmos_ttl_best_guidance_aligned.txt")
+if not os.environ.get("GUIDANCE"):
+    # 기본값은 v6b — 태스크 종류로 규칙을 쓴 옛 가이던스다. 이걸 의도해서 고른
+    # 사람은 거의 없으므로, 조용히 넘어가지 말고 무엇이 나올지 말해준다.
+    print("[WARN] GUIDANCE 미설정 -> v6b (ttl_aligned, 4문항). "
+          "phase5/phase6 를 원하면 GUIDANCE 를 지정할 것.", flush=True)
+print(f"[gen] GUIDANCE={os.environ.get('GUIDANCE') or 'v6b(default)'} "
+      f"guidance={_GF} out={os.path.basename(OUT)}", flush=True)
 G=open(f"{BASE}/analysis/_evolver/_varkA/{_GF}").read().strip()
 
 # 계산이 이미 답하는 것을 다시 물으면 모델은 사실을 복창할 뿐이다(v6 1차: 답 2종으로 붕괴).
@@ -56,12 +63,12 @@ ASK=("The measurements above already tell you how the arm and gripper move; do n
  "D) Is the gripper closing onto a handle that it will then have to pull against, at the moment the\n"
  "   hold is being established?\nAnswer:")
 
-# phase6 확정본. D(무게)·E(베이스 결합)는 파일럿에서 차단 결정을 0.007/0.004 밖에
-# 바꾸지 못했다 — phase5 의 죽은 문항(q_D 0.000)과 같은 수준이라 뺐다.
-# 남은 셋은 phase5 대응 문항보다 낫다: A 7배, B 2배, C 2.2배 (차단 결정 변화 기준,
-# 검증된 phase5 집합으로 눈금을 맞춘 값).
-# 다섯 축 각각에 대응. 파일럿에서 D·E 가 죽었던 것은 문항이 아니라 가이던스가
-# 그 두 축을 설명하지 않은 탓이었다 — v5 에서 다섯 축을 모두 서술한다.
+# phase6 확정본 — 다섯 축에 문항 하나씩.
+# 파일럿에서 D·E 가 차단 결정을 0.007/0.004 밖에 못 바꿨지만, 원인은 문항이 아니라
+# 그때 쓰던 가이던스가 그 두 축을 아예 서술하지 않은 것이었다. 설명 없이 물으면
+# 모델이 답할 근거가 없다. v5 가 다섯 축을 모두 서술하므로 D·E 를 되살렸다.
+# (한때 셋으로 줄였다가 되돌렸다. 낮게 나온다는 이유만으로 문항을 버리면 안 된다 —
+#  값은 연속이라 낮아도 noisy-OR 에 기여하고, 폐루프만이 문항을 퇴출할 수 있다.)
 ASK6=("The measurements above already tell you how the arm and gripper move; do not repeat them. "
  "Answer only what the cameras show about the MOMENT in front of you. Answer each check on its own "
  "line as \"A) YES\" or \"A) NO\", in order, nothing else. YES and NO refer only to the question asked.\n"
