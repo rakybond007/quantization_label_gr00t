@@ -40,6 +40,24 @@ fi
 OUT="$WS/assets/checkpoints/n17_robocasa_${RUN}${OUT_SUFFIX:-}"
 mkdir -p "$OUT"
 
+# 해결된 설정을 눈에 띄게 남긴다. 앞선 실행들은 제출할 때 MAX_STEPS 를 덮어써
+# 10000/20000 스텝만 돌았는데 잡 이름은 60k 였고, 그 사실이 어디에도 안 남아
+# 비교가 조용히 무효가 되었다. N1.5 기준은 60000 스텝 · 글로벌 배치 64 다.
+_MS="${MAX_STEPS:-60000}"; _BS="${BS:-64}"
+echo "=========================================================="
+echo "[cfg] max_steps=$_MS  global_batch=$_BS  (N1.5 기준 60000 / 64)"
+if [ "$_MS" != "60000" ] || [ "$_BS" != "64" ]; then
+  echo "[cfg] 경고: N1.5 기준과 다르다. 이 실행은 matched 비교에 쓸 수 없다."
+fi
+echo "=========================================================="
+mkdir -p "$OUT" 2>/dev/null || true
+echo "max_steps=$_MS global_batch=$_BS gate_labels=${GATE_LABELS:-none} $(date -Iseconds)" \
+  >> "${OUT:-.}/run_settings.txt" 2>/dev/null || true
+
+# 주석은 명령 밖에 둔다. 백슬래시로 이어진 줄 사이에 # 을 넣으면 그 줄이 그대로
+# 이어붙어 뒤의 인자가 전부 주석 처리된다 — 실제로 --max-steps 와
+# --global-batch-size 가 그렇게 사라져 모든 실행이 기본값으로 돌았다.
+# N1.5 비교 대상은 배치 64 · 60k 스텝(3.84M 샘플)이다.
 "$HOME/miniconda3/envs/quant_gate_eval/bin/python" -u \
   gr00t/experiment/launch_finetune.py \
   --base-model-path nvidia/GR00T-N1.7-3B \
@@ -48,8 +66,6 @@ mkdir -p "$OUT"
   --modality-config-path "$WS/vlm_gate/n17/robocasa_modality_config.py" \
   --num-gpus 1 \
   --output-dir "$OUT" \
-  # N1.5 비교 대상이 배치 64 · 60k 스텝(3.84M 샘플)이다. 같게 맞추지 않으면
-  # 성능 차이가 게이트 때문인지 학습량 때문인지 구분할 수 없다.
   --max-steps "${MAX_STEPS:-60000}" \
   --global-batch-size "${BS:-64}" \
   --dataloader-num-workers 4
