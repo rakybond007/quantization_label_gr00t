@@ -11,6 +11,7 @@
 사용법:  python gen_libero_tiles_shard.py <shard> <nshards>
         python gen_libero_tiles_shard.py merge <nshards>   # 샤드 JSON -> 평문 매니페스트
 """
+import os
 import sys, json, os, glob, numpy as np
 from PIL import Image
 
@@ -18,7 +19,10 @@ DS = "/sjw_alinlab2/home/myungkyu/.cache/huggingface/lerobot/kimtaey/libero_gr00
 BASE = "/sjw_alinlab/home/hojin2/quantization_agent_workspace/vlm_gate"
 OUT = f"{BASE}/output/_gate_distill/libero_full"
 MANIFEST = f"{BASE}/output/_gate_distill/libero_tiles_manifest.txt"
-STRIDE = 4
+# 전 프레임 라벨링이 기본이다. VLA 데이터로더는 모든 시점을 도는데 라벨이
+# 간격마다만 있으면 그 시점들은 gate_valid=0 으로 손실에서 빠지고, 합동 학습에서
+# 게이트가 받는 감독이 그만큼 성겨진다. STRIDE 로 줄일 수는 있게 남겨둔다.
+STRIDE = int(os.environ.get("TILE_STRIDE", "1"))
 # 정면 먼저, 손목 나중 — 라벨러가 왼쪽 절반을 정면으로 읽는다.
 VK = ["observation.images.front_view", "observation.images.left_wrist_view"]
 

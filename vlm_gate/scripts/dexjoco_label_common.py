@@ -41,7 +41,8 @@ DEFAULT_MANIFEST = f"{DEFAULT_TILES}/tiles_manifest.txt"
 # the RoboCasa pilot.  DOWNSCALE 2 -> 320 px per view (tile 640x320), twice
 # RoboCasa's per-view 128 px because the dexterous hand's finger configuration
 # is the thing being judged.
-STRIDE = 16
+# 전 프레임 라벨링이 기본. 이유는 gen_libero_tiles_shard.py 의 같은 자리에 있다.
+STRIDE = int(os.environ.get("TILE_STRIDE", "1"))
 TILE_VIEW_PX = 320          # per-view square size after downscale (640 -> 320)
 CHUNK_N = 16                # descriptor window length, in control steps
 TAIL = 16                   # frames at the end of an episode with no full chunk
