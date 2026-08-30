@@ -1,0 +1,35 @@
+Decide whether the next second of motion can be run at half rate, by merging each pair
+of steps into one command.
+
+These commands are end-effector deltas, so merging two steps means executing their sum.
+The controller clips each dimension at plus or minus one. A single step never reaches
+that limit in this data, but a merged pair does on about 8% of pairs, and whatever is
+clipped off is displacement the arm simply never travels.
+
+Most of the time the gripper is crossing empty space, holding nothing or carrying
+something with room around it. A longer step changes nothing there, whatever the task is
+called. This is the common case and it merges safely.
+
+What decides the rest is not the motion but where the object has to end up.
+
+A destination can be forgiving or unforgiving. Dropping something into a basket or a bowl
+is forgiving: the container catches it, and landing a centimetre off changes nothing.
+Setting something down on a plate, or onto a burner, is not: it has to sit squarely on a
+small flat target, and the last approach is where a merged step puts it down askew.
+
+An enclosed space is its own case. Moving an object into or out of a drawer, or onto a
+shelf inside a cabinet, means clearing an opening on the way. Merging replaces the path
+around the lip with a straight line across it, and the object catches on what it should
+have cleared.
+
+The moment the load transfers is decisive on its own. Closing onto an object until its
+weight is taken, and setting it down until it stands by itself, are moments where a few
+millimetres decide whether it is held or dropped. Carrying it afterwards, with the grip
+unchanged, is not delicate at all.
+
+Clutter matters for the same reason a rim does. When the gripper reaches in among other
+objects standing close by, a longer step is a wider swing, and something that was clear
+gets knocked.
+
+Report only what the cameras show at this instant. The measurements above already state
+how the arm and gripper move; never restate or second-guess them.
