@@ -95,6 +95,9 @@ bin/qgate results robocasa
 잇는 직선이 공짜로 얻는 거래이고, 그 위로 얼마나 올라갔는지만 근거가 된다. 함정들은
 [docs/TOOLKIT.md](docs/TOOLKIT.md), 가중치 위치는 [docs/CHECKPOINTS.md](docs/CHECKPOINTS.md).
 
+벤치마크별로 프롬프트·라벨링·학습·평가가 어디까지 와 있는지는
+[docs/STATUS.md](docs/STATUS.md).
+
 ## 담지 않은 것
 
 평가 결과, 라벨 파케이, 학습된 가중치, 로그. 가중치는 HuggingFace 에 있고
