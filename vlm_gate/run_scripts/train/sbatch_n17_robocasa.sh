@@ -27,7 +27,11 @@ export TUNE_TOP_LLM_LAYERS="${TUNE_TOP_LLM_LAYERS:-4}"
 # 같은 스크립트로 둘 다 뽑아야 비교가 성립한다.
 RUN="${RUN:?RUN=gate 또는 RUN=baseline 을 지정하세요}"
 if [ "$RUN" = gate ]; then
-  export GATE_LABELS="$WS/assets/labels/robocasa/v6b_phase5_1call_full.parquet"
+  # 연속 계산플래그판을 쓴다. 이진판(_1call_full)은 p_raw==0 에 29.51% 가 동점으로
+  # 묶여 순위정규화 후 바닥에서 임의 순서가 되고, 동결 증류라면 학생이 무시하면
+  # 그만이지만 공동 파인튜닝에서는 그 그래디언트가 상위 4층을 타고 액션 헤드와
+  # 공유된다. STATUS.md 가 "모든 비교는 연속 플래그로 돈다"고 적은 것과도 맞춘다.
+  export GATE_LABELS="${GATE_LABELS:-$WS/assets/labels/robocasa/v6b_phase5_softA.parquet}"
   export GATE_LAYER="${GATE_LAYER:-14}"          # 액션 탭 16 아래 — 레이어 12·13 을 형성
   export GATE_LOSS_WEIGHT="${GATE_LOSS_WEIGHT:-1.0}"
 else
