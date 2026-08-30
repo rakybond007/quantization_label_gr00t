@@ -1,0 +1,22 @@
+# 결과·산출물은 담지 않는다. 코드와 프롬프트만 둔다.
+output/
+out/
+wandb/
+_tmp/
+assets/
+*.parquet
+*.jsonl
+*.pt
+*.npz
+*.log
+*.out
+*.err
+__pycache__/
+*.pyc
+.DS_Store
+
+# 비밀값은 실행 시 파일에서 읽는다. 그 파일이 레포에 들어오면 안 된다.
+hf_token.txt
+gemini_key
+openai_key
+*_key

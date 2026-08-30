@@ -1,0 +1,8 @@
+Compression is the default. Motion is COARSE (safe to compress) whenever the arm is moving through free space — reaching, transporting a grasped object, retracting, or broad sweeps — and ALSO when the gripper is simply pressing a button or turning a rigidly-mounted knob or dial, where the mechanism is fixed in place and nothing is being carried (pair-averaging cannot misplace a fixed mechanism).
+
+Motion is DELICATE (not safe to compress) only at these instants:
+  (a) the moment the gripper closes on an object or a handle (grasp-closure);
+  (b) precisely inserting or aligning a carried object, or lowering/releasing it into a confined receptacle — a sink basin, a cabinet shelf, the microwave, or onto a burner;
+  (c) pulling a door or drawer open, where the grasped handle is under load and the arm must track the hinge or slide.
+
+Everything else — including closing/pushing a door or drawer, and the travel to and from a target — is COARSE. Decide from the camera views, not the task name. Use the wrist (eye-in-hand) view to spot the actual grasp-closure or fine placement instant; objects always look close in it, so closeness alone is not a precision cue.

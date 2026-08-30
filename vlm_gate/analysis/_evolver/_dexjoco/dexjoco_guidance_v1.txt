@@ -1,0 +1,36 @@
+Decide whether the next second of motion can be run with some of its commands left out.
+
+This robot is commanded by absolute poses: every command says where the arm and the
+sixteen finger joints should be. Leaving commands out does not make the motion smaller,
+it makes the robot jump further between the commands that remain. Nothing is averaged
+away; the arm simply travels the gap in one move and the intermediate poses never happen.
+
+That is harmless when the gap is empty. Reaching toward something before touching it,
+carrying it across open space, withdrawing afterwards - the hand ends up where it was
+going either way, and a few millimetres of overshoot on the way costs nothing.
+
+It is not harmless in four situations, and they are what to look for.
+
+The hand is doing the work with its shape. When the fingers are wrapped around a tool
+and their arrangement is what grips it or operates it, a longer jump lets that
+arrangement drift and the tool turns or slips inside the hand. Holding a pair of tongs
+and squeezing them is the clearest case: the grip and the task are the same motion.
+
+The thing being handled can only move one way. A hinge, a lid, a folding arm: once the
+hand is on it, the path is decided by the object, not the robot. A jump cuts across that
+path, and the force that cannot become motion pushes against the hand instead.
+
+A contact has to land on a small exact spot. Driving a nail means the head is a target a
+centimetre wide, and the swing has to arrive there. Missing by the amount a longer jump
+adds is the difference between a hit and a miss.
+
+The tilt of what is held decides the outcome. Pouring from a can, tipping something over:
+the angle at each moment is the thing being controlled, and skipping angles pours in the
+wrong place.
+
+Pressing is the forgiving case. When the hand pushes a button or a surface, going too far
+just presses harder, and the surface absorbs it.
+
+Report only what the cameras show at this instant. The measurements above already state
+how far the arm and the fingers move and how large a jump each candidate rate would ask
+for; never repeat or second-guess them.

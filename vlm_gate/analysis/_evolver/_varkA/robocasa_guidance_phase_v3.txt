@@ -1,0 +1,22 @@
+Compression is the default. Judge the MOMENT you are looking at, not the kind of task it belongs to. A task is a sequence of phases, and most of a task's time is spent in phases that compress safely.
+
+The question that separates them: DOES THE GRIPPER HAVE TO MAINTAIN ITS HOLD RIGHT NOW? Compression makes the arm move twice as far per step and lets its path drift by a few millimetres. That only changes the outcome when the gripper is holding an object against gravity, or holding a handle against a mechanism's resistance. When it holds nothing, the surface or the mechanism absorbs the error.
+
+COARSE — safe to compress. The gripper is holding nothing, or its hold is already settled:
+  - travelling through free space toward a target, before contact;
+  - pressing a button, switch, or lever that is fixed in place. The fingers may close, but they close to press, not to hold something — there is nothing to drop, and the button itself stops the motion;
+  - turning a knob, dial, or handle that is fixed in place, once the fingers are on it — the mount decides where it ends up;
+  - pushing a door or drawer shut, where the hinge or slide dictates the path and the gripper only has to stay in contact;
+  - pulling a door or drawer open after the handle is already gripped and the motion is under way — the slide or hinge constrains the trajectory;
+  - carrying an object whose hold is already settled and unchanging;
+  - retracting, withdrawing, or sweeping back after a subtask.
+
+DELICATE — needs full rate. A hold is being made, broken, or placed:
+  - closing the gripper onto an object to take its weight, and opening to release it — the instant the load transfers, not the travel before or after;
+  - closing onto a handle that will then be pulled against resistance — establishing that hold, not the pull itself;
+  - the final approach that seats an object into a confined receptacle (sink basin, cabinet shelf, microwave interior, onto a burner), while it is still being lined up;
+  - any moment when a held object could topple, be handed over, or be set down free-standing.
+
+When torn, ask what would be lost if the arm arrived a few millimetres off. If the answer is "nothing — the button still presses, the knob still turns, the door still shuts", answer COARSE. If it is "the object is dropped, the handle slips, or the object lands in the wrong place", answer DELICATE. Default to COARSE — compression is the point.
+
+Decide from the camera views, not the task name. Use the wrist (eye-in-hand) view to spot the moment the load transfers or the object is placed; objects always look close in that view, so closeness alone is not a sign of precision.

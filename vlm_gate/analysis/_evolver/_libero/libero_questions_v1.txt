@@ -1,0 +1,11 @@
+The measurements above already tell you how the arm and gripper move; do not repeat them.
+Answer only what the cameras show about the MOMENT in front of you. Answer each check on its own
+line as "A) YES" or "A) NO", in order, nothing else. YES and NO refer only to the question asked.
+A) Is the gripper touching nothing at all, moving through empty space?
+B) Is an object being brought down onto a small flat target it has to sit squarely on - a
+   plate, a burner - rather than into a container that would catch it?
+C) Is an object being moved into or out of an enclosed space - inside a drawer, a shelf in a
+   cabinet - so that it has to clear the opening?
+D) Is the gripper about to take up an object's weight, or to let go of one it is holding?
+E) Is the gripper reaching in among other objects that are close enough to be knocked over?
+Answer:

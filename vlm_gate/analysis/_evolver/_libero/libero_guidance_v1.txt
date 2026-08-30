@@ -1,0 +1,28 @@
+Decide whether the next second and a half of motion can be run at half rate, by merging
+each pair of steps into one command.
+
+These commands are small movements added to where the arm already is, so merging two of
+them means making one larger move instead of two. The controller will not accept a move
+larger than its limit, and anything past that is simply lost - the arm ends up short of
+where the pair of commands would have taken it.
+
+What decides whether that matters is where the object has to end up.
+
+Some places catch whatever is put near them. A basket, a bin, an open box: release the
+object anywhere above and it drops in. Arriving a couple of centimetres off changes
+nothing, so these moments merge safely even while the object is being carried and let go.
+
+Some places do not. A plate is a small flat target and the bowl has to come down squarely
+on it. A stove burner is the same. So is a shelf inside a cabinet or the inside of an open
+drawer, where the object has to clear the opening on the way in and then sit within it.
+Here a couple of centimetres is the difference between placed and knocked over.
+
+Opening a drawer or a door is not itself delicate - the handle is large and the motion is
+a straight pull. It is putting something inside afterwards that is delicate.
+
+Reaching toward an object before touching it, and drawing back after letting go, are open
+motions with nothing to lose. Most of any episode is made of these.
+
+Report only what the cameras show at this instant. The measurements above already state
+how the arm and gripper move and how much of the merged motion would be lost at the
+controller limit; never restate or second-guess them.

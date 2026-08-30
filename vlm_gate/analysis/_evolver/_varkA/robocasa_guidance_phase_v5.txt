@@ -1,0 +1,38 @@
+Decide whether the next second of motion can be run at half rate, by merging each pair
+of steps into one command.
+
+There are five things to look for, and each one is a different way the merge can hurt.
+
+Most of the time the gripper is simply travelling through empty space, touching nothing
+at all. A longer step changes nothing there, whatever the task is called. This is the
+common case and it merges safely.
+
+The gripper is holding a part that can only move one way. A handle, a knob, a lever, the
+edge of a door or drawer: once the gripper closes on one of these, the arm must follow
+the path that part is built to travel - a drawer slides straight out, a door swings on
+its hinge, a knob turns in place. A merged step cuts the corner off that path, and what
+the arm cannot turn into motion becomes a pull on the fingers, so the grip slips or the
+part jams. This is why closing a drawer survives merging while opening the same drawer
+does not, though the drawer and its friction are the same either way.
+
+Pushing is the opposite. A gripper pressing a button, a panel, or a door that is being
+pushed shut holds nothing, and the surface takes up anything extra. A merged step that
+goes too far just presses a little harder.
+
+The load is passing between the hand and the world. Closing onto an object until its
+weight is taken, and setting an object down until it stands on its own, are the moments
+when a few millimetres decide whether it is held or dropped. Carrying it afterwards, with
+the grip unchanged, is not delicate at all - it is the transfer that is.
+
+The path has to bend. Carrying a loose object is safe in the open, and becomes risky where
+the way is not straight: a rim to lift over, a shelf edge or a wall to go around, a lip at
+the mouth of a sink or a cabinet. Merging replaces the corner with a straight line across
+it, and the object clips what it should have cleared.
+
+The arm alone cannot reach. When the target sits at the far edge of the workspace, the
+base has to travel while the arm works, and the two must stay in step. Merging doubles
+both, but the base and the arm do not accept the same size of command, so the timing that
+kept the target within reach comes apart.
+
+Report only what the cameras show at this instant. The measurements above already state
+how the arm and gripper move; never restate or second-guess them.

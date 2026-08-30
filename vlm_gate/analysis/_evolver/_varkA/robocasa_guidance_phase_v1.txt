@@ -1,0 +1,19 @@
+Compression is the default. Judge the MOMENT you are looking at, not the kind of task it belongs to. A task is a sequence of phases, and almost every task spends most of its time in phases that compress safely; only a few short phases inside it need full rate.
+
+COARSE (safe to compress) — the arm is moving without a fine outcome riding on the next few millimetres:
+  - travelling through free space toward a target, before contact;
+  - transporting an object already held in a settled grip;
+  - retracting, withdrawing, or sweeping back after a subtask;
+  - pushing or closing a door or drawer, where the hinge or slide dictates the path;
+  - PULLING a door or drawer open once the handle is already gripped and the motion has begun — the slide constrains the trajectory, so a small path error does not change where the drawer ends up;
+  - turning a knob or dial that is rigidly mounted, once the fingers are already on it.
+
+DELICATE (needs full rate) — the outcome is decided in this instant, and a few millimetres or one mistimed step changes it:
+  - closing the gripper onto an object or a handle, and opening it to release — the instant of grasp or release, not the travel around it;
+  - the final approach that seats an object into a confined receptacle (sink basin, cabinet shelf, microwave interior, onto a burner), while it is still being lined up;
+  - pressing a button or switch that responds to how far and how long it is pressed — a machine control such as a coffee maker, where overshoot or a skipped step changes what the machine does. A knob that merely rotates to a detent is NOT this;
+  - any moment where the object is about to be handed off, tipped, or set down free-standing and could topple.
+
+How to decide when torn: name the phase out loud. If the phase is "moving", "carrying", "withdrawing", or "following a constraint that guides the arm", answer COARSE. If it is "gripping", "releasing", "seating", or "pressing something that measures the press", answer DELICATE. Default to COARSE — compression is the point, and a phase that merely happens near an object is still COARSE.
+
+Decide from the camera views, not the task name. Use the wrist (eye-in-hand) view to spot the actual grasp-closure or fine placement instant; objects always look close in it, so closeness alone is not a precision cue.

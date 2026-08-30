@@ -1,0 +1,25 @@
+Decide whether the next second of motion can be run at half speed, by merging each pair
+of steps into one larger step.
+
+What matters is whether the gripper is holding a part that can only move one way.
+A handle, a knob, a lever, a door edge: once the gripper closes on one of these, the arm
+can no longer go wherever it likes. It must follow the path that part is built to travel
+- a drawer slides straight out, a door swings on its hinge, a knob turns in place.
+A merged step cuts the corner off that path. What the arm cannot turn into motion it
+turns into a pull on the fingers, so the grip slips or the part jams.
+
+Pushing is safe. When the gripper presses a button, a panel, or a door that is being
+pushed shut, it is not holding anything and the surface takes up anything extra.
+A merged step that goes too far just presses a little harder. This is why closing a
+drawer survives merging while opening the same drawer does not, even though the drawer
+and its friction are the same either way.
+
+Carrying a loose object is a third case. Nothing forces the path, so merging is safe in
+open space. It becomes risky where the path has to lift over a rim or go around an edge,
+and where the object is being picked up or set down.
+
+Most of the time the gripper is simply travelling through empty space, touching nothing.
+Those moments merge safely no matter what the task is called.
+
+Report only what the cameras show at this instant. The measurements above already say
+how the arm and gripper move; do not repeat or second-guess them.
