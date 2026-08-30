@@ -1,0 +1,194 @@
+<title>Quantization Gate Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400&display=swap">
+<style>
+:root{--bg:#EFF2F3;--surface:#FFF;--surface-2:#F7F9F9;--ink:#111819;--ink-2:#3C4A4D;
+ --muted:#6B7B7F;--line:#DBE2E3;--line-2:#C6D0D2;--accent:#0D6B59;--accent-soft:#E2F0EC;
+ --warn:#9C4A16;--warn-soft:#F6E9DF;--live:#1D6FA8;--live-soft:#E3EDF5;
+ --mono:"IBM Plex Mono",ui-monospace,monospace;--sans:"IBM Plex Sans",system-ui,sans-serif;
+ --serif:"Newsreader",Georgia,serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+ --bg:#0E1416;--surface:#161E20;--surface-2:#1B2427;--ink:#E2EAEB;--ink-2:#B4C2C4;
+ --muted:#7F9296;--line:#263134;--line-2:#33413F;--accent:#4ECBAA;--accent-soft:#123029;
+ --warn:#D98A4E;--warn-soft:#2E2015;--live:#6FB3E0;--live-soft:#13242F}}
+:root[data-theme="dark"]{--bg:#0E1416;--surface:#161E20;--surface-2:#1B2427;--ink:#E2EAEB;
+ --ink-2:#B4C2C4;--muted:#7F9296;--line:#263134;--line-2:#33413F;--accent:#4ECBAA;
+ --accent-soft:#123029;--warn:#D98A4E;--warn-soft:#2E2015;--live:#6FB3E0;--live-soft:#13242F}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;
+ line-height:1.6;margin:0;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px 88px}
+header{padding:56px 0 32px;border-bottom:1px solid var(--line)}
+.eyebrow{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);
+ font-weight:600;margin:0 0 12px}
+h1{font-weight:600;font-size:clamp(28px,4.4vw,40px);line-height:1.12;letter-spacing:-.02em;
+ margin:0 0 16px;text-wrap:balance}
+.lede{font-family:var(--serif);font-size:18.5px;line-height:1.62;color:var(--ink-2);
+ max-width:64ch;margin:0}
+section{padding:46px 0 0}
+h2{font-size:12.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;
+ color:var(--muted);margin:0 0 6px}
+.sec{font-size:24px;font-weight:600;letter-spacing:-.015em;margin:0 0 12px;text-wrap:balance}
+.note{font-family:var(--serif);font-size:16.5px;line-height:1.65;color:var(--ink-2);
+ max-width:70ch;margin:0 0 22px}
+.note strong{color:var(--ink);font-weight:500}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:9px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:540px}
+th{text-align:left;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+ font-weight:600;padding:12px 14px;border-bottom:1px solid var(--line-2);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.num{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.mono{font-family:var(--mono);font-size:12.5px;color:var(--ink-2)}
+.pill{display:inline-block;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;
+ font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.live{background:var(--live-soft);color:var(--live)}
+.ok{background:var(--accent-soft);color:var(--accent)}
+.bad{background:var(--warn-soft);color:var(--warn)}
+.bar{height:7px;border-radius:4px;background:var(--surface-2);overflow:hidden;
+ border:1px solid var(--line);min-width:110px}
+.bar>i{display:block;height:100%;background:var(--live)}
+.cards{display:grid;gap:13px;grid-template-columns:repeat(auto-fit,minmax(310px,1fr))}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:17px 19px}
+.card h3{margin:0 0 7px;font-size:16px;font-weight:600;letter-spacing:-.01em}
+.card p{margin:0;color:var(--ink-2);font-size:14.5px}
+.card code{font-family:var(--mono);font-size:12.5px}
+.caveat{border-left:3px solid var(--warn);background:var(--warn-soft);padding:14px 18px;
+ border-radius:0 7px 7px 0;margin:22px 0;font-family:var(--serif);font-size:16px;
+ line-height:1.6;color:var(--ink-2);max-width:74ch}
+.caveat strong{color:var(--ink);font-weight:500}
+pre{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:15px 17px;
+ overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.65;color:var(--ink-2);margin:0 0 18px}
+footer{margin-top:56px;padding-top:24px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+a{color:var(--accent);text-decoration:none;border-bottom:1px solid transparent}
+a:hover{border-bottom-color:currentColor}
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">Quantizability gate · 31 August 2026</p>
+  <h1>Board</h1>
+  <p class="lede">What is running, what today changed, and the checks that now
+  stand between a labelling pass and a trained student. Three of the four things
+  below were found by looking at artefacts rather than at job states.</p>
+</header>
+
+<section>
+  <h2>Running now</h2>
+  <p class="sec">Three jobs</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Job</th><th>What</th><th>Configuration</th><th>Progress</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">145335</td><td>N1.7 joint, <strong>gate</strong></td>
+        <td>60,000 steps · batch 64 · continuous labels</td>
+        <td><span class="pill live">running</span></td></tr>
+      <tr><td class="mono">145336</td><td>N1.7 joint, baseline</td>
+        <td>matched, no gate</td>
+        <td><span class="pill live">running</span></td></tr>
+      <tr><td class="mono">145246</td><td>LIBERO labelling, 16 shards</td>
+        <td>every frame · 274k chunks</td>
+        <td><div class="bar"><i style="width:19%"></i></div>
+            <span class="mono" style="font-size:12px">53,200</span></td></tr>
+    </tbody>
+  </table></div>
+  <p class="note" style="margin-top:18px">The joint runs now log
+  <code>gate_loss</code>, <code>action_loss_only</code> and
+  <code>gate_valid_n</code> separately. Until today they logged one number, so a
+  gated run at 0.706 against a baseline at 0.123 could not be read: the gap
+  might be the gate's own loss with the policy untouched, or the gate plus real
+  policy damage. Separating them is the reason the baseline runs at all.</p>
+</section>
+
+<section>
+  <h2>Rejected</h2>
+  <p class="sec">phase6 does not predict what compression costs</p>
+  <p class="note">A label set is only worth training on if it ranks tasks the way
+  compression damage ranks them. Measured against the per-task cost of blanket
+  K=2 — a number that was on disk the whole time:</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Generation</th><th style="text-align:right">Spearman with measured damage</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr><td>phase5</td><td class="num">+0.420</td><td><span class="pill ok">keep</span></td></tr>
+      <tr><td>phase6</td><td class="num">+0.019</td><td><span class="pill bad">rejected</span></td></tr>
+    </tbody>
+  </table></div>
+  <div class="caveat"><strong>It was built to fix a dead question, and it did.</strong>
+  phase5's fourth question answered 0.007 on average; the rewrite took it to
+  0.067, exactly as intended, and the labels stopped predicting the only thing
+  they exist to predict. Question liveness is a property of the questions, not of
+  the labels, and it had never been checked against anything external.</div>
+  <p class="note">The check now takes twenty seconds and fails a candidate that
+  falls below its reference:</p>
+  <pre>qgate labelcheck &lt;parquet&gt; --dataset &lt;root&gt; --reference &lt;known-good&gt;
+  → Spearman(dK2, confidence) = +0.019
+    reference +0.420   delta -0.400   FAIL — do not train on these labels</pre>
+  <p class="note">LIBERO can be scored the same way now. Its labels carry only
+  instruction sentences and its evaluation writes numbered directories, so
+  nothing joined them; the index enumerated from the benchmark package matches
+  all 40, one to one.</p>
+</section>
+
+<section>
+  <h2>Fixed today</h2>
+  <p class="sec">Four failures, each invisible in what was being watched</p>
+  <div class="cards">
+    <div class="card"><h3>The gate never trained</h3>
+      <p>Every N1.7 joint run left the gate head at its initialization — parameters
+      moved by exactly 0 across 4,000 steps while the backbone moved 3–7e-3. The
+      label join read the episode index off a DataFrame that never carries it, so
+      every sample counted as unlabelled and the loss was exactly zero.</p></div>
+    <div class="card"><h3>The smoke tested the part, not the wiring</h3>
+      <p>It attached the gate, ran the backbone, applied BCE to the head and checked
+      gradients arrived. It never called the model's forward, which is where the
+      label had to travel from the dataset to the loss — the path that was broken.</p></div>
+    <div class="card"><h3>Hyperparameters never reached python</h3>
+      <p>Comment lines sat between backslash-continued arguments, so the joined line
+      commented out everything after <code>--output-dir</code>.
+      <code>--max-steps</code> and <code>--global-batch-size</code> were silently
+      dropped and every run used config defaults. A job named 60k trained 10,000 steps.</p></div>
+    <div class="card"><h3>Training on the superseded variant</h3>
+      <p>The joint run used the binary aggregation, where 29.51% of chunks collapse to
+      zero and take arbitrary ranks. A frozen student can ignore that block; here the
+      gradient flows through the four backbone layers the action head shares.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>Standing</h2>
+  <p class="sec">Where each benchmark is</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Benchmark</th><th>Prompt</th><th>Labelling</th><th>Student</th><th>Closed loop</th></tr></thead>
+    <tbody>
+      <tr><td>RoboCasa phase5</td><td>final</td><td>247,887</td><td>4 architectures</td><td>all 4 evaluated</td></tr>
+      <tr><td>RoboCasa phase6</td><td><span class="pill bad">rejected</span></td><td>247,887</td><td>deleted</td><td>—</td></tr>
+      <tr><td>LIBERO</td><td>final</td><td><span class="pill live">running</span></td><td>—</td><td>baselines only</td></tr>
+      <tr><td>dexjoco</td><td>v2, revised</td><td>ready</td><td>—</td><td>baselines only</td></tr>
+      <tr><td>allex</td><td>final</td><td>14,809</td><td>n/a</td><td>impossible — no policy</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note" style="margin-top:18px">dexjoco's six single-arm tasks were
+  re-converted to the layout GR00T's loader reads — the earlier conversion's
+  output had been deleted with a home migration, leaving every dexjoco training
+  script pointing at a dead path. Its questions C and E were rewritten: they asked
+  for a hinge's kinematics and whether a tilt was deliberate, which a still frame
+  cannot answer, and scored 0.014 and 0.001 on the two tasks they were written for.</p>
+</section>
+
+<section>
+  <h2>For whoever picks this up</h2>
+  <p class="sec">The repository is the source of truth</p>
+  <p class="note">Files created in the workspace have vanished twice today and
+  been rewritten by another process a third time, returning with a umask this
+  session does not use. The LIBERO prompt was lost that way and had to be
+  rewritten from the measurements behind it, because it had never been committed.
+  <strong>Commit anything you create before you rely on it</strong>, and when the
+  workspace and the repository disagree, check the repository first.</p>
+</section>
+
+<footer>
+  Detail lives in <code>docs/HANDOFF.md</code>, <code>docs/STATUS.md</code> and
+  <code>docs/TOOLKIT.md</code> in
+  <a href="https://github.com/rakybond007/quantization_label_gr00t">quantization_label_gr00t</a>.
+</footer>
+</div>
