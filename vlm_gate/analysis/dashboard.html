@@ -1,0 +1,384 @@
+<title>Quantizability Ledger</title>
+<style>
+:root {
+  --ground:#F7F8FA; --surface:#FFFFFF; --ink:#16202B; --muted:#5C6B7A; --rule:#DFE4EA;
+  --accent:#0F6E7A; --good:#2E7D51; --warn:#A8730F; --bad:#B03A3A; --chip:#EDF1F4;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground:#10151B; --surface:#171E26; --ink:#E6EDF3; --muted:#97A6B5; --rule:#253039;
+    --accent:#4FC3CE; --good:#57C08A; --warn:#D8A343; --bad:#E0726E; --chip:#1D262F;
+  }
+}
+:root[data-theme="dark"] {
+  --ground:#10151B; --surface:#171E26; --ink:#E6EDF3; --muted:#97A6B5; --rule:#253039;
+  --accent:#4FC3CE; --good:#57C08A; --warn:#D8A343; --bad:#E0726E; --chip:#1D262F;
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--ground); color:var(--ink);
+  font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,"Noto Sans KR",sans-serif;
+  font-size:15px; line-height:1.55; }
+.wrap { max-width:1180px; margin:0 auto; padding:40px 24px 80px; display:flex; flex-direction:column; gap:36px; }
+header { display:flex; flex-direction:column; gap:6px; border-bottom:1px solid var(--rule); padding-bottom:20px; }
+h1 { margin:0; font-size:28px; letter-spacing:-0.02em; font-weight:650; text-wrap:balance; }
+.sub { color:var(--muted); font-size:14px; }
+.mono { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-variant-numeric:tabular-nums; }
+.strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:14px; }
+.card { background:var(--surface); border:1px solid var(--rule); border-radius:10px; padding:16px 18px;
+  display:flex; flex-direction:column; gap:4px; }
+.card .lab { font-size:11px; letter-spacing:0.09em; text-transform:uppercase; color:var(--muted); }
+.card .val { font-size:26px; font-weight:640; letter-spacing:-0.01em; }
+.card .note { font-size:13px; color:var(--muted); }
+h2 { margin:0 0 2px; font-size:17px; letter-spacing:-0.01em; font-weight:620; }
+section { display:flex; flex-direction:column; gap:12px; }
+.scroll { overflow-x:auto; border:1px solid var(--rule); border-radius:10px; background:var(--surface); }
+table { border-collapse:collapse; width:100%; font-size:13.5px; }
+th { text-align:left; font-size:11px; letter-spacing:0.07em; text-transform:uppercase; color:var(--muted);
+  font-weight:600; padding:11px 14px; border-bottom:1px solid var(--rule); white-space:nowrap; }
+td { padding:9px 14px; border-bottom:1px solid var(--rule); white-space:nowrap; }
+tr:last-child td { border-bottom:none; }
+td.name { font-weight:560; white-space:normal; }
+td.num { text-align:right; }
+td.delta { color:var(--muted); }
+td.prov { font-size:11.5px; color:var(--muted); }
+.good { color:var(--good); font-weight:640; }
+.warn { color:var(--warn); }
+.bad { color:var(--bad); }
+.negtable td { white-space:normal; }
+.foot { color:var(--muted); font-size:12.5px; border-top:1px solid var(--rule); padding-top:14px; }
+.pill { display:inline-block; background:var(--chip); color:var(--muted); border-radius:999px;
+  padding:2px 9px; font-size:11px; letter-spacing:0.04em; }
+</style>
+<div class="wrap">
+<header>
+  <h1>Quantizability Ledger</h1>
+  <div class="sub">robocasa 폐루프 24태스크 × 50에피소드 기준. 모든 수치는 <span class="mono">analysis/results_db.json</span>에서 자동 수집되며 체크포인트 출처가 함께 기록됩니다. 갱신 2026-08-19 14:46</div>
+</header>
+
+<section>
+  <h2>기준선 대비 현재 최고</h2>
+  <div class="strip">
+    <div class="card"><span class="lab">무압축 원본</span><span class="val mono">0.657</span><span class="note">327 스텝 · 압축 없음</span></div>
+    <div class="card"><span class="lab">naive K2 (게이트 없음)</span><span class="val mono bad">0.598</span><span class="note">221 스텝 · 성공률 −5.9pp</span></div>
+    <div class="card"><span class="lab">최고 게이트 (A' / gemma4)</span><span class="val mono good">0.667</span><span class="note">258 스텝 · 원본 대비 −21% 시간</span></div>
+    <div class="card"><span class="lab">동역학 보정 단독</span><span class="val mono">0.595</span><span class="note">214 스텝 · naive와 동일</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>폐루프 결과 <span class="pill">출처 포함</span></h2>
+  <div class="scroll"><table>
+    <thead><tr><th>아키텍처</th><th>티처</th><th>τ</th><th>성공률</th><th>Δ기준</th><th>스텝</th><th>Δ시간</th><th>qrate</th><th>conf최대</th><th>체크포인트 출처</th></tr></thead>
+    <tbody><tr>
+<td class="name">VLM judge 직접(varK)</td>
+<td class="mono">gemma4</td>
+<td class="mono num">—</td>
+<td class="mono num good">0.672</td>
+<td class="mono num delta">+0.015</td>
+<td class="mono num">284</td>
+<td class="mono num delta">-13%</td>
+<td class="mono num">0.54</td>
+<td class="mono num">1.00</td>
+<td class="mono prov">—</td>
+</tr><tr>
+<td class="name">A&#x27; 학생</td>
+<td class="mono">gemma4</td>
+<td class="mono num">0.50</td>
+<td class="mono num good">0.667</td>
+<td class="mono num delta">+0.010</td>
+<td class="mono num">258</td>
+<td class="mono num delta">-21%</td>
+<td class="mono num">0.53</td>
+<td class="mono num">1.00</td>
+<td class="mono prov">gate_distill_robocasa_gemma_v1/module_A_tc_full</td>
+</tr><tr>
+<td class="name">A&#x27; + K3사다리(미발동)</td>
+<td class="mono">cosmos3</td>
+<td class="mono num">0.50</td>
+<td class="mono num good">0.660</td>
+<td class="mono num delta">+0.003</td>
+<td class="mono num">294</td>
+<td class="mono num delta">-10%</td>
+<td class="mono num">0.19</td>
+<td class="mono num">0.73</td>
+<td class="mono prov">gate_distill_robocasa_cosmos_v1/module_A_tc_full</td>
+</tr><tr>
+<td class="name">A&#x27; 학생</td>
+<td class="mono">cosmos3</td>
+<td class="mono num">0.50</td>
+<td class="mono num good">0.659</td>
+<td class="mono num delta">+0.002</td>
+<td class="mono num">299</td>
+<td class="mono num delta">-9%</td>
+<td class="mono num">0.20</td>
+<td class="mono num">0.71</td>
+<td class="mono prov">gate_distill_robocasa_cosmos_v1/module_A_tc_full</td>
+</tr><tr>
+<td class="name">무압축 원본</td>
+<td class="mono">기준선</td>
+<td class="mono num">—</td>
+<td class="mono num good">0.657</td>
+<td class="mono num delta">-0.000</td>
+<td class="mono num">327</td>
+<td class="mono num delta">+0%</td>
+<td class="mono num"></td>
+<td class="mono num"></td>
+<td class="mono prov">—</td>
+</tr><tr>
+<td class="name">A&#x27; 학생 (재학습)</td>
+<td class="mono">gemma4</td>
+<td class="mono num">0.50</td>
+<td class="mono num good">0.652</td>
+<td class="mono num delta">-0.005</td>
+<td class="mono num">265</td>
+<td class="mono num delta">-19%</td>
+<td class="mono num">0.47</td>
+<td class="mono num">1.00</td>
+<td class="mono prov">gate_distill_robocasa_cosmos_v1/module_A_gemma_full_restored</td>
+</tr><tr>
+<td class="name">A&#x27; 학생 (전량)</td>
+<td class="mono">frontier+액션</td>
+<td class="mono num">0.995</td>
+<td class="mono num warn">0.647</td>
+<td class="mono num delta">-0.010</td>
+<td class="mono num">287</td>
+<td class="mono num delta">-12%</td>
+<td class="mono num">0.32</td>
+<td class="mono num">1.00</td>
+<td class="mono prov">gate_distill_robocasa_cosmos_v1/module_A_frontier_full</td>
+</tr><tr>
+<td class="name">A&#x27; 학생 (9k)</td>
+<td class="mono">cosmos3</td>
+<td class="mono num">0.50</td>
+<td class="mono num warn">0.646</td>
+<td class="mono num delta">-0.011</td>
+<td class="mono num">287</td>
+<td class="mono num delta">-12%</td>
+<td class="mono num">0.32</td>
+<td class="mono num">0.68</td>
+<td class="mono prov">gate_distill_robocasa_cosmos_v1/module_A_cosmos9k_ep900</td>
+</tr><tr>
+<td class="name">B (frozen+MLP)</td>
+<td class="mono">gemma4</td>
+<td class="mono num">0.50</td>
+<td class="mono num warn">0.643</td>
+<td class="mono num delta">-0.014</td>
+<td class="mono num">267</td>
+<td class="mono num delta">-18%</td>
+<td class="mono num">0.51</td>
+<td class="mono num">0.99</td>
+<td class="mono prov">dim=2048</td>
+</tr><tr>
+<td class="name">A&#x27; 학생 (전량)</td>
+<td class="mono">frontier+액션</td>
+<td class="mono num">0.976</td>
+<td class="mono num warn">0.643</td>
+<td class="mono num delta">-0.014</td>
+<td class="mono num">277</td>
+<td class="mono num delta">-15%</td>
+<td class="mono num">0.55</td>
+<td class="mono num">1.00</td>
+<td class="mono prov">gate_distill_robocasa_cosmos_v1/module_A_frontier_full</td>
+</tr><tr>
+<td class="name">VLM judge 직접(varK)</td>
+<td class="mono">cosmos3</td>
+<td class="mono num">—</td>
+<td class="mono num warn">0.641</td>
+<td class="mono num delta">-0.016</td>
+<td class="mono num">292</td>
+<td class="mono num delta">-11%</td>
+<td class="mono num">0.41</td>
+<td class="mono num">0.80</td>
+<td class="mono prov">—</td>
+</tr><tr>
+<td class="name">A&#x27; + clip×3</td>
+<td class="mono">cosmos3</td>
+<td class="mono num">0.50</td>
+<td class="mono num warn">0.640</td>
+<td class="mono num delta">-0.017</td>
+<td class="mono num">304</td>
+<td class="mono num delta">-7%</td>
+<td class="mono num">0.18</td>
+<td class="mono num">0.73</td>
+<td class="mono prov">gate_distill_robocasa_cosmos_v1/module_A_tc_full</td>
+</tr><tr>
+<td class="name">C (게이트토큰 λ0.3)</td>
+<td class="mono">cosmos3</td>
+<td class="mono num">0.50</td>
+<td class="mono num warn">0.638</td>
+<td class="mono num delta">-0.019</td>
+<td class="mono num">289</td>
+<td class="mono num delta">-12%</td>
+<td class="mono num">0.34</td>
+<td class="mono num">0.82</td>
+<td class="mono prov">—</td>
+</tr><tr>
+<td class="name">B (frozen+MLP)</td>
+<td class="mono">cosmos3</td>
+<td class="mono num">0.50</td>
+<td class="mono num warn">0.638</td>
+<td class="mono num delta">-0.019</td>
+<td class="mono num">289</td>
+<td class="mono num delta">-12%</td>
+<td class="mono num">0.22</td>
+<td class="mono num">0.72</td>
+<td class="mono prov">dim=2048</td>
+</tr><tr>
+<td class="name">A&#x27; 학생</td>
+<td class="mono">cosmos3</td>
+<td class="mono num">0.42</td>
+<td class="mono num warn">0.635</td>
+<td class="mono num delta">-0.022</td>
+<td class="mono num">264</td>
+<td class="mono num delta">-19%</td>
+<td class="mono num">0.56</td>
+<td class="mono num">0.72</td>
+<td class="mono prov">gate_distill_robocasa_cosmos_v1/module_A_tc_full</td>
+</tr><tr>
+<td class="name">A&#x27; 학생 (전량)</td>
+<td class="mono">frontier+액션</td>
+<td class="mono num">0.50</td>
+<td class="mono num warn">0.624</td>
+<td class="mono num delta">-0.033</td>
+<td class="mono num">237</td>
+<td class="mono num delta">-27%</td>
+<td class="mono num">0.82</td>
+<td class="mono num">1.00</td>
+<td class="mono prov">gate_distill_robocasa_cosmos_v1/module_A_frontier_full</td>
+</tr><tr>
+<td class="name">C (게이트토큰 λ1.0)</td>
+<td class="mono">cosmos3</td>
+<td class="mono num">0.50</td>
+<td class="mono num warn">0.623</td>
+<td class="mono num delta">-0.034</td>
+<td class="mono num">280</td>
+<td class="mono num delta">-14%</td>
+<td class="mono num">0.35</td>
+<td class="mono num">0.81</td>
+<td class="mono prov">—</td>
+</tr><tr>
+<td class="name">C + K3사다리 τ₃0.65</td>
+<td class="mono">cosmos3</td>
+<td class="mono num">0.50</td>
+<td class="mono num warn">0.620</td>
+<td class="mono num delta">-0.037</td>
+<td class="mono num">289</td>
+<td class="mono num delta">-12%</td>
+<td class="mono num">0.34</td>
+<td class="mono num">0.80</td>
+<td class="mono prov">—</td>
+</tr><tr>
+<td class="name">A&#x27; 학생</td>
+<td class="mono">cosmos3</td>
+<td class="mono num">0.38</td>
+<td class="mono num bad">0.608</td>
+<td class="mono num delta">-0.049</td>
+<td class="mono num">258</td>
+<td class="mono num delta">-21%</td>
+<td class="mono num">0.70</td>
+<td class="mono num">0.72</td>
+<td class="mono prov">gate_distill_robocasa_cosmos_v1/module_A_tc_full</td>
+</tr><tr>
+<td class="name">naive K2</td>
+<td class="mono">전 구간 압축</td>
+<td class="mono num">—</td>
+<td class="mono num bad">0.598</td>
+<td class="mono num delta">-0.059</td>
+<td class="mono num">214</td>
+<td class="mono num delta">-35%</td>
+<td class="mono num"></td>
+<td class="mono num"></td>
+<td class="mono prov">—</td>
+</tr><tr>
+<td class="name">A&#x27; 학생 (9k)</td>
+<td class="mono">frontier+액션</td>
+<td class="mono num">0.50</td>
+<td class="mono num bad">0.597</td>
+<td class="mono num delta">-0.060</td>
+<td class="mono num">243</td>
+<td class="mono num delta">-26%</td>
+<td class="mono num">0.92</td>
+<td class="mono num">1.00</td>
+<td class="mono prov">gate_distill_robocasa_cosmos_v1/module_A_f9k_act_ep900</td>
+</tr><tr>
+<td class="name">naive K2 + 모델보정</td>
+<td class="mono">—</td>
+<td class="mono num">—</td>
+<td class="mono num bad">0.595</td>
+<td class="mono num delta">-0.062</td>
+<td class="mono num">214</td>
+<td class="mono num delta">-35%</td>
+<td class="mono num"></td>
+<td class="mono num"></td>
+<td class="mono prov">—</td>
+</tr><tr>
+<td class="name">naive K2 + 스칼라보정</td>
+<td class="mono">—</td>
+<td class="mono num">—</td>
+<td class="mono num bad">0.574</td>
+<td class="mono num delta">-0.083</td>
+<td class="mono num">210</td>
+<td class="mono num delta">-36%</td>
+<td class="mono num"></td>
+<td class="mono num"></td>
+<td class="mono prov">—</td>
+</tr><tr>
+<td class="name">naive K3 + 모델보정</td>
+<td class="mono">—</td>
+<td class="mono num">—</td>
+<td class="mono num bad">0.506</td>
+<td class="mono num delta">-0.151</td>
+<td class="mono num">202</td>
+<td class="mono num delta">-38%</td>
+<td class="mono num"></td>
+<td class="mono num"></td>
+<td class="mono prov">—</td>
+</tr><tr>
+<td class="name">naive K3</td>
+<td class="mono">전 구간 압축</td>
+<td class="mono num">—</td>
+<td class="mono num bad">0.497</td>
+<td class="mono num delta">-0.160</td>
+<td class="mono num">198</td>
+<td class="mono num delta">-39%</td>
+<td class="mono num"></td>
+<td class="mono num"></td>
+<td class="mono prov">—</td>
+</tr></tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>매트릭스 진행 현황</h2>
+  <div class="scroll"><table>
+    <thead><tr><th>도메인</th><th>티처</th><th>라벨</th><th>A'</th><th>C</th></tr></thead>
+    <tbody><tr><td class='mono'>robocasa</td><td class='name'>cosmos3</td><td class='mono'>262,329 ✅</td><td class='mono'>✅ 학습·평가</td><td class='mono'>✅ 학습·평가</td></tr><tr><td class='mono'>robocasa</td><td class='name'>gemma4</td><td class='mono'>262,329 ✅</td><td class='mono'>🔄 재학습(ckpt 소실)</td><td class='mono'>✅ 학습·평가</td></tr><tr><td class='mono'>robocasa</td><td class='name'>frontier(단일프레임+액션)</td><td class='mono'>🔄 라벨링 중</td><td class='mono'>⏳ 대기</td><td class='mono'>⏳ 대기</td></tr><tr><td class='mono'>real</td><td class='name'>cosmos3</td><td class='mono'>3,765 ✅ (+phase-aware)</td><td class='mono'>🔄 학습 중</td><td class='mono'>✅ 학습</td></tr><tr><td class='mono'>real</td><td class='name'>gemma4</td><td class='mono'>🔄 라벨링 중</td><td class='mono'>⏳ 대기</td><td class='mono'>⏳ 대기</td></tr><tr><td class='mono'>real</td><td class='name'>frontier(단일프레임+액션)</td><td class='mono'>3,664/3,705</td><td class='mono'>⏳ 대기</td><td class='mono'>⏳ 대기</td></tr><tr><td class='mono'>real</td><td class='name'>luna-batch6</td><td class='mono'>3,705 ⛔ 폐기</td><td class='mono'>(폐기)</td><td class='mono'>(폐기)</td></tr></tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>티처 프롬프트 프로토콜 비교 <span class="pill">균등표본 1,200프레임 · 물리 프록시 기준</span></h2>
+  <div class="scroll"><table>
+    <thead><tr><th>프로토콜</th><th>qrate</th><th>위험 검출</th><th>차단 정확도</th><th>메모</th></tr></thead>
+    <tbody><tr><td class='name'>이진 4대규칙</td><td class='mono num'>0.48</td><td class='mono num'>70.4%</td><td class='mono num'>31.2%</td><td>액션 4조건 중 하나라도 걸리면 NO. 현재 최고 판별력, 동작점 고정</td></tr><tr><td class='name'>bits8 + 가중치 + 순위정규화</td><td class='mono num'>0.50 (τ=0.5)</td><td class='mono num'>67.6%</td><td class='mono num'>16.7%</td><td>영상4+액션4 분해. τ가 곧 압축비율 — 동작점 자유 조절</td></tr><tr><td class='name'>bits8cal (캘리브 수치 포함)</td><td class='mono num'>0.50 (τ=0.5)</td><td class='mono num'>60.8%</td><td class='mono num'>15.0%</td><td>스케일 기준 명시했으나 그리퍼 판정이 둔해져 소폭 하락</td></tr><tr><td class='name'>4비트 분해 (액션만)</td><td class='mono num'>0.17~0.65 (τ별)</td><td class='mono num'>87.8%~66.9%</td><td class='mono num'>13~24%</td><td>영상 판단 미반영. 비트별 조합으로 동작점 조절 가능</td></tr><tr><td class='name'>투표 3회</td><td class='mono num'>0.67</td><td class='mono num'>86.5%</td><td class='mono num'>35.3%</td><td>토큰확률 미사용. 값 4단계뿐</td></tr><tr><td class='name'>등급별 동의(ladder)</td><td class='mono num'>1.00</td><td class='mono num'>0.0%</td><td class='mono num'>—</td><td>약한 주장에 전부 동의 → 하한이 0.5로 깔림. 주장 강도 재설계 필요</td></tr><tr><td class='name'>20단계/10단계/5단계 등급</td><td class='mono num'>0.9~1.0</td><td class='mono num'>58~85%</td><td class='mono num'>—</td><td>값은 퍼지나 위험과 무관(이웃상관 ~0). 자기 확신도 환산 실패</td></tr><tr><td class='name'>범용+액션설명 (전량 $46에 사용)</td><td class='mono num'>1.00</td><td class='mono num'>1.1%</td><td class='mono num'>—</td><td>액션을 주되 해석 규칙이 없어 판단 붕괴</td></tr></tbody>
+  </table></div>
+  <div class="foot" style="border:none;padding-top:4px">
+    핵심 발견: (1) 액션 수치를 주려면 <b>해석 규칙이 세트</b>여야 한다 — 규칙 없이 수치만 주면 로컬·frontier 모두 판별력이 무너진다(cosmos 그리퍼 검출 70.4%→36.2%, 규칙 추가 시 83.9%로 회복).
+    (2) 모델에게 <b>자기 확신도를 숫자로 환산시키는 방식은 실패</b>한다(5·10·20단계 모두 위험과 무관한 값 생성).
+    (3) 분해 방식은 <b>비트별 가중치와 τ로 동작점을 자유롭게 조절</b>할 수 있고, 순위 정규화를 적용하면 τ가 곧 압축 비율이 된다.
+    (4) 가중치는 <b>비트별 상·하한 + 모달리티 그룹 최소 비중</b>으로 제약해 한쪽 편향을 막고, τ와 함께 evolve/RL 탐색 대상으로 둔다.
+  </div>
+</section>
+
+<section>
+  <h2>확정된 부정 결과 — 재실험 금지</h2>
+  <div class="scroll"><table class="negtable">
+    <thead><tr><th>항목</th><th>근거</th></tr></thead>
+    <tbody><tr><td class='name'>K3 혼합 (신뢰도 사다리)</td><td>clip 해제해도 K2 미달. τ₃는 학생별 confidence 분포에서 골라야 하며, 과거 실험은 K3가 발동조차 안 해 무효였다.</td></tr><tr><td class='name'>동역학 보정 (OSC 역산)</td><td>clip 해제 후에도 naive K2와 동일(0.595 vs 0.598). 진폭은 복원되나 성공률은 회복되지 않음 → 성공률은 게이트의 몫.</td></tr><tr><td class='name'>reasoning=none 단독 라벨링</td><td>robocasa에서 라벨이 상수로 붕괴(이웃 상관 0.058). 단일프레임으로 바꿔도 동일.</td></tr><tr><td class='name'>모션 3프레임 입력</td><td>evolve 루프는 단일 시점만 사용 가능 — 배포 불가로 폐기.</td></tr><tr><td class='name'>타일 해상도 상향</td><td>원본 256×256 3뷰가 384×128 타일 대비 그리퍼 판별 개선 없음(+0.05 미만).</td></tr></tbody>
+  </table></div>
+</section>
+
+<div class="foot">
+  τ는 (티처 × 아키텍처)마다 다른 탐색 대상입니다 — judge마다 confidence 캘리브레이션이 달라 같은 0.5가 다른 동작점을 뜻합니다(cosmos 학생 최대 0.726 / gemma 학생 최대 0.999). τ 탐색은 evolve 루프의 일부로 다루되 튜닝·홀드아웃 태스크를 분리합니다.
+</div>
+</div>

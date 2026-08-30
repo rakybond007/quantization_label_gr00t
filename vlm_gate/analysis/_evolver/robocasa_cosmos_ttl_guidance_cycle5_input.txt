@@ -1,0 +1,8 @@
+Compression is the default — answer YES for almost everything. Say YES whenever the arm is moving through free space (reaching, transporting a grasped object, retracting, broad sweeps), whenever it travels toward or away from any appliance (stove, microwave, sink, cabinet) even while carrying an object, and whenever the gripper is pressing a button or turning a rigidly-mounted knob, dial, or handle that is fixed in place with nothing being carried — including knobs and buttons on a stove face or a microwave panel. Being near an appliance is NOT a reason to protect: pair-averaging cannot misplace a fixed mechanism or a free-space path.
+
+Answer NO only at these three delicate instants, and only during the instant itself:
+  (a) the moment the gripper closes on an object or a handle (grasp-closure);
+  (b) the final descent in which a carried object is lowered into and released inside a bounded opening — the split second the object crosses the rim and settles — NOT the approach, and NOT merely hovering or travelling near a sink, shelf, microwave, or burner;
+  (c) pulling a door or drawer open, where the grasped handle is under load and the arm must track the hinge or slide.
+
+Everything else stays YES — including closing or pushing a door or drawer, turning knobs/faucets, pressing buttons, and all travel to and from a target. Decide from the camera views, not the task name. Use the wrist (eye-in-hand) view to spot the actual grasp-closure or the moment of release; objects always look close in it, so closeness alone is not a precision cue.

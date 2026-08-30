@@ -1,0 +1,7 @@
+# RoboTwin 2.0 deploy_policy config for GR00T-N1.5 zmq inference server.
+# Override fields via --overrides at eval_policy.py call time.
+host: "127.0.0.1"
+port: 5755
+action_horizon: 16
+instruction_type: unseen
+eval_test_num: 50

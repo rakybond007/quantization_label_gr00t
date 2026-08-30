@@ -1,0 +1,7 @@
+{
+  "succ": 0.919,
+  "steps": 126,
+  "quant": 47,
+  "gate_dir": "/sjw_alinlab2/home/hojin2/quantization_agent_workspace/vlm_gate/output/libero/libero_gemma_cycle1/gate",
+  "guidance": "Compression is the default: answer YES when the arm is moving through free space \u2014 reaching, transporting a grasped object, retracting, or broad sweeps. Answer NO only when the gripper is in delicate contact: grasping an object, or inserting/aligning it precisely. Decide from the camera views, not the task name.\n"
+}

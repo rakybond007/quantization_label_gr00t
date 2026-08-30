@@ -1,22 +1,161 @@
-# 결과·산출물은 담지 않는다. 코드와 프롬프트만 둔다.
-output/
-out/
-wandb/
-_tmp/
-assets/
-*.parquet
-*.jsonl
-*.pt
-*.npz
-*.log
-*.out
-*.err
-__pycache__/
-*.pyc
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# build artifacts
+
+.eggs/
+.mypy_cache
+*.egg-info/
+build/
+dist/
+pip-wheel-metadata/
+
+
+# dev tools
+
+.envrc
+.python-version
+.idea
+.venv/
+.vscode/
+/*.iml
+pyrightconfig.json
+.ruff_cache/
+
+# jupyter notebooks
+
+.ipynb_checkpoints
+
+
+# miscellaneous
+
+.cache/
+doc/_build/
+*.swp
 .DS_Store
 
-# 비밀값은 실행 시 파일에서 읽는다. 그 파일이 레포에 들어오면 안 된다.
-hf_token.txt
-gemini_key
-openai_key
-*_key
+
+# python
+
+*.pyc
+*.pyo
+__pycache__
+
+
+# testing and continuous integration
+
+.coverage
+.pytest_cache/
+.benchmarks
+
+# documentation build artifacts
+
+docs/build
+site/
+
+# The following ignores are from vila repository
+*.whl
+*_dev
+dev/
+# config.json
+eval_output/
+eval-result/
+hostfile
+core.*
+*.out
+captioner_bk/
+slurm-logs/
+captioner/
+hostfile
+*_dev.py
+*_dev.sh
+
+
+# Python
+__pycache__
+*.pyc
+*.egg-info
+dist
+
+# Log
+*.log
+*.log.*
+
+# Data
+!**/alpaca-data-conversation.json
+
+# Editor
+.idea
+*.swp
+
+# Other
+.DS_Store
+wandb
+
+# Playground
+playground/
+
+# Hydra 
+.hydra/
+
+# Data
+demo_data/gr00t-gr1-apple-to-shelf/
+tmp/
+output/
+
+# Temporary files
+*tmp*
+# === Project-specific (training/eval artifacts) ===
+ckpt/
+output/
+wandb/
+out/
+slurm_out/
+MUJOCO_LOG.TXT
+
+# Local sweep helpers (not for upstream)
+_dual_sweep*.log
+_dual_sweep_killer.sh
+_durations.log
+_traj_viz.log
+_gr1_traj_viz.log
+_libero_smoke*.log
+_e2e_smoke.log
+_m8_*.log
+_pi05_*.log
+_robocasa*smoke*.log
+_norm_*.log
+_uv_sync.log
+_dual_server.log
+_ensfix_*.log
+_libero_smoke_server.log
+_libero_smoke_client.log
+
+# tmp scripts (smoke / debug)
+scripts/_*.py
+scripts/_*.sh
+
+# large artifact / vendored dirs (not source)
+outputs/
+external_dependencies/
+logs/

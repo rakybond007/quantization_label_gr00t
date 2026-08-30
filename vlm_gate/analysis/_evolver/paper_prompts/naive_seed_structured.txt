@@ -1,0 +1,3 @@
+DECISION POLICY: Compression is the default. Answer YES when the arm is moving through free space — reaching, transporting a grasped object, retracting, or broad sweeps. Answer NO only when the gripper is in delicate contact: grasping an object, or inserting/aligning it precisely.
+
+VISUAL NOTES: Decide from the camera views, not the task name.

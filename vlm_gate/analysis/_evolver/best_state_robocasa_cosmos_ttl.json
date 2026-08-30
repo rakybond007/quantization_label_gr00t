@@ -1,0 +1,7 @@
+{
+  "succ": 0.645,
+  "steps": 286,
+  "quant": 38,
+  "gate_dir": "/sjw_alinlab2/home/hojin2/quantization_agent_workspace/vlm_gate/output/robocasa/robocasa_cosmos_ttl_cycle4",
+  "guidance": "Compression is the default: answer YES whenever the arm is moving through free space \u2014 reaching, transporting a grasped object, retracting, or broad sweeps \u2014 and ALSO when the gripper is simply pressing a button or turning a rigidly-mounted knob or dial, where the mechanism is fixed in place and nothing is being carried (pair-averaging cannot misplace a fixed mechanism).\n\nAnswer NO only at these delicate instants:\n  (a) the moment the gripper closes on an object or a handle (grasp-closure);\n  (b) precisely inserting or aligning a carried object, or lowering/releasing it into a confined receptacle \u2014 a sink basin, a cabinet shelf, the microwave, or onto a burner;\n  (c) pulling a door or drawer open, where the grasped handle is under load and the arm must track the hinge or slide.\n\nEverything else \u2014 including closing/pushing a door or drawer, and the travel to and from a target \u2014 stays YES. Decide from the camera views, not the task name. Use the wrist (eye-in-hand) view to spot the actual grasp-closure or fine placement instant; objects always look close in it, so closeness alone is not a precision cue.\n"
+}

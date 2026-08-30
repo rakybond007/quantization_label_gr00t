@@ -1,0 +1,137 @@
+{
+ "labels": {
+  "robocasa/cosmos3": {
+   "path": "/rlwrld-unified-checkpoints/hojin2/checkpoints/gate_distill_robocasa_cosmos_v1/labels/full_merged.parquet",
+   "rows": 262329,
+   "stride": 8
+  },
+  "robocasa/gemma4": {
+   "path": "/rlwrld-unified-checkpoints/hojin2/checkpoints/gate_distill_robocasa_gemma_v2/labels/gemma_full_merged.parquet",
+   "rows": 262329,
+   "stride": 8
+  },
+  "robocasa/frontier": {
+   "path": "exp_s16_act + exp_s8_odd_act",
+   "rows_even": 244929,
+   "rows_odd": 74748,
+   "target": 260031,
+   "stride": 8,
+   "status": "진행중"
+  },
+  "real/cosmos3": {
+   "path": "/rlwrld-unified-checkpoints/hojin2/checkpoints/gate_distill_real_droid_pnp_v1/labels/real_cosmos_full.parquet",
+   "rows": 3765
+  },
+  "real/luna_batch6(폐기)": {
+   "path": "/rlwrld-unified-checkpoints/hojin2/checkpoints/gate_distill_real_droid_pnp_v1/labels/real_luna_full.parquet",
+   "rows": 3705
+  },
+  "real/cosmos3_phase_v2": {
+   "path": "/sjw_alinlab/home/hojin2/quantization_agent_workspace/vlm_gate/output/_gate_distill/cosmos_real_tiles_phase_v2.parquet",
+   "rows": 3765
+  },
+  "real/frontier_api_act": {
+   "path": "/sjw_alinlab/home/hojin2/quantization_agent_workspace/vlm_gate/output/_gate_distill/exp_real_api_act/labels.jsonl",
+   "rows": 3664,
+   "target": 3705
+  },
+  "real/gemma4": {
+   "status": "미실시 (GAP)"
+  }
+ },
+ "students": {
+  "robocasa/cosmos3/A'": {
+   "path": "/rlwrld-unified-checkpoints/hojin2/checkpoints/gate_distill_robocasa_cosmos_v1/module_A_tc_full/gate_module.pt",
+   "exists": true
+  },
+  "robocasa/gemma4/A'": {
+   "path": "/rlwrld-unified-checkpoints/hojin2/checkpoints/gate_distill_robocasa_cosmos_v1/module_A_gemma_full_restored/gate_module.pt",
+   "exists": false
+  },
+  "robocasa/frontier/A'": {
+   "path": "/rlwrld-unified-checkpoints/hojin2/checkpoints/gate_distill_robocasa_cosmos_v1/module_A_frontier_full/gate_module.pt",
+   "exists": false
+  },
+  "robocasa/cosmos3/C": {
+   "path": "/rlwrld-unified-checkpoints/hojin2/checkpoints/gate_distill_robocasa_cosmos_v1/vla_gateC_v3_lam03_60k/checkpoint-60000",
+   "exists": true
+  },
+  "robocasa/gemma4/C": {
+   "path": "/rlwrld-unified-checkpoints/hojin2/checkpoints/gate_distill_robocasa_cosmos_v1/vla_gateC_60k/checkpoint-60000",
+   "exists": true
+  },
+  "real/luna_batch6/C": {
+   "path": "/rlwrld-unified-checkpoints/hojin2/checkpoints/gate_distill_real_droid_pnp_v1/vla_gateC_real_25k/checkpoint-25000",
+   "exists": true
+  },
+  "real/cosmos3/C": {
+   "path": "/rlwrld-unified-checkpoints/hojin2/checkpoints/gate_distill_real_droid_pnp_v1/vla_gateC_real_cosmos_25k/checkpoint-25000",
+   "exists": true
+  },
+  "real/luna_batch6/A'": {
+   "path": "/rlwrld-unified-checkpoints/hojin2/checkpoints/gate_distill_real_droid_pnp_v1/module_A_luna_25kstep/gate_module.pt",
+   "exists": true
+  },
+  "real/plain_VLA": {
+   "path": "/rlwrld-unified-checkpoints/hojin2/checkpoints/gate_distill_real_droid_pnp_v1/vla_plain_real_25k/checkpoint-25000",
+   "exists": true
+  }
+ },
+ "closed_loop": {
+  "robocasa/gemma4/A'@tau0.5": {
+   "success": 0.667,
+   "steps": 257.8,
+   "episodes": 1200
+  },
+  "robocasa/cosmos3/A'@tau0.5": {
+   "success": 0.659,
+   "steps": 299.1,
+   "episodes": 1200
+  },
+  "robocasa/gemma4/B@tau0.5": {
+   "success": 0.643,
+   "steps": 266.7,
+   "episodes": 1200
+  },
+  "robocasa/cosmos3/B@tau0.5": {
+   "success": 0.638,
+   "steps": 289.1,
+   "episodes": 1200
+  },
+  "robocasa/cosmos3/C_v3lam03@tau0.5": {
+   "success": 0.638,
+   "steps": 288.6,
+   "episodes": 1200
+  },
+  "robocasa/cosmos3/C_v3@tau0.5": {
+   "success": 0.623,
+   "steps": 279.6,
+   "episodes": 1200
+  },
+  "robocasa/frontier9k/A'@tau0.5": {
+   "success": 0.543,
+   "steps": 131.5,
+   "episodes": 46
+  },
+  "robocasa/cosmos9k/A'@tau0.5": {
+   "success": 0.646,
+   "steps": 287.2,
+   "episodes": 1200
+  }
+ },
+ "best_tau": {
+  "주의": "티처x아키텍처마다 다름. evolve로 탐색해야 하는 값",
+  "robocasa/cosmos3/A'": "탐색중 (0.5=0.659/299, 0.42/0.38 대기)",
+  "robocasa/gemma4/A'": "0.5 기준 0.667/258 (미탐색)",
+  "robocasa/cosmos3/C": "0.5 기준 0.638~0.647 (미탐색)"
+ },
+ "gaps": [
+  "학습 필요: robocasa/gemma4/A'",
+  "학습 필요: robocasa/frontier/A'",
+  "real/gemma4 라벨링 미실시",
+  "real/frontier A' 학생 미학습",
+  "real/cosmos3 A' 학생 미학습",
+  "robocasa/frontier C 미학습",
+  "real 도메인 폐루프 평가 수단 없음(오프라인 지표만)"
+ ]
+}

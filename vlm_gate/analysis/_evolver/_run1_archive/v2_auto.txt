@@ -1,0 +1,7 @@
+Answer NO only at the brief fine-manipulation instants of handling an object: (1) closing the gripper on an object to pick it up, especially when reaching into a confined space (sink basin, microwave interior, cabinet, shelf) to grasp it; (2) lowering and releasing the held object at its destination; (3) inserting or aligning a HELD OBJECT into a tight slot or receptacle where millimeters matter. Carrying the object through open space BETWEEN pickup and release is YES.
+Learned exception: when the gripper is holding a handle and pulling a door or drawer OPEN (it swings or slides open as the arm moves), answer NO during the opening pull. Pushing a door or drawer CLOSED is forgiving and stays YES.
+Operating a control without picking anything up — pressing a button (even a small machine button), flipping a switch, turning a knob or dial — is a forgiving tap or turn and stays YES. The one control to treat as genuinely borderline is turning a sink faucet handle on or off: do not force YES there; answer with real uncertainty and let the confidence threshold decide.
+Otherwise answer YES — reaching through open space, carrying a grasped object, retracting, and broad arm sweeps are all fine to compress.
+For genuinely borderline moments, answer with real uncertainty rather than forcing a side; a confidence threshold makes the final call.
+The wrist (eye-in-hand) camera is mounted on the gripper, so objects routinely fill it; that closeness alone is NOT a reason for NO.
+Decide from the scene, not the task name.

@@ -1,0 +1,22 @@
+# Memory index
+
+- [slurm sbatch 정책](slurm-submission-policy.md) — wckey=project-short-name:sub_fast, MODEL_OUTPUT_DIR($USER 포함) 필수, 학습=sjw_alinlab 파티션
+- [학습 제출 절차](training-launch-protocol.md) — srun 스모크로 의도 확인 후에만 본학습 sbatch, 제출 후 헬스체크
+- [모니터링 주기 규칙](monitoring-cadence.md) — 긴 작업은 긴 주기로, standby 표시 최소화, 지시받았다고 실행중 작업 재구성 금지
+- [vlm-gate env separation](vlm-gate-env-separation.md) — private gr00t fork + quant_gate/quant_gate_eval envs isolate ATQ work from shared Isaac-GR00T
+- [cosmos judge model](cosmos-judge-model.md) — Cosmos3-Nano VLM judge via transformers cu124 (not vLLM); cosmos_judge_venv; wiring + why
+- [ops: downloads & bg tasks](ops-download-and-bg-task-lessons.md) — no pipe-masked exit codes, disable hf-xet, verify by artifact, monitor long tasks
+- [libero preemption gate bug](libero-preemption-gate-bug.md) — bg-partition requeue silently emptied LIBERO prediction.txt; fixed w/ durable per-ep sidecar (robocasa was already safe)
+- [terminology: naive guidance](terminology-naive-guidance.md) — say "naive guidance" not "seed" for the self-evolve starting prompt
+- [evolver composite gating](evolver-composite-gating.md) — accept-gate v3: baseline-normalized composite+corridor fixed anti-compression drift (old asymmetric rule was the culprit, not the meta-prompt)
+- [libero install repoint](libero-install-repoint.md) — disk-full wiped neurips_2026_workspace; ~/.libero/config.yaml now points at multigpu_workspace/LIBERO (dead path there = instant silent client crashes)
+- [home migration](home-migration.md) — 홈 이사 /sjw_alinlab2→/sjw_alinlab 진행 중; 전환 절차는 ~/_migration/CUTOVER_CHECKLIST.md (루프 완주 후 델타싱크+전환)
+- [K-ladder saturation](k-ladder-saturation.md) — K2가 폐루프 포화점: clip/dyn 해제로도 이론 단축비 미회복(인과 3층 배제); varK는 성공률 보존용
+- [deliverable format match](deliverable-format-match.md) — 미팅 자료는 사용자 0707 덱 포맷(pptx)으로; 웹페이지는 보조일 뿐; docs/에 저장
+- [scout message discipline](scout-message-discipline.md) — 스카우트 메시지는 verify→triage→park; 지시어에 로드맵 흔들지 말 것
+- [Proactive result briefing](proactive-result-briefing.md) — 결과 나오는 즉시 무요청 브리핑; 잡 제출 시 완료 워처 동반
+- [τ는 셀마다 다른 탐색값](tau-is-per-cell-evolved.md) — 게이트 임계값은 (티처×아키텍처)별 evolve 대상, 홀드아웃 분리 필수
+- [NFS 부하 규율](nfs-load-discipline.md) — 공유 마운트 재귀 find/du/grep -r 금지, 26만 파일 타일 디렉터리는 매니페스트로 접근
+- [체크포인트 보관 정책](checkpoint-storage-archival.md) — unified-checkpoints는 이관 후 90일 삭제; 쓰는 자산은 홈 assets/로
+- [스모크 후 제출 원칙](smoke-before-submit.md) — 학습·eval은 srun 스모크로 산출물 확인 후에만 sbatch, 판정은 잡 상태가 아니라 산출물 개수
+- [로컬 에이전트 전환(tmux)](local-agent-via-tmux.md) — 8/31부터 맥북에서 실행, 서버 영속 tmux 셸 원격조종, 로컬 스모크 금지

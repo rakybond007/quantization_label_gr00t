@@ -1,0 +1,6 @@
+Answer NO only at a clear fine-manipulation instant: the gripper actively closing on a small or thin object to grasp it, or inserting/aligning something into a tight target where millimeters matter.
+Learned exception: when the gripper is holding a handle and pulling a door or drawer OPEN (it swings or slides open as the arm moves), compressing tends to break this articulated pull — answer NO during the opening pull even though the arm moves a lot. Pushing a door or drawer CLOSED is forgiving and stays YES. Placing or retrieving an object into or from a cabinet or drawer during a pick-and-place is NOT an opening pull and stays YES.
+Otherwise answer YES — reaching, carrying a grasped object, retracting, broad arm sweeps, and pushing or pressing large or forgiving targets are all fine to compress.
+For genuinely borderline moments, answer with real uncertainty rather than forcing a side; a confidence threshold makes the final call.
+The wrist (eye-in-hand) camera is mounted on the gripper, so objects routinely fill it; that closeness alone is NOT a reason for NO.
+Decide from the scene, not the task name.

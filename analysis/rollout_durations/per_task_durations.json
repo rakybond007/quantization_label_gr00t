@@ -1,0 +1,490 @@
+{
+  "baseline (16-step main)": {
+    "CloseDoubleDoor": {
+      "n_succ": 42,
+      "mean_frames": 429.42857142857144,
+      "mean_sec": 21.47142857142857
+    },
+    "CloseDrawer": {
+      "n_succ": 42,
+      "mean_frames": 203.5952380952381,
+      "mean_sec": 10.179761904761905
+    },
+    "CloseSingleDoor": {
+      "n_succ": 47,
+      "mean_frames": 259.97872340425533,
+      "mean_sec": 12.998936170212767
+    },
+    "CoffeePressButton": {
+      "n_succ": 31,
+      "mean_frames": 120.90322580645162,
+      "mean_sec": 6.04516129032258
+    },
+    "CoffeeServeMug": {
+      "n_succ": 38,
+      "mean_frames": 304.36842105263156,
+      "mean_sec": 15.218421052631578
+    },
+    "CoffeeSetupMug": {
+      "n_succ": 7,
+      "mean_frames": 263.7142857142857,
+      "mean_sec": 13.185714285714287
+    },
+    "OpenDoubleDoor": {
+      "n_succ": 39,
+      "mean_frames": 736.4615384615385,
+      "mean_sec": 36.823076923076925
+    },
+    "OpenDrawer": {
+      "n_succ": 37,
+      "mean_frames": 226.45945945945945,
+      "mean_sec": 11.322972972972973
+    },
+    "OpenSingleDoor": {
+      "n_succ": 39,
+      "mean_frames": 276.5128205128205,
+      "mean_sec": 13.825641025641024
+    },
+    "PnPCabToCounter": {
+      "n_succ": 7,
+      "mean_frames": 442.0,
+      "mean_sec": 22.1
+    },
+    "PnPCounterToCab": {
+      "n_succ": 25,
+      "mean_frames": 298.76,
+      "mean_sec": 14.937999999999999
+    },
+    "PnPCounterToMicrowave": {
+      "n_succ": 4,
+      "mean_frames": 385.5,
+      "mean_sec": 19.275
+    },
+    "PnPCounterToSink": {
+      "n_succ": 37,
+      "mean_frames": 500.1081081081081,
+      "mean_sec": 25.005405405405405
+    },
+    "PnPCounterToStove": {
+      "n_succ": 19,
+      "mean_frames": 370.2631578947368,
+      "mean_sec": 18.513157894736842
+    },
+    "PnPMicrowaveToCounter": {
+      "n_succ": 12,
+      "mean_frames": 306.4166666666667,
+      "mean_sec": 15.320833333333335
+    },
+    "PnPSinkToCounter": {
+      "n_succ": 35,
+      "mean_frames": 324.4,
+      "mean_sec": 16.22
+    },
+    "PnPStoveToCounter": {
+      "n_succ": 39,
+      "mean_frames": 316.56410256410254,
+      "mean_sec": 15.828205128205127
+    },
+    "TurnOffMicrowave": {
+      "n_succ": 30,
+      "mean_frames": 249.8,
+      "mean_sec": 12.49
+    },
+    "TurnOffSinkFaucet": {
+      "n_succ": 42,
+      "mean_frames": 217.02380952380952,
+      "mean_sec": 10.851190476190476
+    },
+    "TurnOffStove": {
+      "n_succ": 5,
+      "mean_frames": 267.6,
+      "mean_sec": 13.38
+    },
+    "TurnOnMicrowave": {
+      "n_succ": 25,
+      "mean_frames": 248.44,
+      "mean_sec": 12.422
+    },
+    "TurnOnSinkFaucet": {
+      "n_succ": 13,
+      "mean_frames": 248.92307692307693,
+      "mean_sec": 12.446153846153846
+    },
+    "TurnOnStove": {
+      "n_succ": 19,
+      "mean_frames": 330.8421052631579,
+      "mean_sec": 16.542105263157897
+    },
+    "TurnSinkSpout": {
+      "n_succ": 38,
+      "mean_frames": 150.92105263157896,
+      "mean_sec": 7.546052631578948
+    }
+  },
+  "baseline + client merge 16\u21928": {
+    "CloseDoubleDoor": {
+      "n_succ": 39,
+      "mean_frames": 349.84615384615387,
+      "mean_sec": 17.492307692307694
+    },
+    "CloseDrawer": {
+      "n_succ": 50,
+      "mean_frames": 120.9,
+      "mean_sec": 6.045
+    },
+    "CloseSingleDoor": {
+      "n_succ": 46,
+      "mean_frames": 175.04347826086956,
+      "mean_sec": 8.752173913043478
+    },
+    "CoffeePressButton": {
+      "n_succ": 45,
+      "mean_frames": 88.55555555555556,
+      "mean_sec": 4.427777777777778
+    },
+    "CoffeeServeMug": {
+      "n_succ": 39,
+      "mean_frames": 188.33333333333334,
+      "mean_sec": 9.416666666666668
+    },
+    "CoffeeSetupMug": {
+      "n_succ": 12,
+      "mean_frames": 160.5,
+      "mean_sec": 8.025
+    },
+    "OpenDoubleDoor": {
+      "n_succ": 34,
+      "mean_frames": 502.38235294117646,
+      "mean_sec": 25.11911764705882
+    },
+    "OpenDrawer": {
+      "n_succ": 23,
+      "mean_frames": 157.2173913043478,
+      "mean_sec": 7.86086956521739
+    },
+    "OpenSingleDoor": {
+      "n_succ": 35,
+      "mean_frames": 276.62857142857143,
+      "mean_sec": 13.831428571428571
+    },
+    "PnPCabToCounter": {
+      "n_succ": 26,
+      "mean_frames": 240.5,
+      "mean_sec": 12.025
+    },
+    "PnPCounterToCab": {
+      "n_succ": 25,
+      "mean_frames": 203.88,
+      "mean_sec": 10.193999999999999
+    },
+    "PnPCounterToMicrowave": {
+      "n_succ": 11,
+      "mean_frames": 286.6363636363636,
+      "mean_sec": 14.331818181818182
+    },
+    "PnPCounterToSink": {
+      "n_succ": 31,
+      "mean_frames": 299.741935483871,
+      "mean_sec": 14.98709677419355
+    },
+    "PnPCounterToStove": {
+      "n_succ": 26,
+      "mean_frames": 241.69230769230768,
+      "mean_sec": 12.084615384615384
+    },
+    "PnPMicrowaveToCounter": {
+      "n_succ": 7,
+      "mean_frames": 186.14285714285714,
+      "mean_sec": 9.307142857142857
+    },
+    "PnPSinkToCounter": {
+      "n_succ": 19,
+      "mean_frames": 226.0,
+      "mean_sec": 11.3
+    },
+    "PnPStoveToCounter": {
+      "n_succ": 35,
+      "mean_frames": 185.17142857142858,
+      "mean_sec": 9.258571428571429
+    },
+    "TurnOffMicrowave": {
+      "n_succ": 48,
+      "mean_frames": 160.79166666666666,
+      "mean_sec": 8.039583333333333
+    },
+    "TurnOffSinkFaucet": {
+      "n_succ": 38,
+      "mean_frames": 231.92105263157896,
+      "mean_sec": 11.596052631578948
+    },
+    "TurnOffStove": {
+      "n_succ": 11,
+      "mean_frames": 289.09090909090907,
+      "mean_sec": 14.454545454545453
+    },
+    "TurnOnMicrowave": {
+      "n_succ": 28,
+      "mean_frames": 143.78571428571428,
+      "mean_sec": 7.189285714285714
+    },
+    "TurnOnSinkFaucet": {
+      "n_succ": 29,
+      "mean_frames": 174.17241379310346,
+      "mean_sec": 8.708620689655174
+    },
+    "TurnOnStove": {
+      "n_succ": 18,
+      "mean_frames": 235.5,
+      "mean_sec": 11.775
+    },
+    "TurnSinkSpout": {
+      "n_succ": 38,
+      "mean_frames": 101.13157894736842,
+      "mean_sec": 5.056578947368421
+    }
+  },
+  "mh_m8 + ens\u21928": {
+    "CloseDoubleDoor": {
+      "n_succ": 10,
+      "mean_frames": 305.5,
+      "mean_sec": 15.275
+    },
+    "CloseDrawer": {
+      "n_succ": 50,
+      "mean_frames": 129.3,
+      "mean_sec": 6.465000000000001
+    },
+    "CloseSingleDoor": {
+      "n_succ": 49,
+      "mean_frames": 177.9387755102041,
+      "mean_sec": 8.896938775510204
+    },
+    "CoffeePressButton": {
+      "n_succ": 43,
+      "mean_frames": 67.86046511627907,
+      "mean_sec": 3.3930232558139535
+    },
+    "CoffeeServeMug": {
+      "n_succ": 38,
+      "mean_frames": 193.55263157894737,
+      "mean_sec": 9.677631578947368
+    },
+    "CoffeeSetupMug": {
+      "n_succ": 10,
+      "mean_frames": 154.9,
+      "mean_sec": 7.745
+    },
+    "OpenDoubleDoor": {
+      "n_succ": 35,
+      "mean_frames": 454.8285714285714,
+      "mean_sec": 22.74142857142857
+    },
+    "OpenDrawer": {
+      "n_succ": 29,
+      "mean_frames": 136.6551724137931,
+      "mean_sec": 6.832758620689655
+    },
+    "OpenSingleDoor": {
+      "n_succ": 14,
+      "mean_frames": 349.7857142857143,
+      "mean_sec": 17.489285714285714
+    },
+    "PnPCabToCounter": {
+      "n_succ": 9,
+      "mean_frames": 281.8888888888889,
+      "mean_sec": 14.094444444444445
+    },
+    "PnPCounterToCab": {
+      "n_succ": 15,
+      "mean_frames": 184.4,
+      "mean_sec": 9.22
+    },
+    "PnPCounterToMicrowave": {
+      "n_succ": 6,
+      "mean_frames": 271.6666666666667,
+      "mean_sec": 13.583333333333334
+    },
+    "PnPCounterToSink": {
+      "n_succ": 1,
+      "mean_frames": 378.0,
+      "mean_sec": 18.9
+    },
+    "PnPCounterToStove": {
+      "n_succ": 22,
+      "mean_frames": 220.04545454545453,
+      "mean_sec": 11.002272727272727
+    },
+    "PnPMicrowaveToCounter": {
+      "n_succ": 11,
+      "mean_frames": 205.8181818181818,
+      "mean_sec": 10.290909090909091
+    },
+    "PnPSinkToCounter": {
+      "n_succ": 20,
+      "mean_frames": 203.3,
+      "mean_sec": 10.165000000000001
+    },
+    "PnPStoveToCounter": {
+      "n_succ": 8,
+      "mean_frames": 169.0,
+      "mean_sec": 8.45
+    },
+    "TurnOffMicrowave": {
+      "n_succ": 47,
+      "mean_frames": 171.46808510638297,
+      "mean_sec": 8.573404255319149
+    },
+    "TurnOffSinkFaucet": {
+      "n_succ": 37,
+      "mean_frames": 172.56756756756758,
+      "mean_sec": 8.628378378378379
+    },
+    "TurnOffStove": {
+      "n_succ": 3,
+      "mean_frames": 707.0,
+      "mean_sec": 35.35
+    },
+    "TurnOnMicrowave": {
+      "n_succ": 27,
+      "mean_frames": 168.40740740740742,
+      "mean_sec": 8.420370370370371
+    },
+    "TurnOnSinkFaucet": {
+      "n_succ": 35,
+      "mean_frames": 160.05714285714285,
+      "mean_sec": 8.002857142857142
+    },
+    "TurnOnStove": {
+      "n_succ": 14,
+      "mean_frames": 210.78571428571428,
+      "mean_sec": 10.539285714285715
+    },
+    "TurnSinkSpout": {
+      "n_succ": 38,
+      "mean_frames": 92.89473684210526,
+      "mean_sec": 4.644736842105263
+    }
+  },
+  "mh_m8+econsist + ens\u21928": {
+    "CloseDoubleDoor": {
+      "n_succ": 36,
+      "mean_frames": 291.69444444444446,
+      "mean_sec": 14.584722222222222
+    },
+    "CloseDrawer": {
+      "n_succ": 16,
+      "mean_frames": 102.9375,
+      "mean_sec": 5.146875
+    },
+    "CloseSingleDoor": {
+      "n_succ": 47,
+      "mean_frames": 152.72340425531914,
+      "mean_sec": 7.636170212765957
+    },
+    "CoffeePressButton": {
+      "n_succ": 11,
+      "mean_frames": 61.36363636363637,
+      "mean_sec": 3.0681818181818183
+    },
+    "CoffeeServeMug": {
+      "n_succ": 14,
+      "mean_frames": 184.85714285714286,
+      "mean_sec": 9.242857142857144
+    },
+    "CoffeeSetupMug": {
+      "n_succ": 4,
+      "mean_frames": 117.25,
+      "mean_sec": 5.8625
+    },
+    "OpenDoubleDoor": {
+      "n_succ": 12,
+      "mean_frames": 456.0,
+      "mean_sec": 22.8
+    },
+    "OpenDrawer": {
+      "n_succ": 7,
+      "mean_frames": 142.85714285714286,
+      "mean_sec": 7.142857142857143
+    },
+    "OpenSingleDoor": {
+      "n_succ": 37,
+      "mean_frames": 252.35135135135135,
+      "mean_sec": 12.617567567567567
+    },
+    "PnPCabToCounter": {
+      "n_succ": 6,
+      "mean_frames": 225.16666666666666,
+      "mean_sec": 11.258333333333333
+    },
+    "PnPCounterToCab": {
+      "n_succ": 23,
+      "mean_frames": 222.65217391304347,
+      "mean_sec": 11.132608695652173
+    },
+    "PnPCounterToMicrowave": {
+      "n_succ": 3,
+      "mean_frames": 507.3333333333333,
+      "mean_sec": 25.366666666666667
+    },
+    "PnPCounterToSink": {
+      "n_succ": 9,
+      "mean_frames": 284.77777777777777,
+      "mean_sec": 14.238888888888889
+    },
+    "PnPCounterToStove": {
+      "n_succ": 5,
+      "mean_frames": 407.4,
+      "mean_sec": 20.369999999999997
+    },
+    "PnPMicrowaveToCounter": {
+      "n_succ": 4,
+      "mean_frames": 159.25,
+      "mean_sec": 7.9625
+    },
+    "PnPSinkToCounter": {
+      "n_succ": 8,
+      "mean_frames": 236.125,
+      "mean_sec": 11.80625
+    },
+    "PnPStoveToCounter": {
+      "n_succ": 36,
+      "mean_frames": 199.97222222222223,
+      "mean_sec": 9.998611111111112
+    },
+    "TurnOffMicrowave": {
+      "n_succ": 14,
+      "mean_frames": 141.35714285714286,
+      "mean_sec": 7.067857142857143
+    },
+    "TurnOffSinkFaucet": {
+      "n_succ": 43,
+      "mean_frames": 163.41860465116278,
+      "mean_sec": 8.170930232558138
+    },
+    "TurnOffStove": {
+      "n_succ": 4,
+      "mean_frames": 103.75,
+      "mean_sec": 5.1875
+    },
+    "TurnOnMicrowave": {
+      "n_succ": 6,
+      "mean_frames": 95.5,
+      "mean_sec": 4.775
+    },
+    "TurnOnSinkFaucet": {
+      "n_succ": 6,
+      "mean_frames": 152.5,
+      "mean_sec": 7.625
+    },
+    "TurnOnStove": {
+      "n_succ": 9,
+      "mean_frames": 226.44444444444446,
+      "mean_sec": 11.322222222222223
+    },
+    "TurnSinkSpout": {
+      "n_succ": 17,
+      "mean_frames": 94.70588235294117,
+      "mean_sec": 4.735294117647059
+    }
+  }
+}

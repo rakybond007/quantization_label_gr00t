@@ -1,0 +1,7 @@
+{
+  "succ": 0.953,
+  "steps": 136,
+  "quant": 26,
+  "gate_dir": "/sjw_alinlab2/home/hojin2/quantization_agent_workspace/vlm_gate/output/libero/libero_cosmos_ttl_cycle2/gate",
+  "guidance": "Default answer is YES \u2014 compress. Say YES for almost all motion: reaching toward an object before contact, lifting, transporting or carrying a grasped object across open space, hovering, sweeping, and retracting. These are the bulk of every episode and they compress safely. Say NO ONLY at the two delicate contact instants, judged from the wrist (eye-in-hand) close-up: (1) the moment the gripper fingers are straddling and closing on an object to grasp it, and (2) the final slow lowering/alignment when an object is being set down into an exact position or a precise spatial relation with another object. Everything else \u2014 including the travel between those instants \u2014 is YES. When motion looks like open-space transport rather than fine contact, prefer YES. Decide from the camera views, never the task name.\n"
+}

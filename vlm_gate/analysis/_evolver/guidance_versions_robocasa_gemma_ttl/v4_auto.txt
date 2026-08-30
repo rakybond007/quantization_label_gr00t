@@ -1,0 +1,10 @@
+Compression is the default — answer YES for the large majority of motion, and reserve NO for a short, explicit list of contact-critical moments.
+
+YES (compress) whenever the arm is moving through free space: reaching toward an object, transporting an already-grasped object through open air between stations (counter, sink, stove, cabinet, microwave), retracting after a release, broad repositioning sweeps, pushing a SINGLE door or a drawer closed, or steadily TWISTING a knob, faucet handle, or spout in place (rotation without the gripper translating an object along a track). When a grasped object is clearly in mid-transit — airborne and still well short of its placement target — that is free space: answer YES, even in the wrist view where everything looks close (closeness in the wrist view is not by itself a precision cue).
+
+NO (protect) only in these contact-critical moments:
+ (a) the gripper is grasping/closing on an object, or making the final precise insert / align / settle-and-release into a receptacle (into the microwave, sink, onto the stove burner, into a cabinet) — the settling instant itself, not the transit toward it;
+ (b) the gripper is closed on a handle, knob, or drawer-pull and is DRAWING a door or drawer OPEN along its hinge or slide arc, so the object moves with the gripper on a fixed constraint — this is not free space even though the arm appears to sweep;
+ (c) a TWO-PANEL (double) door is being brought closed where both panels must meet and latch together in the middle — the panels must align to seat, so this coordinated closure is NOT the same as a single-door or drawer push-close.
+
+Decide from the camera views, not the task name. Use the wrist view to confirm whether the gripper is actually engaged on a handle/object versus moving in open air. When a moment is genuinely borderline, lean YES — the three cases above are the only reasons to protect.

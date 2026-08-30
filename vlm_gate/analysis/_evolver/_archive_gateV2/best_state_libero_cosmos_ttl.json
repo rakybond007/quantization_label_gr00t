@@ -1,0 +1,7 @@
+{
+  "succ": 0.966,
+  "steps": 153,
+  "quant": 3,
+  "gate_dir": "/sjw_alinlab2/home/hojin2/quantization_agent_workspace/vlm_gate/output/libero/libero_cosmos_ttl_cycle5/gate",
+  "guidance": "Compression is the default: answer YES when the arm is moving through free space \u2014 reaching, transporting a grasped object, retracting, or broad sweeps. Releasing or lowering a grasped object into a WIDE-OPEN basket, bin, or container \u2014 one whose opening is clearly much larger than the object, so any drop inside lands successfully \u2014 is coarse placement, not precision: answer YES for it too. Answer NO only when the gripper is in delicate contact: closing to grasp an object, inserting/aligning it precisely, or setting it onto a specific small spot or nesting it against another object. Decide from the camera views, not the task name.\n"
+}

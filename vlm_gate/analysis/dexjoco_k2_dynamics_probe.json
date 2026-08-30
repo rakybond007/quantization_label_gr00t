@@ -1,0 +1,187 @@
+{
+  "probe": "dexjoco K2 temporal quantization dynamics",
+  "env": "PandaHammerNailGymEnv (control_dt=0.02, physics_dt=0.002, 10 substeps/tick)",
+  "protocol": {
+    "N_k2_commands": 25,
+    "ticks_total": 50,
+    "settle_ticks": 25,
+    "fine": "2N absolute targets, 1/tick",
+    "k2": "N targets (every other), each held 2 ticks; identical final target"
+  },
+  "arm_abs_ee_pose": [
+    {
+      "axis": "x",
+      "amplitude_m": 0.02,
+      "achieved_fine_m": 0.01277571760838786,
+      "achieved_k2_m": 0.012957766927588599,
+      "ratio_k2_over_fine_at_end": 1.0142496355023702,
+      "settled_fine_m": 0.017952574519851827,
+      "settled_k2_m": 0.01800422511276456,
+      "ratio_settled": 1.0028770577086656,
+      "traj_rms_dev_m": 0.0001384298353257459,
+      "traj_max_dev_m": 0.00018530285077622327,
+      "tracking_lag_fine_m": 0.0072242823916121406,
+      "tracking_lag_k2_m": 0.007042233072411402
+    },
+    {
+      "axis": "x",
+      "amplitude_m": 0.05,
+      "achieved_fine_m": 0.03193899737836381,
+      "achieved_k2_m": 0.03239423026193766,
+      "ratio_k2_over_fine_at_end": 1.0142531989398715,
+      "settled_fine_m": 0.04488360599356023,
+      "settled_k2_m": 0.0450126740191818,
+      "ratio_settled": 1.0028756162247767,
+      "traj_rms_dev_m": 0.00034614605028327475,
+      "traj_max_dev_m": 0.00046336739619892914,
+      "tracking_lag_fine_m": 0.018061002621636194,
+      "tracking_lag_k2_m": 0.01760576973806234
+    },
+    {
+      "axis": "x",
+      "amplitude_m": 0.1,
+      "achieved_fine_m": 0.06389170491692753,
+      "achieved_k2_m": 0.06480245568032683,
+      "ratio_k2_over_fine_at_end": 1.0142546010406746,
+      "settled_fine_m": 0.08978078702097642,
+      "settled_k2_m": 0.0900387510386988,
+      "ratio_settled": 1.0028732652751429,
+      "traj_rms_dev_m": 0.0006925028852261364,
+      "traj_max_dev_m": 0.0009270262366471712,
+      "tracking_lag_fine_m": 0.03610829508307248,
+      "tracking_lag_k2_m": 0.035197544319673174
+    },
+    {
+      "axis": "y",
+      "amplitude_m": 0.02,
+      "achieved_fine_m": 0.012778231484898133,
+      "achieved_k2_m": 0.012960302828046373,
+      "ratio_k2_over_fine_at_end": 1.0142485557069003,
+      "settled_fine_m": 0.017954619113788418,
+      "settled_k2_m": 0.01800620375062569,
+      "ratio_settled": 1.00287305659398,
+      "traj_rms_dev_m": 0.00013849080639835324,
+      "traj_max_dev_m": 0.00018533241723298595,
+      "tracking_lag_fine_m": 0.007221768515101867,
+      "tracking_lag_k2_m": 0.007039697171953628
+    },
+    {
+      "axis": "y",
+      "amplitude_m": 0.05,
+      "achieved_fine_m": 0.03194599125157694,
+      "achieved_k2_m": 0.03240118253180875,
+      "ratio_k2_over_fine_at_end": 1.0142487762125503,
+      "settled_fine_m": 0.04488694299830119,
+      "settled_k2_m": 0.045015899672262265,
+      "ratio_settled": 1.0028729217306234,
+      "traj_rms_dev_m": 0.0003462321949734734,
+      "traj_max_dev_m": 0.0004633434916074024,
+      "tracking_lag_fine_m": 0.018054008748423063,
+      "tracking_lag_k2_m": 0.017598817468191252
+    },
+    {
+      "axis": "y",
+      "amplitude_m": 0.1,
+      "achieved_fine_m": 0.0638951419155183,
+      "achieved_k2_m": 0.0648056200209509,
+      "ratio_k2_over_fine_at_end": 1.0142495669958198,
+      "settled_fine_m": 0.08977703995653438,
+      "settled_k2_m": 0.09003491576574951,
+      "ratio_settled": 1.0028724026693236,
+      "traj_rms_dev_m": 0.0006925051440967321,
+      "traj_max_dev_m": 0.0009267792433804597,
+      "tracking_lag_fine_m": 0.0361048580844817,
+      "tracking_lag_k2_m": 0.035194379979049104
+    },
+    {
+      "axis": "z",
+      "amplitude_m": 0.02,
+      "achieved_fine_m": 0.01279723730629212,
+      "achieved_k2_m": 0.012979405431334134,
+      "ratio_k2_over_fine_at_end": 1.0142349571772376,
+      "settled_fine_m": 0.01796921508163707,
+      "settled_k2_m": 0.018020625980919247,
+      "ratio_settled": 1.0028610542557708,
+      "traj_rms_dev_m": 0.00013867731271054176,
+      "traj_max_dev_m": 0.00018549694871613416,
+      "tracking_lag_fine_m": 0.007202762693707881,
+      "tracking_lag_k2_m": 0.007020594568665866
+    },
+    {
+      "axis": "z",
+      "amplitude_m": 0.05,
+      "achieved_fine_m": 0.031988196833952154,
+      "achieved_k2_m": 0.032443506467908945,
+      "ratio_k2_over_fine_at_end": 1.014233676137491,
+      "settled_fine_m": 0.04491807769193512,
+      "settled_k2_m": 0.04504665815754838,
+      "ratio_settled": 1.0028625549493706,
+      "traj_rms_dev_m": 0.00034663111076713545,
+      "traj_max_dev_m": 0.00046363270840800544,
+      "tracking_lag_fine_m": 0.01801180316604785,
+      "tracking_lag_k2_m": 0.017556493532091058
+    },
+    {
+      "axis": "z",
+      "amplitude_m": 0.1,
+      "achieved_fine_m": 0.06395631805803381,
+      "achieved_k2_m": 0.06486645987352202,
+      "ratio_k2_over_fine_at_end": 1.0142306787370459,
+      "settled_fine_m": 0.08981576763758925,
+      "settled_k2_m": 0.09007314315867299,
+      "ratio_settled": 1.0028655939580928,
+      "traj_rms_dev_m": 0.0006930140172115796,
+      "traj_max_dev_m": 0.0009267965950316687,
+      "tracking_lag_fine_m": 0.036043681941966194,
+      "tracking_lag_k2_m": 0.035133540126477986
+    }
+  ],
+  "hand_abs_joint": [
+    {
+      "amplitude_rad": 0.1,
+      "n_joints_moving": 16,
+      "mean_span_rad": 0.1,
+      "ratio_k2_over_fine_at_end": 1.0081116411822575,
+      "ratio_settled": 1.000000196526876,
+      "mean_abs_final_gap_fine_rad": 0.0062016456769629705,
+      "mean_abs_final_gap_k2_rad": 0.00612063409872323,
+      "traj_rms_dev_rad": 0.0009867942354699277,
+      "traj_max_dev_rad": 0.001210828044311961
+    },
+    {
+      "amplitude_rad": 0.3,
+      "n_joints_moving": 16,
+      "mean_span_rad": 0.30000000000000004,
+      "ratio_k2_over_fine_at_end": 1.0084249052062755,
+      "ratio_settled": 1.0000001819947943,
+      "mean_abs_final_gap_fine_rad": 0.009407816343999766,
+      "mean_abs_final_gap_k2_rad": 0.008233297930213459,
+      "traj_rms_dev_rad": 0.002951064783228653,
+      "traj_max_dev_rad": 0.0036195178938494416
+    },
+    {
+      "amplitude_rad": 0.6,
+      "n_joints_moving": 16,
+      "mean_span_rad": 0.5756249999999999,
+      "ratio_k2_over_fine_at_end": 1.0085224865109688,
+      "ratio_settled": 1.0000001707833586,
+      "mean_abs_final_gap_fine_rad": 0.020296655027194837,
+      "mean_abs_final_gap_k2_rad": 0.015562130393120256,
+      "traj_rms_dev_rad": 0.005664761207130478,
+      "traj_max_dev_rad": 0.007203259833675341
+    }
+  ],
+  "summary": {
+    "arm_ratio_end_mean": 1.0142448496055512,
+    "arm_ratio_end_range": [
+      1.0142306787370459,
+      1.0142546010406746
+    ],
+    "hand_ratio_end_mean": 1.0083530109665004,
+    "hand_ratio_end_range": [
+      1.0081116411822575,
+      1.0085224865109688
+    ],
+    "robocasa_reference_ratio": "0.89-0.90 (delta EE + achieved-mode re-anchoring)"
+  }
+}

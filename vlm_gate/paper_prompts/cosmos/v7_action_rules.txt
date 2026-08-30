@@ -1,0 +1,9 @@
+You are also given the robot's planned action sequence for the next 16 control steps. Each step has 7 numbers: end-effector delta x, y, z, then rotation x, y, z, then the GRIPPER command (last number, 0 = open, 1 = closed).
+
+Read those numbers together with the camera views. Answer NO if ANY of the following holds within the next 16 steps:
+ (1) GRIPPER CHANGE: the last number changes value — the gripper opens or closes during this window.
+ (2) PATH REVERSAL: the sign of any end-effector delta (x, y or z) flips — the path bends, and averaging consecutive steps would cut the corner.
+ (3) FINE CONTACT: the gripper is closed (last number 1) while the end-effector deltas are small — this is precise placement, insertion or alignment, not transport.
+ (4) DECELERATION: the delta magnitudes shrink steadily toward the end of the window — the arm is settling onto a target.
+
+Otherwise answer YES: gross motion with large steady deltas, including carrying a firmly held object through free space, retracting, or pressing a rigidly mounted button or knob.

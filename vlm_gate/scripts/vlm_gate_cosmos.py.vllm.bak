@@ -1,0 +1,337 @@
+"""Zero-shot VLM action-quantization gate — Cosmos3-Nano backend.
+
+A SECOND, fully-separate judge pipeline (alternative to the Gemma judge in
+`vlm_gate.py`).  It exposes the EXACT SAME HTTP contract as `vlm_gate.py` so the
+eval clients (`robocasa_service_compress.py`, `robocasa_service_moe.py`) and the
+self-evolving loop can talk to it unchanged via `--judge-url`:
+
+  POST /judge  (JSON in)
+    {"images_b64": [<png b64>, ...] | "image_b64": <png b64>,
+     "instruction": <str>, "guidance": <str>}
+  -> (JSON out)
+    {"confidence": <float P(YES) in [0,1]>,   # CALIBRATED CONTINUOUS, tau'd by caller
+     "quantize": <bool>,
+     "answer": "YES"|"NO",
+     "p_yes_marginal": <float>}
+
+Backend
+-------
+The model is FIXED: `nvidia/Cosmos3-Nano` (16B omnimodal Reasoner: image+text->text).
+Official reasoning inference path is **vLLM** with an OpenAI-compatible server:
+
+    vllm serve nvidia/Cosmos3-Nano \
+      --hf-overrides '{"architectures": ["Cosmos3ReasonerForConditionalGeneration"]}' \
+      --tensor-parallel-size 1 --mm-encoder-tp-mode data --async-scheduling \
+      --allowed-local-media-path / --media-io-kwargs '{"video": {"num_frames": -1}}' \
+      --port 8000
+
+This file does NOT load the model itself.  Instead, `--serve` stands up a thin
+HTTP shim on the gate's port that, per /judge request, calls a *local vLLM
+OpenAI server* (`--vllm-url`) with a chat-completions request that:
+  * sends the camera views as image_url data-URLs + the gate prompt,
+  * constrains the answer to {YES, NO} via vLLM guided decoding
+    (`extra_body={"guided_choice": ["YES", "NO"]}`),
+  * requests `logprobs=True, top_logprobs=20` and `seed` for reproducibility,
+  * reads the YES vs NO token logprobs -> softmax -> CONTINUOUS P(YES).
+
+The same SYSTEM/guidance prompt as `vlm_gate.py` is reused verbatim so the two
+judges are directly comparable.  Keeping the model in vLLM (rather than
+transformers) matches the official "Reasoner" inference surface and gives us
+first-class logprobs + guided_choice for a calibrated confidence.
+
+Surfaces:
+  * `python vlm_gate_cosmos.py --serve --vllm-url http://127.0.0.1:8000 \
+        --model nvidia/Cosmos3-Nano --port 8120`
+        -> serves POST /judge (the gate the eval clients hit).
+  * `python vlm_gate_cosmos.py --ping <image> --url http://127.0.0.1:8120`
+        -> quick self-test against a running gate.
+  * `from vlm_gate_cosmos import VLMGate` -> identical client to vlm_gate.py.
+"""
+import argparse
+import base64
+import io
+import json
+import math
+import re
+import urllib.request
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+import numpy as np
+from PIL import Image
+
+# Reuse the IMAGE NORMALIZATION + PROMPT verbatim from the Gemma judge so both
+# pipelines are directly comparable (same SYSTEM, same guidance handling, same
+# 3-view note).  We only swap the backend.
+from vlm_gate import to_pil, SYSTEM, parse_decision  # noqa: F401
+
+
+# -----------------------------------------------------------------------------
+# Prompt builder — OpenAI/vLLM chat format (image_url data-URLs + text).
+# Mirrors vlm_gate.build_messages but emits the wire format vLLM expects.
+# -----------------------------------------------------------------------------
+
+def _data_url(pil: Image.Image) -> str:
+    buf = io.BytesIO()
+    pil.convert("RGB").save(buf, format="PNG")
+    b64 = base64.b64encode(buf.getvalue()).decode()
+    return f"data:image/png;base64,{b64}"
+
+
+def build_messages(pil_imgs, instruction, guidance=""):
+    """OpenAI chat-completions messages for the Cosmos reasoner."""
+    if not isinstance(pil_imgs, (list, tuple)):
+        pil_imgs = [pil_imgs]
+    sys_text = SYSTEM
+    if guidance:
+        sys_text = SYSTEM + "\n\nAdditional learned guidance (from prior evaluations):\n" + guidance.strip()
+    if len(pil_imgs) >= 3:
+        view_note = ("You are shown 3 camera views: agentview-left, agentview-right, "
+                     "and a wrist (eye-in-hand) close-up. The wrist camera is mounted on "
+                     "the gripper, so objects normally look close in it — general "
+                     "closeness is normal. Use the wrist view only to spot the actual "
+                     "grasp-closure or fine-insertion instant.")
+    else:
+        view_note = "You are shown the current camera view(s)."
+    user_content = [{"type": "image_url", "image_url": {"url": _data_url(im)}} for im in pil_imgs]
+    user_content.append({"type": "text", "text": (
+        f"Task: {instruction}\n{view_note}\n"
+        "Can the next ~1 second of motion be compressed (run at half rate)? "
+        "Answer YES (compress) or NO (needs precise full-rate control).")})
+    return [
+        {"role": "system", "content": sys_text},
+        {"role": "user", "content": user_content},
+    ]
+
+
+# -----------------------------------------------------------------------------
+# Continuous P(YES) extraction from a vLLM chat-completions response.
+# -----------------------------------------------------------------------------
+
+def _norm(tok: str) -> str:
+    return (tok or "").strip().upper()
+
+
+def p_yes_from_logprobs(choice) -> tuple:
+    """Read the {YES,NO} logprobs from the FIRST generated token and softmax them.
+
+    `choice` is one element of resp["choices"].  With guided_choice=["YES","NO"]
+    the model is forced to emit one of the two words, so the first content token's
+    top_logprobs carry the calibrated mass for YES vs NO.
+
+    Returns (p_yes in [0,1], ly_logprob, ln_logprob, raw_answer_str).
+    Falls back to the decoded text (hard 0/1) only if logprobs are unavailable.
+    """
+    content = choice.get("message", {}).get("content", "") or ""
+    answer = "YES" if re.search(r"\bYES\b", content.upper()) else (
+        "NO" if re.search(r"\bNO\b", content.upper()) else "")
+
+    lp = choice.get("logprobs") or {}
+    # OpenAI chat logprobs schema: {"content": [ {token, logprob, top_logprobs:[{token,logprob}...]}, ... ]}
+    toks = lp.get("content") or []
+    ly = ln = None
+    for step in toks:
+        cands = list(step.get("top_logprobs") or [])
+        # include the chosen token itself (not always echoed in top_logprobs)
+        cands = cands + [{"token": step.get("token"), "logprob": step.get("logprob")}]
+        step_ly = step_ln = None
+        for c in cands:
+            t = _norm(c.get("token"))
+            v = c.get("logprob")
+            if v is None:
+                continue
+            if t == "YES" or t.startswith("YES"):
+                step_ly = v if step_ly is None else max(step_ly, v)
+            elif t == "NO" or t.startswith("NO"):
+                step_ln = v if step_ln is None else max(step_ln, v)
+        # first step that actually distinguishes YES/NO wins
+        if step_ly is not None or step_ln is not None:
+            ly, ln = step_ly, step_ln
+            break
+
+    if ly is None and ln is None:
+        # No usable logprobs -> degrade to hard decode (1.0 / 0.0 / 0.5 unknown).
+        conf = 1.0 if answer == "YES" else (0.0 if answer == "NO" else 0.5)
+        return conf, (0.0 if answer == "YES" else -1e9), (0.0 if answer == "NO" else -1e9), answer
+    # Missing side -> very low logprob so softmax pins to the present side.
+    if ly is None:
+        ly = -1e9
+    if ln is None:
+        ln = -1e9
+    m = max(ly, ln)
+    ey, en = math.exp(ly - m), math.exp(ln - m)
+    p_yes = ey / (ey + en)
+    if not answer:
+        answer = "YES" if p_yes >= 0.5 else "NO"
+    return float(p_yes), float(ly), float(ln), answer
+
+
+# -----------------------------------------------------------------------------
+# vLLM OpenAI client (stdlib only; no openai package dependency required).
+# -----------------------------------------------------------------------------
+
+def call_vllm(vllm_url, model, messages, seed, max_tokens, timeout,
+              top_logprobs=20, use_guided=True):
+    body = {
+        "model": model,
+        "messages": messages,
+        "max_tokens": max_tokens,
+        "temperature": 0.0,
+        "seed": seed,
+        "logprobs": True,
+        "top_logprobs": top_logprobs,
+    }
+    if use_guided:
+        # vLLM-specific guided decoding: force the answer into {YES, NO}.
+        body["extra_body"] = {"guided_choice": ["YES", "NO"]}
+        # Some vLLM versions accept guided_choice as a top-level field too:
+        body["guided_choice"] = ["YES", "NO"]
+    data = json.dumps(body).encode()
+    req = urllib.request.Request(
+        vllm_url.rstrip("/") + "/v1/chat/completions",
+        data=data, headers={"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return json.loads(r.read())
+
+
+# -----------------------------------------------------------------------------
+# Gate server (the POST /judge surface the eval clients hit).
+# -----------------------------------------------------------------------------
+
+def run_server(model, port, host, vllm_url, seed, max_tokens, timeout, use_guided):
+    print(f"[judge] Cosmos gate -> vLLM at {vllm_url} model={model}", flush=True)
+
+    # Probe the vLLM server is up (best-effort; do not hard-fail at startup so the
+    # gate can be launched in parallel with the vLLM serve and recover once ready).
+    try:
+        with urllib.request.urlopen(vllm_url.rstrip("/") + "/v1/models", timeout=10) as r:
+            _ = r.read()
+        print("[judge] vLLM /v1/models reachable", flush=True)
+    except Exception as e:  # noqa
+        print(f"[judge] WARN vLLM not reachable yet ({e}); will retry per request", flush=True)
+
+    def judge(pil_imgs, instruction, guidance=""):
+        messages = build_messages(pil_imgs, instruction, guidance)
+        resp = call_vllm(vllm_url, model, messages, seed, max_tokens, timeout,
+                         use_guided=use_guided)
+        choice = resp["choices"][0]
+        p_yes, ly, ln, answer = p_yes_from_logprobs(choice)
+        return {
+            "confidence": float(p_yes),                 # client thresholds this (tau)
+            "quantize": bool(p_yes >= 0.5),             # default 0.5 (client may override)
+            "answer": answer or ("YES" if p_yes >= 0.5 else "NO"),
+            "p_yes_marginal": float(math.exp(ly)) if ly > -1e8 else 0.0,  # diagnostic
+        }
+
+    class Handler(BaseHTTPRequestHandler):
+        def log_message(self, *a):
+            pass
+
+        def _send(self, code, obj):
+            payload = json.dumps(obj).encode()
+            self.send_response(code)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(payload)))
+            self.end_headers()
+            self.wfile.write(payload)
+
+        def do_GET(self):
+            if self.path == "/health":
+                self._send(200, {"status": "ok", "model": model, "backend": "cosmos-vllm",
+                                 "vllm_url": vllm_url})
+            else:
+                self._send(404, {"error": "not found"})
+
+        def do_POST(self):
+            if self.path != "/judge":
+                self._send(404, {"error": "not found"})
+                return
+            n = int(self.headers.get("Content-Length", 0))
+            try:
+                req = json.loads(self.rfile.read(n))
+                if "images_b64" in req:
+                    imgs = [Image.open(io.BytesIO(base64.b64decode(b))).convert("RGB")
+                            for b in req["images_b64"]]
+                else:
+                    imgs = [Image.open(io.BytesIO(base64.b64decode(req["image_b64"]))).convert("RGB")]
+                res = judge(imgs, req.get("instruction", ""), req.get("guidance", ""))
+                self._send(200, res)
+            except Exception as e:  # noqa
+                self._send(500, {"error": f"{type(e).__name__}: {e}"})
+
+    srv = HTTPServer((host, port), Handler)
+    print(f"[judge] JUDGE READY listening on {host}:{port}", flush=True)
+    srv.serve_forever()
+
+
+# -----------------------------------------------------------------------------
+# Client — IDENTICAL contract to vlm_gate.VLMGate (so eval clients are unchanged).
+# -----------------------------------------------------------------------------
+
+class VLMGate:
+    """Client for the Cosmos judge service. .judge(imgs, instruction) -> dict.
+
+    Fail-safe: on any transport/parse error returns quantize=False (execute raw)
+    so a flaky judge never silently corrupts the rollout. Matches vlm_gate.VLMGate.
+    """
+
+    def __init__(self, url, timeout=60.0):
+        self.url = url.rstrip("/")
+        self.timeout = timeout
+
+    def judge(self, imgs, instruction, guidance=""):
+        try:
+            if not isinstance(imgs, (list, tuple)):
+                imgs = [imgs]
+            b64s = []
+            for im in imgs:
+                buf = io.BytesIO()
+                to_pil(im).save(buf, format="PNG")
+                b64s.append(base64.b64encode(buf.getvalue()).decode())
+            payload = json.dumps({
+                "images_b64": b64s,
+                "instruction": instruction,
+                "guidance": guidance,
+            }).encode()
+            req = urllib.request.Request(
+                self.url + "/judge", data=payload,
+                headers={"Content-Type": "application/json"},
+            )
+            with urllib.request.urlopen(req, timeout=self.timeout) as r:
+                return json.loads(r.read())
+        except Exception as e:  # noqa
+            return {"quantize": False, "answer": "", "raw": "", "error": str(e)}
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument("--serve", action="store_true")
+    p.add_argument("--model", type=str, default="nvidia/Cosmos3-Nano")
+    p.add_argument("--port", type=int, default=8120, help="gate (POST /judge) port")
+    p.add_argument("--host", type=str, default="0.0.0.0")
+    # Backend: local vLLM OpenAI-compatible server for nvidia/Cosmos3-Nano.
+    p.add_argument("--vllm-url", type=str, default="http://127.0.0.1:8000",
+                   help="Base URL of the running `vllm serve nvidia/Cosmos3-Nano` server.")
+    p.add_argument("--seed", type=int, default=42, help="reproducibility seed sent to vLLM")
+    p.add_argument("--max-tokens", type=int, default=2)
+    p.add_argument("--timeout", type=float, default=60.0)
+    p.add_argument("--no-guided", action="store_true",
+                   help="Disable guided_choice (fall back to free decode + logprobs).")
+    # quick CLI self-test against a running gate.
+    p.add_argument("--ping", type=str, default=None)
+    p.add_argument("--url", type=str, default="http://127.0.0.1:8120")
+    p.add_argument("--instruction", type=str, default="pick up the object")
+    args = p.parse_args()
+
+    if args.serve:
+        run_server(args.model, args.port, args.host, args.vllm_url, args.seed,
+                   args.max_tokens, args.timeout, use_guided=not args.no_guided)
+    elif args.ping:
+        g = VLMGate(args.url)
+        print(g.judge(Image.open(args.ping), args.instruction))
+    else:
+        p.error("use --serve or --ping <image>")
+
+
+if __name__ == "__main__":
+    main()

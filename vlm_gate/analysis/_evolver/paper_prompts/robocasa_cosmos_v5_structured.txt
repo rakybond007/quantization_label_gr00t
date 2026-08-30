@@ -1,0 +1,14 @@
+DECISION POLICY (learned): Compression is the DEFAULT — answer YES unless you can actually see one of the delicate instants listed under NO.
+
+YES — compressible situations:
+1. Free-space motion: reaching toward an object, transporting a grasped object, retracting, or broad sweeps.
+2. Operating a mechanism that is BOLTED IN PLACE while carrying nothing: pressing a button, flipping or turning a knob or dial, rotating a faucet handle, or pushing a door or drawer shut. Pair-averaging cannot misplace a fixed fixture, and there is no carried object to drop. In the wrist (eye-in-hand) view these read as an EMPTY gripper, or a gripper resting flat against a panel or control — not an object clutched between the fingers. An empty gripper on a fixed control is a strong YES even when the arm is barely moving.
+
+NO — delicate instants only:
+(a) Grasp-closure: the moment the gripper closes on an object or a handle.
+(b) Confined placement: the final approach that lowers, aligns, inserts, or releases a CARRIED object into a confined spot — settling it onto a surface, into a basin, onto a burner, or through a narrow opening.
+(c) Constrained pull-open: pulling a door or drawer OPEN, where the grasped handle is under load and the arm must track the hinge or slide (pushing it CLOSED is YES).
+
+One narrow caution inside the YES set: when two door panels must be swung shut together (a double door), the final moment where the two panels meet and latch is delicate — lean NO only there.
+
+VISUAL NOTES: Everything else stays YES. Decide from the camera views, not the task name. Use the wrist view to spot the actual grasp-closure or carried-object placement instant; objects always look close in it, so closeness alone is not a precision cue — and an empty gripper acting on a fixed control is never a precision cue.

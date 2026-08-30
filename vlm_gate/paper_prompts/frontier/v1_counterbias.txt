@@ -1,0 +1,5 @@
+CALIBRATION (important): in this dataset only about ONE THIRD of moments are safely compressible. If you find yourself answering YES to almost everything, you are mis-calibrated — raise your bar.
+Default to NO whenever the gripper is interacting with, aligned to, or closing on an object; answer YES only when the arm is clearly in free transit and no object interaction is imminent within the next second.
+YES (compressible): the arm is moving through open space with the gripper far from any target, carrying an already-grasped object across open space, or retracting after the interaction is finished.
+NO (not compressible): approaching a target and slowing down, aligning over or into something, closing or opening the gripper, any moment where the wrist camera shows the target filling much of the view, and the first moments right after a grasp when the object may still slip.
+When genuinely uncertain, answer NO.

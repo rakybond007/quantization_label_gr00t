@@ -1,0 +1,909 @@
+Denoising Tells When to Replan: Denoising-Variance Adaptive Chunking for Flow-Based Robot Policies
+Report GitHub Issue
+×
+Title:
+Content selection saved. Describe the issue below:
+Description:
+Submit without GitHub
+Submit in GitHub
+arXiv is now an independent nonprofit!
+Learn more
+×
+Back to arXiv
+Why HTML?
+Report Issue
+Back to Abstract
+Download PDF
+Abstract
+1 Introduction
+2 Related Work
+Flow-Based Robot Policies.
+Action Chunking.
+3 Method
+3.1 Preliminaries: Flow-Based Action Chunking
+3.2 Denoising-Variance Adaptive Chunking
+Denoising Variance for Adaptive Execution.
+Scale-Adaptive Thresholding.
+4 Experiments
+4.1 Simulation Experiments
+Main results.
+Backbone transferability.
+Replanning efficiency.
+4.2 Real-World Experiments
+4.3 Ablations
+Threshold sensitivity.
+Adaptive scaling.
+Correlation with manipulation phases.
+5 Conclusion
+6 Limitations
+References
+7 Appendix
+7.1 Proof of the Tail-Variance Error Bound
+Lemma 1: vector-field total variation is controlled by clean-action variance.
+Global Euler error bound.
+7.2 Additional Experimental Details
+Simulation setup.
+Real-world setup.
+Phase-correlation analysis.
+7.3 Phase-Correlation Analysis
+7.4 Failure Case Analysis
+Episode-level outcome breakdown.
+Representative failure case.
+Failure modes.
+7.5 Complete Evaluation Results
+License: CC BY 4.0
+arXiv:2606.03847v1 [cs.RO] 02 Jun 2026
+Denoising Tells When to Replan: Denoising-Variance
+Adaptive Chunking for Flow-Based Robot Policies
+Xiangdong Feng∗, 1,3,
+Yuxuan Cheng∗, 2,3,
+Chen Shi2,
+Boyao Han4,2,
+Yuxuan Yan5,3,
+Yitong Hong6,3,
+Zhuotao Tian7,3,
+Li Jiang†, 2,3
+1 Beijing Institute of Technology, 2 The Chinese University of Hong Kong, Shenzhen,
+3 Shenzhen Loop Area Institute, 4 Hunan University, 5 Xi’an Jiaotong University,
+6 Renmin University of China, 7 Harbin Institute of Technology, Shenzhen
+Abstract
+Action chunking has become a common inference strategy for flow-based robot policies, improving action coherence by modeling multi-step temporal dependencies in demonstrations.
+However, the execution horizon is still typically set as an empirical fixed value,
+overlooking that predictable free-space motions and precision-critical interaction phases often require different replanning frequencies.
+In this work, we first show that the denoising process of flow-based policies contains an intrinsic signal of task phases:
+clean-action estimates remain stable during predictable motion phases, but fluctuate more strongly around contact-rich or precision-sensitive operations.
+Motivated by this observation, we propose DVAC (Denoising-Variance Adaptive Chunking), a test-time method that adaptively determines how many actions to execute from each predicted chunk.
+DVAC measures the variance of clean-action estimates over the final denoising steps, executes the stable low-variance prefix, and replans before high-variance future actions are committed.
+To transfer across tasks and rollouts, DVAC further calibrates the threshold with a rolling estimate of the local variance scale.
+Experiments on LIBERO, RoboTwin, CALVIN, and real-world manipulation show that DVAC improves task success while reducing replanning frequency.
+With a \pi_{0.5}-based policy, DVAC improves LIBERO success from 94.75% to 98.00% and reduces replanning by 43.0%, while also yielding aggregate gains on RoboTwin and CALVIN and improving real-world execution efficiency.
+††footnotemark: ††footnotetext:
+∗These authors contributed equally. †Correspondence to: jiangli@cuhk.edu.cn.
+Keywords: Flow-based robot policy, Action chunking, Denoising variance, Robot manipulation
+1 Introduction
+Modern robot policies are increasingly built as large-scale visuomotor or vision-language-action models trained on diverse robotic data [4, 41, 9, 28, 27, 16, 2, 15].
+In these systems, chunked policy has become a common interface, which predicts a short sequence of future actions and executes all or part of the sequence before replanning [40, 8, 27, 2, 15].
+This design improves temporal coherence across consecutive actions, and amortizes expensive policy inference over multiple control steps.
+Yet action chunking introduces a central deployment question:
+how long should a predicted future be trusted before replanning?
+Most existing chunked policies instead execute a fixed number of actions from each predicted chunk [40, 8, 2, 15],
+which implicitly assumes that the trustworthy horizon is constant across tasks, states, and task phases.
+This creates an inherent trade-off between dynamic responsiveness and inference efficiency during deployment.
+Recent studies further show that the choice of action-chunk execution length can substantially affect task success [23, 14, 18].
+A natural solution is adaptive execution, where the policy replans when the remaining predicted future becomes unreliable. This consistency–reactivity trade-off has been studied through guided decoding [24], similarity-based updates [31], learned chunk selectors [12], or entropy-based selection [19].
+While improving execution adaptivity, they often require extra candidate chunks, additional selection heuristics, or task-specific training, which motivates a simpler question:
+can the policy’s own inference process tell us when to stop executing a predicted chunk and replan?
+Figure 1:
+Denoising variance varies across manipulation phases.
+(a) Representative LIBERO rollout: denoising variance remains low during moving phases and rises around contact-rich operation phases.
+(b) Phase statistics across LIBERO tasks: operation phases exhibit higher mean denoising variance than moving phases.
+Detailed experimental settings are provided in Appendix 7.3.
+Our key insight is that, for flow-based robot policies, the denoising process already contains such a signal.
+During flow matching inference, the full future action chunk is progressively refined through an iterative denoising process, and each step produces an intermediate clean-action estimate \hat{x}_{0}.
+The fluctuation of these estimates across denoising steps reveals how stable each individual future action prediction is. To verify this idea, we analyze denoising variance on LIBERO rollouts [21].
+Figure 1 shows that denoising variance is highly non-uniform within an episode and closely aligns with different task phases, which remain low during relatively simple arm-moving intervals but increase sharply around operation phases.
+Across all four LIBERO suites, operating phases consistently exhibit higher average denoising variance than moving phases (Figure 1).
+These observations suggest that denoising dynamics can provide a useful cue for selecting a execution length before replanning.
+Motivated by this idea, we propose Denoising-Variance Adaptive Chunking (DVAC), a training-free inference-time framework for adaptive action execution in flow-based robot policies. Concretely, DVAC uses the variance of final denoising estimates to identify the stable prefix of each predicted action chunk. Moreover, since the absolute variance scale varies across tasks and rollouts, DVAC sets the threshold relative to a rolling estimate of the local variance distribution, enabling adaptation without task-specific tuning. Evaluated on LIBERO, RoboTwin [26], and CALVIN [25] with a \pi_{0.5}-based policy, DVAC improves LIBERO success rate from 94.75% to 98.00% while reducing replanning frequency by 43.0%.
+In summary, this work makes three contributions.
+(1) We identify denoising convergence stability as an intrinsic inference-time signal for adaptive execution in flow-based robot policies, and connect it to contact-rich and precision-sensitive phases.
+(2) We propose Denoising-Variance Adaptive Chunking (DVAC), a training-free test-time framework that adapts execution horizons with denoising variance and an online scale-adaptive threshold.
+(3) We validate DVAC across LIBERO, RoboTwin, CALVIN, multiple flow-based backbones, and real-world manipulation, demonstrating higher task success and lower replanning cost.
+2 Related Work
+Flow-Based Robot Policies.
+Diffusion and flow-based models have become effective generators for continuous robot actions.
+Diffusion models sample through iterative denoising [13, 32], while flow matching and rectified flow learn velocity fields that transport noise to data [20, 22].
+In robotics, Diffusion Policy formulates visuomotor control as conditional denoising over action sequences [8], and recent vision-language-action policies such as \pi_{0} and \pi_{0.5} use flow matching to generate action chunks [2, 30].
+Although these policies expose intermediate denoising states and clean-action estimates during inference, existing deployments typically use only the final chunk.
+DVAC instead reuses this denoising trajectory to decide how many actions to execute.
+Action Chunking.
+Action chunking predicts a sequence of future actions and executes a prefix before replanning, thereby amortizing policy inference and improving temporal consistency.
+It has been adopted in ACT for fine-grained bimanual manipulation [40], in Diffusion Policy via receding-horizon execution [8], and in recent robot foundation models with extended action outputs [4, 41, 28, 27, 2, 30].
+Most chunked policies use a fixed execution horizon, creating a trade-off between feedback frequency and open-loop efficiency.
+Recent work addresses this trade-off via guided test-time sampling [23], asynchronous inference and action inpainting [3], attention-based horizon estimation [35], entropy-based adaptation [18], or uncertainty-aware confidence estimation [17].
+In contrast, DVAC adapts execution using denoising variance from a single inference.
+Figure 2: Method overview of DVAC. The final denoising steps are monitored to computes the denoising-variance sequence \mathcal{B}_{s}=\{V_{s}(k)\}_{k=0}^{H-1}.
+A rolling buffer W_{s} estimates the local variance scale and sets \tau_{s}=\mu_{s}+\alpha\sigma_{s}.
+Actions before the first threshold crossing are executed, while later high-variance actions are discarded and replanning is triggered.
+3 Method
+Motivated by the temporal structure of denoising variance and its alignment with manipulation phases, we propose DVAC, a training-free strategy that uses denoising variance to adaptively decide when to replan.
+This section first reviews flow-based action chunking and clean-action estimates, then defines the denoising-variance execution rule, and finally introduces a scale-adaptive threshold for robust deployment across tasks and rollouts.
+3.1 Preliminaries: Flow-Based Action Chunking
+We consider a flow-based robot policy that predicts a continuous action chunk conditioned on the current policy input state s.
+The input s may include visual observations, proprioception, language instructions, or other task context.
+The policy outputs a horizon-H action chunk
+| A_{s}=[a_{s,0},a_{s,1},\ldots,a_{s,H-1}]\in\mathbb{R}^{H\times D}, | | (1)
+where a_{s,k}\in\mathbb{R}^{D} denotes the k-th future action in the D-dimensional action space.
+In receding-horizon deployment, only a prefix of A_{s} is executed before observing a new state and replans.
+Flow-based policies generate A_{s} by integrating a learned velocity field from noise to action space.
+Let t\in[0,1] denote denoising time, where t=1 corresponds to noise and t=0 to clean actions.
+We discretize the interval into M Euler steps t_{0},\ldots,t_{M}, with t_{0}=1, t_{M}=0, and \Delta t=t_{i+1}-t_{i}<0.
+Given sample x_{i}\in\mathbb{R}^{H\times D} and velocity v_{\theta}(x_{i},t_{i},s), Euler integration updates
+| x_{i+1}=x_{i}+\Delta t\,v_{\theta}(x_{i},t_{i},s),\quad i=0,\ldots,M-1. | | (2)
+The final sample x_{M} is the action chunk returned by the policy.
+Besides the final sample, the denoising process also exposes intermediate clean-action estimates.
+At step i, the clean-action estimate is
+| z_{i}=x_{i}-t_{i}\,v_{\theta}(x_{i},t_{i},s), | | (3)
+where z_{i}\in\mathbb{R}^{H\times D}.
+While fixed-horizon execution keeps only the final chunk x_{M}, the estimates \{z_{i}\}_{i=0}^{M-1} reveals how consistently each future action is predicted along the denoising trajectory.
+This stability information will be used to construct the denoising-variance signal in the next subsection.
+3.2 Denoising-Variance Adaptive Chunking
+Denoising Variance for Adaptive Execution.
+The denoising trajectory provides a natural signal for action stability.
+As observed in Figure 1, denoising variance is low during predictable motion phases and rises around contact-rich operations.
+This suggests that stable future indices can be executed open-loop, while unstable indices should trigger replanning.
+For future action index k and action dimension d, let z_{i,k,d}=z_{i}[k,d].
+Let L denote the number of final denoising steps used for variance estimation,
+and define \mathcal{I}_{L}=\{M-L,M-L+1,\ldots,M-1\}.
+With tail mean \bar{z}_{k,d}=\frac{1}{L}\sum_{i=M-L}^{M-1}z_{i,k,d} the denoising-variance score at future index k is
+| V_{s}(k)=\sum_{d=1}^{D}\frac{1}{L}\sum_{i\in\mathcal{I}_{L}}\left(z_{i,k,d}-\bar{z}_{k,d}\right)^{2}. | | (4)
+Small V_{s}(k) means that the final clean-action estimates agree on future index k,
+while large V_{s}(k) indicates persistent fluctuation.
+We also use
+| V_{\mathrm{total}}(s)=\sum_{k=0}^{H-1}V_{s}(k) | | (5)
+as a scalar diagnostic in the analysis.
+Given the variance sequence \mathcal{B}_{s}=\{V_{s}(k):k=0,\ldots,H-1\} and a threshold \tau_{s}>0,
+DVAC identifies the high-variance future indices:
+| \mathcal{K}_{h}=\left\{k\in\{0,\ldots,H-1\}:V_{s}(k)>\tau_{s}\right\}. | | (6)
+The executed prefix length is then
+| N^{\mathrm{exec}}=\begin{cases}N_{\max},&\text{if }\mathcal{K}_{h}=\emptyset,\\
+\max\left(N_{\min},\min\{\mathcal{K}_{h}\}\right),&\text{otherwise},\end{cases} | | (7)
+where N_{\min}, N_{\max} are the minimum and maximum number of actions executed at each policy call, respectively.
+This rule executes the low-variance prefix before the first high-variance future index while ensuring a minimum execution length.
+Scale-Adaptive Thresholding.
+Although the execution rule can be instantiated with a fixed numerical threshold \tau, this assumes a comparable denoising-variance scale across tasks, episodes, and phases.
+As illustrated in Figure 3, different rollouts exhibit distinct variance distributions, so the same fixed \tau can be conservative in one rollout but permissive in another.
+This scale variation is also observed across LIBERO suites and episodes (Figures 7 and 9).
+DVAC therefore sets \tau_{s} relative to a rolling estimate of the local variance distribution rather than using an absolute threshold.
+Let \mathcal{R}_{s} be the set of recent states retained in a rolling buffer with capacity m.
+For each state q\in\mathcal{R}_{s}, let
+\mathcal{B}_{q}=\{V_{q}(k):k=0,\ldots,H-1\}.
+The rolling variance window is
+| W_{s}=\bigcup_{q\in\mathcal{R}_{s}}\mathcal{B}_{q}=\{V_{q}(k):q\in\mathcal{R}_{s},\ k=0,\ldots,H-1\},\quad|\mathcal{R}_{s}|\leq m. | | (8)
+Let \mu_{s} and \sigma_{s} be the empirical mean and standard deviation of the scalars in W_{s}.
+DVAC sets
+| \tau_{s}=\mu_{s}+\alpha\sigma_{s}, | | (9)
+Figure 3:
+Scale-adaptive thresholding.
+Two episodes selected from Libero have different denoising-variance scales, making a fixed \tau conservative in one and permissive in the other.
+DVAC instead sets \tau_{s} adaptively from the local rolling distribution.
+where \alpha\geq 0 specifies the uncertainty tolerance in units of local standard deviation. Although DVAC still introduces a hyperparameter, unlike a fixed \tau, \alpha defines a rollout-relative threshold and does not need to match the raw variance scale of a specific task or episode.
+Algorithm 1 summarizes the inference procedure.
+Appendix 7.1 shows that, under a local Lipschitz assumption, the endpoint error at index k is bounded by a quantity proportional to \sqrt{V_{s}(k)}.
+This links larger tail variance to a larger denoising integration-error bound, motivating DVAC’s use of tail variance as a test-time signal for earlier replanning.
+Algorithm 1 DVAC Inference
+1:Current input state s, horizon H, denoising steps M, tail length L, rolling window W_{s}
+2:Initialize noisy action chunk x_{0}\sim\mathcal{N}(0,I) and clean-prediction history \mathcal{H}\leftarrow[\,]
+3:for i=0 to M-1 do
+4:  Predict velocity u_{i}\leftarrow u_{\theta}(x_{i},t_{i},s)
+5:  Store z_{i}\leftarrow x_{i}-t_{i}u_{i} in \mathcal{H}
+6:  Update x_{i+1}\leftarrow x_{i}+\Delta t\,u_{i}
+7:end for
+8:Compute V_{s}(k) for k=0,\ldots,H-1 from the last L clean predictions in \mathcal{H} using Eq. (4)
+9:Form \mathcal{B}_{s}=\{V_{s}(k):k=0,\ldots,H-1\}
+10:Set \tau_{s} using Eq. (9)
+11:Compute N^{\mathrm{exec}} using Eqs. (6)–(7)
+12:Update W_{s} with \mathcal{B}_{s}
+13:return final action prefix (x_{M}[0],\ldots,x_{M}[N^{\mathrm{exec}}-1])
+4 Experiments
+This section evaluates DVAC across simulation benchmarks and real-world manipulation tasks.
+The evaluation focuses on four aspects: task performance, transfer across backbones, threshold sensitivity, and the relation between denoising variance and phase-adaptive execution.
+Detailed benchmark, training, evaluation, and deployment settings are deferred to Appendix 7.2. Complete simulation results and replanning statistics are summarized in Tables 7 and 8.
+4.1 Simulation Experiments
+Table 1:
+LIBERO simulation benchmark results.
+Task success rates are reported across four evaluation suites and averaged over all suites.
+The bottom group compares our reproduced \pi_{0.5} baseline, prior adaptive action-chunking baselines, and DVAC.
+Bold indicates the best result, and underline indicates the runner-up.
+Method | LIBERO-Spatial | LIBERO-Object | LIBERO-Goal | LIBERO-Long | Average | LAPA [36]
+| 0.738 | 0.746 | 0.588 | 0.554 | 0.657 | CoT-VLA [39]
+| 0.875 | 0.916 | 0.876 | 0.690 | 0.811 | WorldVLA [6]
+| 0.876 | 0.962 | 0.834 | 0.600 | 0.818 |
+\pi_{0}-Fast [29]
+| 0.964 | 0.968 | 0.886 | 0.602 | 0.855 | villa-X [7]
+| 0.975 | 0.970 | 0.915 | 0.745 | 0.901 | GR00T N1 [1]
+| 0.944 | 0.976 | 0.930 | 0.906 | 0.939 |
+\pi_{0} [2]
+| 0.968 | 0.988 | 0.958 | 0.852 | 0.942 | UniVLA [5]
+| 0.965 | 0.968 | 0.956 | 0.920 | 0.952 | A1 [38]
+| 0.974 | 0.998 | 0.976 | 0.914 | 0.966 | MergeVLA [11]
+| 0.980 | 0.986 | 0.950 | 0.950 | 0.967 |
+\pi_{0.5} (baseline) | 0.980 | 0.970 | 0.920 | 0.920 | 0.948 | AAC [19]
+| 0.944 | 0.928 | 0.986 | 0.942 | 0.950 | AutoHorizon [34]
+| 0.967 | 0.987 | 0.960 | 0.927 | 0.961 | DVAC | 0.990 | 0.980 | 0.980 | 0.970 | 0.980
+Table 2:
+RoboTwin simulation benchmark results.
+Average success rate is reported over 16 tasks.
+Method | Average SR | DP [26]
+| 0.237 | DP3 [26]
+| 0.399 |
+\pi_{0}  [26]
+| 0.335 |
+\pi_{0.5}^{*}(baseline) | 0.359 | DVAC | 0.416
+Table 3:
+CALVIN-5 benchmark results.
+Success rates are reported for each completed subtask step.
+∗ denotes our reproduced experimental result.
+Bold indicates the best result, and underline indicates the runner-up.
+Method | C1 | C2 | C3 | C4 | C5 | AvgSub |
+\pi_{0.5}^{*}(baseline) | 0.873 | 0.857 | 0.825 | 0.762 | 0.587 | 3.905 | Fixed \tau=10^{-4}
+| 0.900 | 0.820 | 0.756 | 0.664 | 0.576 | 3.716 | Fixed \tau=10^{-3}
+| 0.924 | 0.796 | 0.692 | 0.616 | 0.548 | 3.576 | Fixed \tau=10^{-2}
+| 0.928 | 0.780 | 0.684 | 0.628 | 0.568 | 3.588 | DVAC | 0.952 | 0.888 | 0.816 | 0.756 | 0.628 | 4.040
+Main results.
+Table 1 reports the LIBERO results, where the lower block contains prior adaptive action-chunking methods that directly address the fixed-horizon execution problem.
+DVAC achieves the best average success rate, improving the \pi_{0.5} fixed-prefix baseline from 0.948 to 0.980 and outperforming AAC [19] and AutoHorizon [34].
+These results indicate that denoising variance provides an effective test-time signal for adaptive prefix execution.
+Detailed bad-case analysis in Appendix 7.4, showing that DVAC recovers more baseline failures than it introduces.
+The gains extend to other benchmarks.
+As shown in Tables 3 and 3, DVAC improves the RoboTwin average success rate from 0.359 to 0.416, with per-task results in Table 9, and increases the CALVIN-5 average completed subtasks from 3.905 to 4.040.
+Fixed-threshold variants underperform the fixed-prefix baseline on CALVIN, suggesting that a universal numerical threshold is brittle when denoising-variance scales change across subtasks and phases.
+DVAC mitigates this issue by calibrating the threshold from recent variance statistics, supporting the scale-adaptive design.
+Backbone transferability.
+Table 4 evaluates DVAC on multiple flow-based backbones.
+The average success rate increases from 0.950 to 0.958 for Qwen2.5-VL-\pi, and from 0.933 to 0.938 for Qwen3-VL-GR00T.
+These results show that DVAC is plug-and-play, although the improvement depends on the informativeness of each backbone’s denoising trajectory.
+Replanning efficiency.
+Table 4 reports the average replanning count on LIBERO.
+DVAC reduces replanning from 32.6 to 18.6 for \pi_{0.5}, from 32.8 to 23.0 for Qwen2.5-VL-\pi, and from 31.4 to 25.1 for Qwen3-VL-GR00T.
+Thus, DVAC reduces policy calls while improving or preserving success, yielding a better efficiency–robustness trade-off than fixed-prefix execution.
+Table 4:
+Plug-and-play evaluation of DVAC on LIBERO.
+Adapt. indicates using DVAC for adaptive chunk .
+Avg Replan denotes the average number of replanning steps; lower is better.
+Model | Adapt. | Spatial | Object | Goal | Long | Avg SR | Avg Replan | \pi_{0.5} | \times | 0.980 | 0.970 | 0.920 | 0.920 | 0.948 | 32.6 | \checkmark | 0.990 | 0.980 | 0.980 | 0.970 | 0.980 |
+18.6(↓42.94%) | Qwen2.5-VL-\pi | \times | 0.910 | 0.990 | 0.950 | 0.950 | 0.950 | 32.8 | \checkmark | 0.940 | 0.990 | 0.940 | 0.960 | 0.958 |
+23.0(↓29.88%) | Qwen3-VL-GR00T | \times | 0.940 | 0.980 | 0.940 | 0.870 | 0.933 | 31.4 | \checkmark | 0.950 | 0.990 | 0.950 | 0.860 | 0.938 |
+25.1 (↓20.06%)
+4.2 Real-World Experiments
+DVAC is evaluated on three real-world tasks: placing a red cube into a bowl, stacking three cubes in a specified order, and moving test tubes from a rack to a plate.
+Detailed setups are provided in Appendix 7.2.
+As shown in Table 5, DVAC consistently improves success rates over the Fixed-15 baseline, while reducing both task time and replanning frequency by large margins.
+Fixed-40 uses fewer replans and shorter execution time, but its success rate drops substantially, indicating that blindly extending the execution horizon sacrifices robustness.
+DVAC achieves a better efficiency–success trade-off across all tasks.
+Figure 4 further shows that DVAC shortens execution around contact-rich or precision-sensitive phases and uses longer chunks during stable motion.
+Table 5:
+Real-world experiment results.
+Results are reported with success rate (SR), task time, and replanning count.
+Fix15 and Fix40 denote fixed 15-step and 40-step execution, respectively.
+Method | Placing cube | Stack cubes | Move test tubes | SR | time(s) | replan | SR | time(s) | replan | SR | time(s) | replan |
+\pi_{0.5}-Fix15 | 0.800 | 39.63 | 25.7 | 0.700 | 67.53 | 42.6 | 0.433 | 80.30 | 61.8 |
+\pi_{0.5}-Fix40 | 0.533 | 30.36 | 9.4 | 0.433 | 52.83 | 17.2 | 0.233 | 60.30 | 26.5 |
+\pi_{0.5}-DVAC | 0.867 | 34.25 | 12.5 | 0.767 | 56.04 | 24.1 | 0.533 | 64.28 | 31.2
+Figure 4: Real-world rollout visualization of DVAC. Inf. idx denotes the policy inference index, and N^{\mathrm{exec}} denotes the number of executed actions.
+The shaded regions separating adjacent action chunks.
+DVAC executes longer chunks in low-variance moving phases and shortens the horizon near high-variance, operation-sensitive phases.
+Figure 5:
+Threshold sensitivity on LIBERO across different backbones.
+Success rates remain relatively stable as the fixed threshold \tau varies from 10^{-4} to 10^{-1}, but the optimal value depends on both the suite and the backbone.
+(a) \tau sweep on RoboTwin.
+(b) Phase-correlation analysis on LIBERO.
+Figure 6: Summary of variance threshold sweep and phase correlation analysis.
+(a) On RoboTwin, fixed-threshold variants improve over the fixed-prefix baseline, while DVAC achieves the best success rate.
+(b) On LIBERO, the adaptive \alpha scan yields more stable phase correlations than the fixed-\tau scan, showing more consistent phase-aware execution.
+4.3 Ablations
+Threshold sensitivity.
+We study the sensitivity of DVAC to its thresholding behavior.
+Figure 5 shows LIBERO success rates under different fixed threshold values and across different policy backbones.
+Performance remains stable over a broad range of thresholds, indicating that the denoising-variance signal is informative across task families rather than relying on a fragile numerical value.
+Adaptive scaling.
+Table 3 show that fixed numerical thresholds are not reliably transferable.
+While some fixed-\tau settings improve over the fixed-prefix baseline on RoboTwin, their performance depends on the chosen threshold.
+On CALVIN, fixed thresholds reduce AvgSub from 3.905 to at most 3.716, while DVAC improves it to 4.040.
+This suggests that denoising variance is informative, but its scale should be adaptively calibrated across tasks and benchmarks.
+Correlation with manipulation phases.
+Figure 6 examines whether DVAC shortens execution near manipulation-sensitive phases.
+Using one baseline \pi_{0.5} rollout from each of the 40 LIBERO tasks, each inference step is labeled as MOVING or OPERATING; details are provided in Appendix 7.3.
+Across all tested \alpha values, the adaptive threshold yields stable negative correlations around r<-0.27 with p<0.05, indicating that DVAC tends to execute shorter chunks during operation-sensitive phases.
+In contrast, fixed-threshold behavior varies more strongly with the absolute threshold, further supporting the scale-adaptive design.
+5 Conclusion
+We present DVAC, a training-free inference-time method that adaptively determines how many actions to execute from a flow-based policy’s predicted chunk.
+By measuring the tail variance of clean-action estimates, DVAC turns the policy’s own denoising trajectory into an effective test-time mechanism for deciding how many predicted actions to execute before replanning.
+Experiments across LIBERO, RoboTwin, CALVIN, multiple flow-based backbones, and real-world manipulation tasks show that DVAC improves task success while consistently reducing replanning overhead across diverse settings.
+These results suggest that denoising stability, readily available during inference, is a simple yet effective signal for confidence-aware deployment of chunked robot policies.
+6 Limitations
+DVAC uses denoising variance as an empirical proxy for action stability rather than a calibrated uncertainty or safety estimate.
+Future work could build more reliable failure detectors by combining denoising variance with visual feedback, contact cues, and task-progress indicators.
+DVAC also assumes access to intermediate denoising trajectories, and is therefore not directly applicable to non-flow-based or non-diffusion-style policies.
+Finally, our real-world evaluation is still limited in task diversity and embodiment scale.
+We plan to further evaluate DVAC in more diverse and complex real-world manipulation settings.
+References
+[1]
+J. Bjorck, F. Castañeda, N. Cherniadev, X. Da, R. Ding, L. Fan, Y. Fang, D. Fox, F. Hu, S. Huang, et al. (2025)
+GR00T N1: an open foundation model for generalist humanoid robots.
+arXiv preprint arXiv:2508.12268.
+External Links: 2508.12268,
+Link
+Cited by: Table 1.
+[2]
+K. Black, N. Brown, D. Driess, A. Esmail, M. Equi, C. Finn, N. Fusai, L. Groom, K. Hausman, B. Ichter, et al. (2024)
+\pi_{0}: a vision-language-action flow model for general robot control.
+arXiv preprint arXiv:2410.07291.
+External Links: 2410.07291,
+Link
+Cited by: §1,
+§1,
+§2,
+§2,
+Table 1.
+[3]
+K. Black, M. Y. Galliker, and S. Levine (2025)
+Real-time execution of action chunking flow policies.
+arXiv preprint arXiv:2506.07339.
+External Links: 2506.07339,
+Link
+Cited by: §2.
+[4]
+A. Brohan, N. Brown, J. Carbajal, Y. Chebotar, J. Dabis, C. Finn, K. Gopalakrishnan, K. Hausman, A. Herzog, J. Hsu, et al. (2023)
+RT-1: robotics transformer for real-world control at scale.
+In Robotics: Science and Systems,
+External Links: Link
+Cited by: §1,
+§2.
+[5]
+Q. Bu, Y. Yang, J. Cai, S. Gao, G. Ren, M. Yao, P. Luo, and H. Li (2025)
+UniVLA: learning to act anywhere with task-centric latent actions.
+arXiv preprint arXiv:2503.10474.
+External Links: 2503.10474,
+Link
+Cited by: Table 1.
+[6]
+J. Cen, C. Yu, H. Yuan, Y. Jiang, S. Huang, J. Guo, X. Li, Y. Song, H. Luo, F. Wang, et al. (2025)
+WorldVLA: towards autoregressive action world model.
+arXiv preprint arXiv:2506.02146.
+External Links: 2506.02146,
+Link
+Cited by: Table 1.
+[7]
+X. Chen, H. Wei, P. Zhang, C. Zhang, K. Wang, Y. Guo, R. Yang, Y. Wang, X. Xiao, L. Zhao, et al. (2025)
+VILLA-X: enhancing latent action modeling in vision-language-action models.
+arXiv preprint arXiv:2507.03867.
+External Links: 2507.03867,
+Link
+Cited by: Table 1.
+[8]
+C. Chi, Z. Xu, S. Feng, E. Cousineau, Y. Du, B. Burchfiel, R. Tedrake, and S. Song (2023)
+Diffusion policy: visuomotor policy learning via action diffusion.
+In Robotics: Science and Systems,
+External Links: Link
+Cited by: §1,
+§1,
+§2,
+§2.
+[9]
+D. Driess, F. Xia, M. S. M. Sajjadi, C. Lynch, A. Chowdhery, B. Ichter, A. Wahid, J. Tompson, Q. Vuong, T. Yu, W. Huang, Y. Chebotar, P. Sermanet, D. Duckworth, S. Levine, V. Vanhoucke, K. Hausman, M. Toussaint, K. Greff, A. Zeng, I. Mordatch, and P. Florence (2023)
+PaLM-E: an embodied multimodal language model.
+In Proceedings of the 40th International Conference on Machine Learning,
+Proceedings of Machine Learning Research, Vol. 202, pp. 8469–8488.
+External Links: Link
+Cited by: §1.
+[10]
+T. A. Driscoll and R. J. Braun (2017)
+Fundamentals of numerical computation.
+SIAM.
+Cited by: §7.1,
+§7.1.
+[11]
+Y. Fu, Z. Zhang, Y. Zhang, Z. Wang, Z. Huang, and Y. Luo (2026)
+MergeVLA: cross-skill model merging toward a generalist vision-language-action agent.
+In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition,
+External Links: 2511.18810,
+Link
+Cited by: Table 1.
+[12]
+R. Gou (2024)
+Learning temporal action chunking for motor control.
+Master’s Thesis, University of British Columbia.
+Note: M.Sc. thesis
+External Links: Link
+Cited by: §1.
+[13]
+J. Ho, A. Jain, and P. Abbeel (2020)
+Denoising diffusion probabilistic models.
+In Advances in Neural Information Processing Systems,
+Vol. 33, pp. 6840–6851.
+External Links: Link
+Cited by: §2.
+[14]
+D. Jing, G. Wang, J. Liu, W. Tang, Z. Sun, Y. Yao, Z. Wei, Y. Liu, Z. Lu, and M. Ding (2025)
+Mixture of horizons in action chunking.
+arXiv preprint arXiv:2511.19433.
+External Links: 2511.19433,
+Link
+Cited by: §1.
+[15]
+M. J. Kim, C. Finn, and P. Liang (2025)
+Fine-tuning vision-language-action models: optimizing speed and success.
+In Robotics: Science and Systems,
+External Links: 2502.19645,
+Link
+Cited by: §1,
+§1.
+[16]
+M. J. Kim, K. Pertsch, S. Karamcheti, T. Xiao, A. Balakrishna, S. Nair, R. Rafailov, E. P. Foster, P. R. Sanketi, Q. Vuong, T. Kollar, B. Burchfiel, R. Tedrake, D. Sadigh, S. Levine, P. Liang, and C. Finn (2025)
+OpenVLA: an open-source vision-language-action model.
+In Proceedings of The 8th Conference on Robot Learning,
+Proceedings of Machine Learning Research, Vol. 270, pp. 2679–2713.
+External Links: Link
+Cited by: §1.
+[17]
+S. Lee and Y. Kuo (2024)
+Diff-DAgger: uncertainty estimation with diffusion policy for robotic manipulation.
+arXiv preprint arXiv:2410.14868.
+External Links: 2410.14868,
+Link
+Cited by: §2.
+[18]
+Y. Liang, X. Wang, K. Wang, S. Wang, X. Peng, H. Chen, D. K. H. Chua, and P. Vadakkepat (2026)
+Adaptive action chunking at inference-time for vision-language-action models.
+In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition,
+External Links: 2604.04161,
+Link
+Cited by: §1,
+§2.
+[19]
+Y. Liang, X. Wang, K. Wang, S. Wang, X. Peng, H. Chen, D. K. H. Chua, and P. Vadakkepat (2026)
+Adaptive action chunking at inference-time for vision-language-action models.
+In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition,
+External Links: 2604.04161,
+Link
+Cited by: §1,
+§4.1,
+Table 1.
+[20]
+Y. Lipman, R. T. Q. Chen, H. Ben-Hamu, M. Nickel, and M. Le (2023)
+Flow matching for generative modeling.
+In International Conference on Learning Representations,
+External Links: Link
+Cited by: §2.
+[21]
+B. Liu, Y. Zhu, C. Gao, Y. Feng, Q. Liu, Y. Zhu, and P. Stone (2023)
+LIBERO: benchmarking knowledge transfer for lifelong robot learning.
+In Advances in Neural Information Processing Systems Datasets and Benchmarks Track,
+External Links: Link
+Cited by: §1.
+[22]
+X. Liu, C. Gong, and Q. Liu (2023)
+Flow straight and fast: learning to generate and transfer data with rectified flow.
+In International Conference on Learning Representations,
+External Links: Link
+Cited by: §2.
+[23]
+Y. Liu, J. I. Hamid, A. Xie, Y. Lee, M. Du, and C. Finn (2025)
+Bidirectional decoding: improving action chunking via guided test-time sampling.
+In International Conference on Learning Representations,
+External Links: Link
+Cited by: §1,
+§2.
+[24]
+Y. Liu, J. I. Hamid, A. Xie, Y. Lee, M. Du, and C. Finn (2025)
+Bidirectional decoding: improving action chunking via guided test-time sampling.
+In International Conference on Learning Representations,
+External Links: Link
+Cited by: §1.
+[25]
+O. Mees, L. Hermann, E. Rosete-Beas, and W. Burgard (2022)
+CALVIN: a benchmark for language-conditioned policy learning for long-horizon robot manipulation tasks.
+IEEE Robotics and Automation Letters 7 (3), pp. 7327–7334.
+External Links: Document,
+Link
+Cited by: §1.
+[26]
+Y. Mu, T. Chen, Z. Chen, S. Peng, Z. Lan, Z. Gao, Z. Liang, Q. Yu, Y. Zou, M. Xu, L. Lin, Z. Xie, M. Ding, and P. Luo (2025)
+RoboTwin: dual-arm robot benchmark with generative digital twins.
+In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition,
+External Links: Link
+Cited by: §1,
+Table 3,
+Table 3,
+Table 3,
+Table 9,
+Table 9.
+[27]
+Octo Model Team, D. Ghosh, H. Walke, K. Pertsch, K. Black, O. Mees, S. Dasari, J. Hejna, T. Kreiman, C. Xu, et al. (2024)
+Octo: an open-source generalist robot policy.
+arXiv preprint arXiv:2405.12213.
+External Links: 2405.12213,
+Link
+Cited by: §1,
+§2.
+[28]
+Open X-Embodiment Collaboration, A. Padalkar, A. Pooley, A. Jain, A. Bewley, A. Herzog, A. Irpan, A. Khazatsky, A. Rai, A. Singh, et al. (2023)
+Open x-embodiment: robotic learning datasets and RT-X models.
+arXiv preprint arXiv:2310.08864.
+External Links: 2310.08864,
+Link
+Cited by: §1,
+§2.
+[29]
+K. Pertsch, K. Stachowicz, B. Ichter, D. Driess, S. Nair, Q. Vuong, O. Mees, C. Finn, and S. Levine (2025)
+FAST: efficient action tokenization for vision-language-action models.
+arXiv preprint arXiv:2504.01227.
+External Links: 2504.01227,
+Link
+Cited by: Table 1.
+[30]
+Physical Intelligence, K. Black, N. Brown, J. Darpinian, K. Dhabalia, D. Driess, A. Esmail, M. Equi, C. Finn, N. Fusai, et al. (2025)
+\pi_{0.5}: a vision-language-action model with open-world generalization.
+arXiv preprint arXiv:2504.16054.
+External Links: 2504.16054,
+Link
+Cited by: §2,
+§2,
+§7.2.
+[31]
+J. So, C. Lee, S. Lee, J. Ok, and E. Park (2025)
+Improving generative behavior cloning via self-guidance and adaptive chunking.
+arXiv preprint arXiv:2510.12392.
+External Links: 2510.12392,
+Link
+Cited by: §1.
+[32]
+Y. Song, J. Sohl-Dickstein, D. P. Kingma, A. Kumar, S. Ermon, and B. Poole (2021)
+Score-based generative modeling through stochastic differential equations.
+In International Conference on Learning Representations,
+External Links: Link
+Cited by: §2.
+[33]
+StarVLA Community (2026)
+StarVLA: a lego-like codebase for vision-language-action model developing.
+arXiv preprint arXiv:2604.05014.
+External Links: 2604.05014,
+Link
+Cited by: §7.2.
+[34]
+H. Wang, G. Zhang, Y. Yan, R. R. Kompella, and G. Liu (2026)
+VLA knows its limits.
+arXiv preprint arXiv:2602.21445.
+External Links: 2602.21445,
+Link
+Cited by: §4.1,
+Table 1.
+[35]
+H. Wang, G. Zhang, Y. Yan, R. R. Kompella, and G. Liu (2026)
+VLA knows its limits.
+arXiv preprint arXiv:2602.21445.
+External Links: 2602.21445,
+Link
+Cited by: §2.
+[36]
+S. Ye, J. Jang, B. Jeon, S. Joo, J. Yang, B. Peng, A. Mandlekar, R. Tan, Y. Chao, B. Y. Lin, et al. (2024)
+Latent action pretraining from videos.
+arXiv preprint arXiv:2406.05173.
+External Links: 2406.05173,
+Link
+Cited by: Table 1.
+[37]
+C. Yu, Y. Wang, Z. Guo, H. Lin, S. Xu, H. Zang, Q. Zhang, Y. Wu, C. Zhu, J. Hu, Z. Huang, M. Wei, Y. Xie, K. Yang, B. Dai, Z. Xu, J. Du, X. Wang, X. Fu, L. Shi, Z. Liu, K. Chen, W. Liu, G. Liu, B. Li, J. Yang, Z. Yang, G. Dai, and Y. Wang (2025)
+RLinf: flexible and efficient large-scale reinforcement learning via macro-to-micro flow transformation.
+arXiv preprint arXiv:2509.15965.
+External Links: 2509.15965,
+Link
+Cited by: §7.2,
+§7.2.
+[38]
+K. Zhang, J. Zhang, R. Xu, Y. Sun, S. Xue, Y. Wen, X. Guo, M. Guo, W. Liufu, L. Zihou, K. Ji, Y. Zhang, J. Zhu, J. Liu, Z. Li, R. Chen, M. Cao, J. Zhang, S. Zhao, X. Chang, F. Zheng, I. Laptev, and X. Liang (2026)
+A1: a fully transparent open-source, adaptive and efficient truncated vision-language-action model.
+arXiv preprint arXiv:2604.05672.
+External Links: 2604.05672,
+Link
+Cited by: Table 1.
+[39]
+Q. Zhao, Y. Lu, M. J. Kim, Z. Fu, Z. Zhang, Y. Wu, Z. Li, Q. Ma, S. Han, C. Finn, et al. (2025)
+CoT-VLA: visual chain-of-thought reasoning for vision-language-action models.
+arXiv preprint arXiv:2505.15324.
+External Links: 2505.15324,
+Link
+Cited by: Table 1.
+[40]
+T. Z. Zhao, V. Kumar, S. Levine, and C. Finn (2023-07)
+Learning fine-grained bimanual manipulation with low-cost hardware.
+In Robotics: Science and Systems,
+Daegu, Republic of Korea.
+External Links: Document,
+Link
+Cited by: §1,
+§1,
+§2.
+[41]
+B. Zitkovich, T. Yu, S. Xu, P. Xu, T. Xiao, F. Xia, J. Wu, P. Wohlhart, S. Welker, A. Wahid, et al. (2023)
+RT-2: vision-language-action models transfer web knowledge to robotic control.
+In Proceedings of The 7th Conference on Robot Learning,
+Proceedings of Machine Learning Research, Vol. 229, pp. 2165–2183.
+External Links: Link
+Cited by: §1,
+§2.
+7 Appendix
+7.1 Proof of the Tail-Variance Error Bound
+This appendix expands the derivation summarized in Section 3.
+We work at one fixed input state s and one fixed future chunk index k, and omit k from the notation when unambiguous.
+Let the remaining denoising time be t_{i}=(M-i)\Delta, where \Delta>0 is the step magnitude, so t_{i+1}=t_{i}-\Delta and t_{M-1}=\Delta.
+The Euler update over decreasing denoising time is
+| x_{i+1}=x_{i}-\Delta\,u_{\theta}(x_{i},t_{i},s). | | (10)
+For compactness, write u_{i}=u_{\theta}(x_{i},t_{i},s).
+The clean-action estimate used by DVAC is
+| z_{i}=x_{i}-t_{i}u_{i}. | | (11)
+When focusing on a fixed future index k, we use z_{i} below to denote the selected action coordinates of this clean-action estimate at index k.
+Consider two adjacent clean-action estimates:
+| \displaystyle z_{i+1}-z_{i} | \displaystyle=(x_{i+1}-t_{i+1}u_{i+1})-(x_{i}-t_{i}u_{i}) | | (12)
+| | \displaystyle=(x_{i}-\Delta u_{i}-t_{i+1}u_{i+1})-(x_{i}-t_{i}u_{i}) | | (13)
+| | \displaystyle=(t_{i}-\Delta)u_{i}-t_{i+1}u_{i+1} | | (14)
+| | \displaystyle=t_{i+1}(u_{i}-u_{i+1}). | | (15)
+Thus, clean-action fluctuation is a time-scaled finite difference of the learned vector field along the denoising trajectory.
+Lemma 1: vector-field total variation is controlled by clean-action variance.
+Define the discrete total variation of the learned vector field over the denoising tail as
+| \operatorname{TV}(u)=\sum_{i=M-L}^{M-2}\|u_{i}-u_{i+1}\|. | | (16)
+Using Eq. (15), we have
+| \operatorname{TV}(u)=\sum_{i=M-L}^{M-2}\frac{1}{t_{i+1}}\|z_{i+1}-z_{i}\|. | | (17)
+Applying Cauchy–Schwarz gives
+| \operatorname{TV}(u)\leq C_{L,\Delta}\left(\sum_{i=M-L}^{M-2}\|z_{i+1}-z_{i}\|^{2}\right)^{1/2}, | | (18)
+where
+| C_{L,\Delta}=\left(\sum_{i=M-L}^{M-2}\frac{1}{t_{i+1}^{2}}\right)^{1/2}=\frac{1}{\Delta}\left(\sum_{m=1}^{L-1}\frac{1}{m^{2}}\right)^{1/2}. | | (19)
+This constant depends only on the tail length L and the Euler step size \Delta.
+The equality condition of Eq. (18) is
+| \|z_{i+1}-z_{i}\|=\frac{\lambda}{t_{i+1}},\qquad\forall i=M-L,\ldots,M-2, | | (20)
+for some constant \lambda\geq 0.
+This condition is restrictive, so Eq. (18) is generally a conservative bound.
+We next relate adjacent clean-action fluctuation to the empirical tail variance.
+Let
+| \bar{z}=\frac{1}{L}\sum_{i=M-L}^{M-1}z_{i}. | | (21)
+By the definition of V_{s}(k) in Eq. (4),
+| V_{s}(k)=\frac{1}{L}\sum_{i=M-L}^{M-1}\|z_{i}-\bar{z}\|^{2}. | | (22)
+For each adjacent pair in the tail,
+| \displaystyle\|z_{i+1}-z_{i}\|^{2} | \displaystyle=\|(z_{i+1}-\bar{z})-(z_{i}-\bar{z})\|^{2} | | (23)
+| | \displaystyle\leq 2\|z_{i+1}-\bar{z}\|^{2}+2\|z_{i}-\bar{z}\|^{2}. | | (24)
+The pairwise inequality is tight only when
+| z_{i+1}-\bar{z}=-(z_{i}-\bar{z}), | | (25)
+Summing over adjacent pairs gives
+| \displaystyle\sum_{i=M-L}^{M-2}\|z_{i+1}-z_{i}\|^{2} | \displaystyle\leq 2\sum_{i=M-L}^{M-2}\|z_{i+1}-\bar{z}\|^{2}+2\sum_{i=M-L}^{M-2}\|z_{i}-\bar{z}\|^{2} | | (26)
+| | \displaystyle\leq 4\sum_{i=M-L}^{M-1}\|z_{i}-\bar{z}\|^{2} | | (27)
+| | \displaystyle=4L\,V_{s}(k). | | (28)
+Substituting Eq. (28) into Eq. (18), we obtain
+| \operatorname{TV}(u)\leq 2\sqrt{L}\,C_{L,\Delta}\sqrt{V_{s}(k)}. | | (29)
+Thus, the total variation of the learned vector field along the denoising tail is bounded by a constant times \sqrt{V_{s}(k)}.
+Global Euler error bound.
+Let a_{k}^{*} be the exact endpoint of the continuous flow for future index k, and let \hat{a}_{k} be the Euler endpoint over the same tail interval \epsilon=L\Delta.
+Assume that u_{\theta} is locally Lipschitz in x with constant K over this tail region.
+A standard Gronwall argument for Euler integration [10] gives
+| E(k)=\|\hat{a}_{k}-a_{k}^{*}\|\leq e^{K\epsilon}\Delta\,\operatorname{TV}(u). | | (30)
+Its equality condition is governed by the simultaneous saturation of the Lipschitz growth bound and the local Euler truncation-error bound along the entire tail interval, and is detailed in Ref. [10].
+Substituting Eq. (29) yields
+| E(k)\leq C_{\mathrm{tail}}\sqrt{V_{s}(k)}, | | (31)
+where
+| C_{\mathrm{tail}}=2e^{K\epsilon}\Delta\sqrt{L}\,C_{L,\Delta}=2e^{K\epsilon}\sqrt{L}\left(\sum_{m=1}^{L-1}\frac{1}{m^{2}}\right)^{1/2}. | | (32)
+Here, C_{\mathrm{tail}} is independent of the current input state s and the future chunk index k within the local Lipschitz region.
+It depends only on the tail length L, step size \Delta, tail interval \epsilon=L\Delta, and the local Lipschitz constant K.
+Equality in the final bound would require the equality conditions of Eq. (18), Eq. (28), and the Gronwall-based Euler error bound to hold simultaneously.
+Eq. (31) shows that the endpoint error is bounded by a monotone function of V_{s}(k).
+This result should be interpreted as a local stability argument for denoising-based execution, rather than an absolute calibrated safety guarantee.
+7.2 Additional Experimental Details
+Simulation setup.
+DVAC is evaluated on three simulation benchmarks: LIBERO, RoboTwin, and CALVIN.
+For LIBERO, several flow-based policy backbones are considered.
+For \pi_{0.5}, the baseline is trained for 30k steps with action horizon 10 and fixed action chunk size 5, following [30].
+For \pi_{0}, the released checkpoint from RLinf [37] is used with action horizon 50.
+For Qwen2.5-VL-\pi and Qwen3-VL-GR00T, the LIBERO checkpoints from StarVLA [33] are used, both with action horizon 8.
+On RoboTwin, 16 tasks are selected in the clean setting.
+For each task, 50 episodes are collected, and a single policy is trained jointly across all tasks.
+The policy is trained for 30k steps with batch size 512 and learning rate 5\times 10^{-5} on 8 H100 GPUs.
+The action horizon is set to 50, and the fixed-prefix baseline executes the full 50-step chunk before replanning.
+On CALVIN, the \pi_{0.5} baseline checkpoint is taken from RLinf [37].
+The action horizon is set to 5, and the fixed-prefix baseline executes 5 actions before replanning.
+Unless otherwise specified, DVAC uses \alpha=2, N_{\min}=1, N_{\max} equal to the action horizon, rolling-window size m=5, and the number of final denoising steps used for variance estimation L=5.
+Real-world setup.
+We deploy DVAC on a Cobot Magic robot.
+The observation system contains three Intel RealSense D435i cameras, including two wrist-mounted cameras and one head camera.
+We evaluate three tasks: placing a red cube into a bowl, stacking three cubes in a specified order, and moving test tubes from a rack to a plate.
+For each task, we collect 50 demonstrations for training and evaluate each method over 30 trials.
+During deployment, we use N_{\min}=1 and N_{\max}=40 on two NVIDIA A6000 GPUs.
+Phase-correlation analysis.
+For the phase-correlation analysis, we use one baseline \pi_{0.5} rollout from each of the 40 LIBERO tasks.
+For each inference step, we compute the DVAC metrics under different hyperparameters and label the phase as MOVING or OPERATING using Seed-2.0-Pro.
+We then measure the correlation between the phase label and the execution behavior induced by each thresholding strategy.
+7.3 Phase-Correlation Analysis
+This section provides details for the phase-correlation analysis in Figure 6.
+The analysis is conducted on LIBERO, which contains four suites and 40 tasks.
+For each task, one rollout is generated using the baseline \pi_{0.5} policy.
+During each rollout, the denoising-variance statistics, V_{s}(k), V_{\mathrm{total}}(s)=\sum_{k=0}^{H-1}V_{s}(k), and the DVAC execution horizon N^{\mathrm{exec}} are recorded under different hyperparameter settings.
+Both fixed-\tau and adaptive-\alpha variants are evaluated on the same recorded trajectories.
+Each inference step is assigned a binary phase label y_{i}\in\{0,1\}, where 0 denotes MOVING and 1 denotes OPERATING.
+MOVING corresponds to free-space motion, coarse approach, repositioning, or carrying an already grasped object.
+OPERATING corresponds to contact-rich or precision-sensitive actions, such as grasping, releasing, placing, pressing, inserting, or gripper opening/closing near objects.
+Phase labels are annotated by Seed-2.0-Pro from sampled episode frames.
+Each input contains front-view and wrist-view images with step indices, and the model outputs contiguous JSON segments with start step, end step, phase label, and a short description.
+These segments are converted into step-level labels and aligned with DVAC inference steps.
+For each hyperparameter setting, let x_{i}=N_{i}^{\mathrm{exec}} be the executed chunk length and y_{i} be the phase label.
+The point-biserial correlation is computed as
+| r_{\mathrm{pb}}=\mathrm{corr}(x,y)=\frac{\mu_{1}-\mu_{0}}{\sigma_{x}}\sqrt{p_{0}p_{1}}, | | (33)
+where \mu_{0}=\mathbb{E}[x\mid y=0], \mu_{1}=\mathbb{E}[x\mid y=1], \sigma_{x} is the standard deviation of x, and p_{0}=n_{0}/n, p_{1}=n_{1}/n.
+Since OPERATING is encoded as y=1, a negative correlation means that the executed chunk is shorter during operation phases.
+The significance of the correlation is computed by
+| t=|r_{\mathrm{pb}}|\sqrt{\frac{n-2}{1-r_{\mathrm{pb}}^{2}}}, | | (34)
+with the two-sided p-value
+| p=2\Pr(T_{n-2}\geq t), | | (35)
+where T_{n-2} is a Student’s t distribution with n-2 degrees of freedom.
+Figure 6 reports both r_{\mathrm{pb}} and -\log_{10}(p).
+The results show that fixed numerical thresholds are sensitive to the absolute variance scale, while adaptive \alpha is more stable.
+All tested \alpha values produce negative correlations around r<-0.27 with p<0.05, indicating consistent phase-aware execution.
+Figure 7 shows that OPERATING phases have higher median \log_{10}(V_{\mathrm{total}}) than MOVING phases across all four LIBERO suites.
+Figure 8 further shows that most episodes have positive correlations between V_{\mathrm{total}} and phase labels above r=0.2, confirming that higher denoising variance is consistently associated with operation phases.
+Figure 9 further shows large variation in episode-level mean V_{\mathrm{total}}, indicating that the absolute variance scale is not stable across tasks or rollouts.
+Together, these results motivate DVAC’s adaptive threshold rather than a fixed numerical threshold.
+The time-series plots in Figsure 13–16 show similar local variance increases around operation phases.
+Finally, Figure 10 shows that adaptive DVAC uses a broader distribution of execution horizons than fixed execution, confirming that it selectively shortens chunks rather than uniformly reducing the chunk length.
+Figure 7:
+Phase-wise distribution of denoising variance on LIBERO.
+Across all four suites, OPERATING phases have higher median \log_{10}(V_{\mathrm{total}}) than MOVING phases, indicating less stable denoising predictions during contact-rich or precision-sensitive behavior.
+Figure 8:
+Per-episode correlation between total denoising variance and task phase on LIBERO.
+Each bar reports the correlation between V_{\mathrm{total}} and the binary phase label for one episode.
+Figure 9:
+Per-episode mean total denoising variance on LIBERO.
+Each bar reports the episode-level mean of V_{\mathrm{total}}.
+The large variation across episodes shows that the absolute variance scale is task- and rollout-dependent, motivating the scale-adaptive threshold used in DVAC.
+Figure 10:
+Distribution of executed chunk lengths under fixed execution and adaptive DVAC.
+7.4 Failure Case Analysis
+Episode-level outcome breakdown.
+Table 6 compares the fixed-prefix baseline and DVAC at the episode level on LIBERO.
+Although DVAC does not dominate the baseline in every episode, it recovers more failures than it introduces: across the four suites, DVAC succeeds in 21 episodes where the baseline fails, while the reverse occurs in 8 episodes.
+This suggests that adaptive execution more often corrects fixed-horizon failures than causes new ones.
+Representative failure case.
+Figure 11 shows a representative case where DVAC fails while the fixed-prefix baseline succeeds.
+Around the pre-grasp stage, the denoising variance does not increase sufficiently relative to the adaptive threshold, so DVAC continues to execute a long chunk near contact.
+However, this stage requires finer re-observation and shorter execution; the delayed replanning leads to grasp failure and insufficient time to complete the task.
+This case illustrates that denoising stability is informative but does not always guarantee task-level correctness.
+Table 6:
+Episode-level outcome breakdown on LIBERO.
+Each suite contains 100 episodes.
+Baseline denotes the fixed-prefix \pi_{0.5} baseline.
+Suite | Both | Base. only | DVAC only | Neither | Spatial | 97 | 1 | 2 | 0 | Object | 95 | 2 | 3 | 0 | Goal | 90 | 2 | 8 | 0 | Long | 89 | 3 | 8 | 0 | Total | 371 | 8 | 21 | 0
+Figure 11:
+Representative failure case of DVAC on LIBERO.
+The curve shows the executed chunk length N^{\mathrm{exec}}, total denoising variance V_{\mathrm{total}}, and adaptive threshold \tau over environment steps.
+Near the pre-grasp stage, variance remains insufficiently elevated, causing DVAC to execute a long chunk when shorter execution and earlier replanning would be safer.
+This delayed correction leads to grasp failure and task incompletion.
+Failure modes.
+These bad cases mainly arise when denoising stability is misaligned with task correctness.
+In some episodes, the denoising trajectory remains stable even though the predicted action chunk is suboptimal, causing DVAC to execute a longer prefix than desired.
+In others, variance increases too late around contact-sensitive transitions, leading to delayed replanning and accumulated pose error.
+Combining denoising variance with visual change, contact cues, or value estimates may further improve robustness.
+7.5 Complete Evaluation Results
+Table 7 summarizes all evaluated configurations, including fixed-horizon baselines, fixed-threshold DVAC variants, and adaptive-\alpha DVAC variants.
+Across models and benchmarks, fixed numerical thresholds show clear scale dependence, while adaptive DVAC provides more stable performance without task-specific threshold tuning.
+Table 8 provides the full replanning-cost results on LIBERO.
+Adaptive DVAC consistently reduces replanning compared with standard fixed-prefix baselines, while avoiding the reliability loss caused by simply executing very long fixed chunks.
+Figure 12 give per-task sweep in Robotwin. It further shows that different tasks prefer different thresholds, reflecting the fact that task phases and action uncertainty vary across manipulation skills.
+Table 7: Overview of all simulation results.
+Model | Method | Spatial | Object | Goal | Long | Avg | RoboTwin | CALVIN-5 | pi05 — fixed-horizon sweep | pi05 | Fixed-1 | 0.98 | 0.96 | 0.85 | 0.85 | 0.910 | – | – | pi05 | Fixed-2 | 0.99 | 0.96 | 0.91 | 0.85 | 0.927 | – | – | pi05 | Fixed-3 | 0.99 | 0.95 | 0.92 | 0.93 | 0.948 | – | – | pi05 | Fixed-4 | 0.97 | 0.97 | 0.98 | 0.91 | 0.958 | – | – | pi05 | Fixed-5 (baseline) | 0.98 | 0.97 | 0.92 | 0.92 | 0.948 | 0.359 | 0.587 | pi05 | Fixed-6 | 0.97 | 0.94 | 0.95 | 0.92 | 0.945 | – | – | pi05 | Fixed-7 | 1.00 | 0.99 | 0.96 | 0.93 | 0.970 | – | – | pi05 | Fixed-8 | 0.96 | 0.99 | 0.95 | 0.92 | 0.955 | – | – | pi05 | Fixed-9 | 0.97 | 0.99 | 0.99 | 0.90 | 0.963 | – | – | pi05 | Fixed-10 | 0.97 | 0.96 | 0.99 | 0.90 | 0.955 | – | – | pi05 — DVAC sweep (LIBERO: L{=}5, N_{\min}{=}1, N_{\max}{=}10; RoboTwin: N_{\min}{=}5, N_{\max}{=}50) | pi05 | DVAC \tau{=}5{\times}10^{-4}
+| – | – | – | – | – | 0.413 | – | pi05 | DVAC \tau{=}10^{-4}
+| 0.96 | 0.92 | 0.91 | 0.82 | 0.902 | 0.367 | 0.576 | pi05 | DVAC \tau{=}10^{-3}
+| 0.99 | 0.91 | 0.95 | 0.91 | 0.940 | 0.380 | 0.548 | pi05 | DVAC \tau{=}2{\times}10^{-3}
+| – | – | – | – | – | 0.385 | – | pi05 | DVAC \tau{=}5{\times}10^{-3}
+| 0.99 | 0.98 | 0.95 | 0.92 | 0.960 | – | – | pi05 | DVAC \tau{=}10^{-2}
+| 0.98 | 1.00 | 0.97 | 0.94 | 0.972 | – | 0.568 | pi05 | DVAC \tau{=}2{\times}10^{-2}
+| 1.00 | 1.00 | 0.95 | 0.95 | 0.975 | 0.370 | – | pi05 | DVAC \tau{=}10^{-1}
+| 0.98 | 0.97 | 0.98 | 0.88 | 0.953 | – | – | pi05 | DVAC \alpha{=}1
+| 0.98 | 0.97 | 0.96 | 0.92 | 0.958 | – | – | pi05 | DVAC \alpha{=}2
+| 0.99 | 0.98 | 0.98 | 0.97 | 0.980 | 0.416 | 0.628 | pi0 — LIBERO sweep ( L{=}5, N_{\min}{=}5, N_{\max}{=}50) | pi0 | Fixed-25 | 0.75 | 0.83 | 0.76 | 0.36 | 0.675 | – | – | pi0 | Fixed-50 | 0.65 | 0.76 | 0.79 | 0.34 | 0.635 | – | – | pi0 | DVAC \tau{=}10^{-4}
+| 0.70 | 0.90 | 0.87 | 0.39 | 0.715 | – | – | pi0 | DVAC \tau{=}10^{-3}
+| 0.71 | 0.90 | 0.82 | – | – | – | – | pi0 | DVAC \tau{=}2{\times}10^{-2}
+| 0.64 | 0.82 | 0.88 | 0.42 | 0.690 | – | – | pi0 | DVAC \alpha{=}1
+| 0.61 | 0.79 | – | 0.38 | – | – | – | pi0 | DVAC \alpha{=}2
+| 0.65 | 0.76 | 0.76 | 0.38 | 0.637 | – | – | pi0 | DVAC \alpha{=}3
+| 0.61 | 0.80 | 0.83 | 0.36 | 0.650 | – | – | Qwen2.5-vl-pi — LIBERO ( L{=}3, N_{\min}{=}1, N_{\max}{=}8) | Qwen2.5-vl-pi | Fixed-5 | 0.91 | 0.99 | 0.95 | 0.95 | 0.950 | – | – | Qwen2.5-vl-pi | DVAC \tau{=}10^{-4}
+| 0.89 | 0.82 | 0.85 | 0.78 | 0.835 | – | – | Qwen2.5-vl-pi | DVAC \tau{=}10^{-3}
+| 0.96 | 0.99 | 0.96 | 0.96 | 0.968 | – | – | Qwen2.5-vl-pi | DVAC \tau{=}10^{-2}
+| 0.94 | 0.98 | 0.96 | 0.98 | 0.965 | – | – | Qwen2.5-vl-pi | DVAC \alpha{=}1
+| 0.95 | 1.00 | 1.00 | 0.98 | 0.983 | – | – | Qwen2.5-vl-pi | DVAC \alpha{=}2
+| 0.94 | 0.99 | 0.94 | 0.96 | 0.958 | – | – | Qwen3-vl-GR00T — LIBERO (L{=}3, N_{\min}{=}1, N_{\max}{=}8) | Qwen3-vl-GR00T | Fixed-5 | 0.94 | 0.98 | 0.94 | 0.87 | 0.933 | – | – | Qwen3-vl-GR00T | DVAC \tau{=}10^{-3}
+| 0.93 | 0.98 | 0.92 | 0.82 | 0.913 | – | – | Qwen3-vl-GR00T | DVAC \tau{=}10^{-2}
+| 0.95 | 1.00 | 0.95 | 0.92 | 0.955 | – | – | Qwen3-vl-GR00T | DVAC \alpha{=}1
+| 0.94 | 1.00 | 0.93 | 0.85 | 0.930 | – | – | Qwen3-vl-GR00T | DVAC \alpha{=}2
+| 0.95 | 0.99 | 0.95 | 0.86 | 0.938 | – | –
+Table 8: Replanning cost analysis across fixed-horizon, DVAC, and \pi_{0} configurations on LIBERO.
+Lower Avg indicates fewer replanning steps and better efficiency.
+Model | Method | Spatial | Object | Goal | Long | Avg | Fixed-Horizon Sweep | \pi_{0.5} | Fixed-1 | 108.7 | 163.0 | 135.4 | 298.2 | 176.3 | \pi_{0.5} | Fixed-2 | 54.0 | 74.2 | 62.7 | 147.3 | 84.5 | \pi_{0.5} | Fixed-3 | 35.8 | 51.0 | 41.2 | 93.4 | 55.4 | \pi_{0.5} | Fixed-4 | 27.5 | 38.1 | 28.8 | 68.6 | 40.7 | \pi_{0.5} | Fixed-5 (baseline) | 22.2 | 28.8 | 25.0 | 54.6 | 32.6 | \pi_{0.5} | Fixed-6 | 18.7 | 25.0 | 21.1 | 45.1 | 27.5 | \pi_{0.5} | Fixed-7 | 15.5 | 20.8 | 17.2 | 39.2 | 23.2 | \pi_{0.5} | Fixed-8 | 13.9 | 18.2 | 15.0 | 34.0 | 20.3 | \pi_{0.5} | Fixed-9 | 12.5 | 15.6 | 12.8 | 30.4 | 17.8 | \pi_{0.5} | Fixed-10 | 11.2 | 14.8 | 11.5 | 28.1 | 16.4 | DVAC Sweep | \pi_{0.5} | DVAC \tau{=}10^{-4}
+| 111.8 | 166.3 | 128.2 | 300.8 | 176.8 | \pi_{0.5} | DVAC \tau{=}10^{-3}
+| 73.4 | 89.8 | 85.0 | 144.1 | 98.0 | \pi_{0.5} | DVAC \tau{=}5{\times}10^{-3}
+| 17.0 | 23.5 | 19.4 | 42.0 | 25.5 | \pi_{0.5} | DVAC \tau{=}10^{-2}
+| 14.5 | 18.6 | 14.6 | 35.7 | 20.8 | \pi_{0.5} | DVAC \tau{=}2{\times}10^{-2}
+| 11.9 | 16.7 | 13.6 | 31.8 | 18.5 | \pi_{0.5} | DVAC \tau{=}10^{-1}
+| 11.3 | 15.1 | 11.8 | 28.4 | 16.6 | \pi_{0.5} | DVAC \alpha{=}1
+| 13.9 | 18.4 | 15.0 | 35.9 | 20.8 | \pi_{0.5} | DVAC \alpha{=}2
+| 13.0 | 16.7 | 13.1 | 31.6 | 18.6 | \pi_{0} | Fixed-25 | 5.8 | 6.9 | 6.6 | 17.2 | 9.1 | \pi_{0} | Fixed-50 | 3.4 | 3.9 | 3.4 | 9.0 | 4.9 | \pi_{0} | DVAC \tau{=}10^{-4}
+| 27.9 | 30.8 | 28.4 | 84.7 | 43.0 | \pi_{0} | DVAC \tau{=}2{\times}10^{-2}
+| 9.1 | 7.9 | 6.6 | 18.9 | 10.6 | \pi_{0} | DVAC \alpha{=}2
+| 4.4 | 5.3 | 4.5 | 12.5 | 6.7 | \pi_{0} | DVAC \alpha{=}3
+| 4.2 | 4.8 | 4.0 | 11.6 | 6.1 | Qwen2.5-vl-\pi — LIBERO | Qwen2.5-vl-\pi
+| Fixed-5 | 23.3 | 28.7 | 24.7 | 54.5 | 32.8 | Qwen2.5-vl-\pi
+| DVAC \tau{=}10^{-4}
+| 111.5 | 146.3 | 145.9 | 287.7 | 172.8 | Qwen2.5-vl-\pi
+| DVAC \tau{=}10^{-3}
+| 17.2 | 18.2 | 17.8 | 35.6 | 22.2 | Qwen2.5-vl-\pi
+| DVAC \tau{=}10^{-2}
+| 14.4 | 17.8 | 15.4 | 32.7 | 20.1 | Qwen2.5-vl-\pi
+| DVAC \alpha{=}1
+| 17.6 | 23.3 | 18.0 | 41.6 | 25.1 | Qwen2.5-vl-\pi
+| DVAC \alpha{=}2
+| 16.1 | 20.5 | 17.3 | 38.3 | 23.0 | Qwen3-vl-GR00T — LIBERO | Qwen3-vl-GR00T | Fixed-5 | 21.4 | 27.5 | 23.4 | 53.2 | 31.4 | Qwen3-vl-GR00T | DVAC \tau{=}10^{-3}
+| 30.6 | 40.7 | 30.6 | 93.5 | 48.8 | Qwen3-vl-GR00T | DVAC \tau{=}10^{-2}
+| 15.8 | 19.3 | 16.0 | 40.7 | 23.0 | Qwen3-vl-GR00T | DVAC \alpha{=}1
+| 16.6 | 20.9 | 20.0 | 52.8 | 27.6 | Qwen3-vl-GR00T | DVAC \alpha{=}2
+| 15.4 | 19.7 | 17.4 | 47.7 | 25.1
+Table 9: Per-task results on 16 RoboTwin tasks.
+Task | DP[26]
+| DP3[26]
+|
+\pi_{0.5}(baseline) | DVAC \alpha=2.0 | Blocks Ranking RGB | 0.000 | 0.020 | 0.380 | 0.450 | Blocks Ranking Size | 0.010 | 0.020 | 0.120 | 0.370 | Hanging Mug | 0.190 | 0.350 | 0.040 | 0.010 | Move Stapler Pad | 0.000 | 0.070 | 0.050 | 0.110 | Open Laptop | 0.530 | 0.770 | 0.900 | 0.900 | Open Microwave | 0.780 | 0.910 | 0.430 | 0.670 | Pick Diverse Bottles | 0.280 | 0.550 | 0.360 | 0.550 | Place A2B Left | 0.030 | 0.300 | 0.420 | 0.420 | Place A2B Right | 0.060 | 0.430 | 0.240 | 0.300 | Place Burger Fries | 0.800 | 0.750 | 0.480 | 0.580 | Place Dual Shoes | 0.040 | 0.090 | 0.250 | 0.270 | Place Empty Cup | 0.270 | 0.750 | 0.770 | 0.680 | Place Object Basket | 0.210 | 0.490 | 0.530 | 0.510 | Scan Object | 0.080 | 0.290 | 0.060 | 0.200 | Stack Blocks Three | 0.000 | 0.030 | 0.180 | 0.130 | Stack Bowls Three | 0.510 | 0.570 | 0.530 | 0.500 | Average | 0.237 | 0.399 | 0.359 | 0.416
+Figure 12:
+Per-task RoboTwin success rates under different variance thresholds.
+Figure 13:
+Time-series visualization of \log_{10}(V_{\mathrm{total}}) on LIBERO-Long episodes.
+Figure 14:
+Time-series visualization of \log_{10}(V_{\mathrm{total}}) on LIBERO-Goal episodes.
+Figure 15:
+Time-series visualization of \log_{10}(V_{\mathrm{total}}) on LIBERO-Object episodes.
+Figure 16:
+Time-series visualization of \log_{10}(V_{\mathrm{total}}) on LIBERO-Spatial episodes.
+Experimental support, please
+view the build logs
+for errors. Generated by
+L
+A
+T
+E
+xml
+.
+Instructions for reporting errors
+We are continuing to improve HTML versions of papers, and your feedback helps enhance accessibility and mobile
+support. To report errors in the HTML that will help us improve conversion and rendering, choose any of the
+methods listed below:
+Click the "Report Issue" (
+) button, located in the page header.
+Tip: You can select the relevant text first, to include it in your report.
+Our team has already identified the following issues. We appreciate your time reviewing and reporting rendering errors we
+may not have found yet. Your efforts will help us improve the HTML versions for all readers, because disability
+should not be a barrier to accessing research. Thank you for your continued support in championing open access for
+all.
+Have a free development cycle? Help support accessibility at arXiv! Our collaborators at LaTeXML maintain a list of packages that need conversion, and welcome developer contributions.
+We gratefully acknowledge support from
+our major funders,
+member institutions, ,
+and all contributors.
+About
+·
+Help
+·
+Contact
+·
+Subscribe
+·
+Copyright
+·
+Privacy
+·
+Accessibility
+·
+Operational Status (opens in new tab)
+Major funding support from

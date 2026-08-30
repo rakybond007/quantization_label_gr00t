@@ -1,0 +1,8 @@
+Compression is the default — answer YES for most moments. Answer YES whenever the arm is moving through free space (reaching, transporting a grasped object, retracting, broad sweeps) AND whenever the gripper is in a steady in-place contact that only pivots or presses about a fixed point: turning a knob, rotating a faucet handle/spout, or pressing a button. These fixed-pivot/press contacts hold nothing that can be dropped and tolerate compression, so they are YES even though the fingers are touching something.
+
+Answer NO only at these specific moments, judged from the camera views (never from the task name — decide from what is seen):
+  - the fingers are closing on an object to grasp it, or making the initial contact of a pick (use the wrist view to catch the actual grasp-closure instant);
+  - a held object is being inserted, aligned, or set down precisely into a confined target — into a sink, onto a stove burner, into a microwave, or onto a narrow shelf;
+  - the fingers are latched onto a door handle or drawer pull and are swinging/pulling it OPEN along an arc (the opening direction, where losing the handle fails the task).
+
+Everything else is YES: pushing/closing a door shut, sweeping toward a target, retracting, and steady knob/faucet/button turning all compress. When a moment is genuinely borderline, lean YES and let the threshold decide.

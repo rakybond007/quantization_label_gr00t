@@ -1,0 +1,247 @@
+"""Self-evolving guidance: one cycle of automatic prompt evolution.
+
+Reads the compression-safety baselines (raw, K2), the latest gate eval (+ the
+previous one for regression detection), the current guidance, and the evolution
+history; assembles them with a fixed meta-prompt (evolving_guide_prompt.txt);
+asks Claude (headless `claude -p`, subscription) to propose the next guidance;
+writes it to the live guidance file + a versioned copy + appends to the log.
+
+This automates the human-in-the-loop v0->v9 tuning into a closed loop:
+  eval -> aggregate -> evolve (this script) -> eval -> ...
+
+Usage:
+  python scripts/evolve_gate_prompt.py \
+    --gate output/robocasa/vlm_gate_gemma4_v9 \
+    --prev-gate output/robocasa/vlm_gate_gemma4_tau0p5_mv_guide \
+    [--dry-run]
+"""
+import argparse
+import csv
+import datetime as _dt   # only for stamping the log line (not used for logic)
+import json
+import os
+import subprocess
+
+ROBO = "output/robocasa"
+GUIDE_META = "scripts/evolving_guide_prompt.txt"
+GUIDE_FILE = "run_scripts/eval/vlm_gate_guidance.txt"
+LOG = "analysis/_evolver/evolution_log.jsonl"
+VER_DIR = "analysis/_evolver/guidance_versions"
+
+
+def succ(path):
+    if not os.path.isfile(path):
+        return None
+    n = s = 0
+    for ln in open(path):
+        if ln.startswith("episode ") and "is_success:" in ln:
+            n += 1
+            if "True" in ln.split("is_success:", 1)[1].split("action_steps")[0]:
+                s += 1
+    return s / n if n else None
+
+
+def succ_steps(path):
+    """Mean action_steps over SUCCESSFUL episodes only (the protocol metric: failed
+    episodes saturate at max_step and corrupt the signal)."""
+    if not os.path.isfile(path):
+        return None
+    vals = []
+    for ln in open(path):
+        if ln.startswith("episode ") and "is_success:" in ln:
+            tail = ln.split("is_success:", 1)[1]
+            if "True" in tail.split("action_steps")[0] and "action_steps:" in tail:
+                try:
+                    vals.append(int(tail.split("action_steps:", 1)[1].split()[0]))
+                except (ValueError, IndexError):
+                    pass
+    return sum(vals) / len(vals) if vals else None
+
+
+def quant(d):
+    f = f"{d}/gate_conf.csv"
+    if not os.path.isfile(f) or os.path.getsize(f) < 50:
+        return None
+    q = tot = 0
+    for r in csv.DictReader(open(f)):
+        try:
+            q += int(r["quantize"]); tot += 1
+        except (KeyError, ValueError):
+            pass
+    return q / tot if tot else None
+
+
+def build_table(raw, k2, gate, prev):
+    tasks = sorted(t for t in os.listdir(gate) if os.path.isdir(f"{gate}/{t}"))
+    rows = []
+    for t in tasks:
+        r = succ(f"{ROBO}/{raw}/{t}/prediction.txt")
+        k = succ(f"{ROBO}/{k2}/{t}/prediction.txt")
+        g = succ(f"{gate}/{t}/prediction.txt")
+        if None in (r, k, g):
+            continue
+        cat = "HARMFUL" if (k - r) <= -0.12 else ("SAFE" if (k - r) >= -0.03 else "moderate")
+        qv = quant(f"{gate}/{t}")
+        gst = succ_steps(f"{gate}/{t}/prediction.txt")          # gate succ-only steps
+        rst = succ_steps(f"{ROBO}/{raw}/{t}/prediction.txt")    # raw succ-only steps
+        pv = succ(f"{prev}/{t}/prediction.txt") if prev else None
+        # verdict
+        if cat == "SAFE" and qv is not None and qv < 0.40:
+            verdict = "UNDER-QUANT (missed safe speedup)"
+        elif cat == "HARMFUL" and qv is not None and qv >= 0.50 and g <= k + 0.05:
+            verdict = "OVER-QUANT (no protection)"
+        elif pv is not None and g <= pv - 0.10:
+            verdict = f"REGRESSION vs prev ({pv:.2f}->{g:.2f})"
+        else:
+            verdict = "ok"
+        rows.append((t, cat, r, k, g, qv, gst, rst, pv, verdict))
+    return rows
+
+
+def _mean(xs):
+    xs = [x for x in xs if x is not None]
+    return sum(xs) / len(xs) if xs else None
+
+
+def aggregate(rows):
+    """Macro success/steps/quant overall and per SAFE/HARMFUL cluster — so the
+    evolver sees the DUAL objective and any conservative drift, not just success."""
+    def cl(c):
+        return [x for x in rows if x[1] == c]
+    fmtp = lambda v: f"{100 * v:.0f}%" if v is not None else "-"
+    fmts = lambda v: f"{v:.0f}" if v is not None else "-"
+    a = []
+    a.append("===== AGGREGATE (read THIS first; decide direction from here) =====")
+    a.append(f"macro success: raw={_mean([x[2] for x in rows]):.3f}  "
+             f"K2={_mean([x[3] for x in rows]):.3f}  gate={_mean([x[4] for x in rows]):.3f}")
+    a.append(f"macro succ-only steps: raw={fmts(_mean([x[7] for x in rows]))}  "
+             f"gate={fmts(_mean([x[6] for x in rows]))}   (lower gate = more compression)")
+    a.append(f"macro gate compression (quant%): {fmtp(_mean([x[5] for x in rows]))}")
+    for c in ("SAFE", "HARMFUL", "moderate"):
+        rs = cl(c)
+        if rs:
+            a.append(f"  {c:<8} cluster (n={len(rs)}): mean quant={fmtp(_mean([x[5] for x in rs]))}  "
+                     f"gate_succ={_mean([x[4] for x in rs]):.3f}  raw_succ={_mean([x[2] for x in rs]):.3f}  "
+                     f"gate_steps={fmts(_mean([x[6] for x in rs]))}")
+    a.append("  -> SAFE wants HIGH quant (headroom); HARMFUL wants LOW quant (protect).")
+    return "\n".join(a)
+
+
+def macros(rows):
+    return {
+        "succ": round(_mean([x[4] for x in rows]), 3) if rows else 0,
+        "steps": round(_mean([x[6] for x in rows]) or 0) if rows else 0,
+        "quant": round(100 * (_mean([x[5] for x in rows]) or 0)) if rows else 0,
+    }
+
+
+def fmt_table(rows):
+    out = [f"{'task':<22}{'cat':<9}{'raw':>5}{'K2':>5}{'gate':>5}{'quant':>6}{'g_st':>6}{'r_st':>6}{'prev':>6}  verdict",
+           "-" * 90]
+    for t, cat, r, k, g, qv, gst, rst, pv, v in rows:
+        out.append(f"{t:<22}{cat:<9}{r:>5.2f}{k:>5.2f}{g:>5.2f}"
+                   f"{(f'{100*qv:.0f}%' if qv is not None else '-'):>6}"
+                   f"{(f'{gst:.0f}' if gst is not None else '-'):>6}"
+                   f"{(f'{rst:.0f}' if rst is not None else '-'):>6}"
+                   f"{(f'{pv:.2f}' if pv is not None else '-'):>6}  {v}")
+    m = lambda i: _mean([x[i] for x in rows]) or 0
+    out.append("-" * 90)
+    out.append(f"{'MEAN':<22}{'':<9}{m(2):>5.2f}{m(3):>5.2f}{m(4):>5.2f}")
+    return "\n".join(out)
+
+
+def history_text():
+    if not os.path.isfile(LOG):
+        return "(no prior cycles)"
+    lines = []
+    for ln in open(LOG):
+        try:
+            e = json.loads(ln)
+            lines.append(
+                f"- {e.get('version','?')}: succ={e.get('macro_succ','?')} "
+                f"steps={e.get('macro_steps','?')} quant={e.get('macro_quant','?')}% "
+                f"| {e.get('change','')[:140]}")
+        except Exception:
+            pass
+    return ("\n".join(lines)
+            + "\n(watch the trend: if steps rose / quant fell across cycles "
+              "without succ rising, the loop is over-compressing's opposite — "
+              "drifting conservative; restore compression.)") or "(no prior cycles)"
+
+
+def call_claude(prompt, model):
+    cmd = ["claude", "-p", "--output-format", "json"]
+    if model:
+        cmd += ["--model", model]
+    p = subprocess.run(cmd, input=prompt, capture_output=True, text=True, timeout=600)
+    if p.returncode != 0:
+        raise RuntimeError(f"claude -p failed: {p.stderr[:500]}")
+    env = json.loads(p.stdout)
+    text = env.get("result", "") if isinstance(env, dict) else str(env)
+    # extract JSON object from the model's text (may be fenced)
+    s = text.strip()
+    if "```" in s:
+        s = s.split("```", 2)[1]
+        s = s[4:] if s.lower().startswith("json") else s
+    s = s[s.find("{"): s.rfind("}") + 1]
+    return json.loads(s)
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument("--raw", default="baseline_full_v2_with_action_steps")
+    p.add_argument("--k2", default="baseline_compress_K2")
+    p.add_argument("--gate", required=True, help="latest gate result dir (under cwd)")
+    p.add_argument("--prev-gate", default=None, help="previous gate dir (regression detection)")
+    p.add_argument("--model", default="claude-opus-4-8")
+    p.add_argument("--guidance-file", default=GUIDE_FILE, help="guidance file to read current + write next")
+    p.add_argument("--dry-run", action="store_true", help="print proposed guidance, do not write")
+    args = p.parse_args()
+
+    rows = build_table(args.raw, args.k2, args.gate, args.prev_gate)
+    mac = macros(rows)
+    macro = mac["succ"]
+    cur_guidance = open(args.guidance_file).read()
+    meta = open(GUIDE_META).read()
+
+    prompt = (
+        meta
+        + "\n\n===== CURRENT GUIDANCE =====\n" + cur_guidance
+        + "\n\n" + aggregate(rows)
+        + "\n\n===== LATEST EVAL (per-task) =====\n" + fmt_table(rows)
+        + "\n\n===== EVOLUTION HISTORY (succ / steps / quant per cycle) =====\n" + history_text()
+        + "\n\nPropose the next guidance now as the specified JSON object."
+    )
+
+    res = call_claude(prompt, args.model)
+    print("=== AGGREGATE READ ===\n" + res.get("aggregate_read", ""))
+    print("\n=== DIAGNOSIS ===\n" + res.get("diagnosis", ""))
+    print("\n=== CHANGE ===\n" + res.get("change", ""))
+    print("\n=== TARGETS ===", res.get("target_tasks"))
+    print("\n=== PREDICTED EFFECT ===\n" + res.get("predicted_effect", ""))
+    print("\n=== NEW GUIDANCE ===\n" + res.get("new_guidance", ""))
+
+    if args.dry_run:
+        print("\n[dry-run] not writing.")
+        return
+
+    os.makedirs(os.path.dirname(LOG), exist_ok=True)
+    os.makedirs(VER_DIR, exist_ok=True)
+    n_prev = len([f for f in os.listdir(VER_DIR)]) if os.path.isdir(VER_DIR) else 0
+    ver = f"v{n_prev + 1}_auto"
+    open(f"{VER_DIR}/{ver}.txt", "w").write(res["new_guidance"].strip() + "\n")
+    open(args.guidance_file, "w").write(res["new_guidance"].strip() + "\n")
+    with open(LOG, "a") as f:
+        f.write(json.dumps({
+            "version": ver, "gate_dir": args.gate,
+            "macro_succ": macro, "macro_steps": mac["steps"], "macro_quant": mac["quant"],
+            "aggregate_read": res.get("aggregate_read"),
+            "diagnosis": res.get("diagnosis"), "change": res.get("change"),
+            "target_tasks": res.get("target_tasks"), "predicted_effect": res.get("predicted_effect"),
+        }) + "\n")
+    print(f"\n[written] {args.guidance_file}  +  {VER_DIR}/{ver}.txt  +  logged "
+          f"({ver}, succ={macro} steps={mac['steps']} quant={mac['quant']}%)")
+
+
+if __name__ == "__main__":
+    main()

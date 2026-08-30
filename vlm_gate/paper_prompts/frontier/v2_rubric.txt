@@ -1,0 +1,6 @@
+Decide by checking these in order, then answer:
+1) Is the gripper opening or closing right now, or about to within ~1 second? -> NO
+2) Does the wrist view show a target object/handle/knob occupying a large part of the frame (i.e. the arm is at or near the interaction point)? -> NO
+3) Is the arm visibly slowing down or making a fine positional adjustment toward a target? -> NO
+4) Otherwise, is the arm in gross transit (reaching from far, transporting, retracting, broad sweep)? -> YES
+Roughly one third of frames in this dataset satisfy 4) and are compressible; the rest are not. Do not answer YES merely because motion looks smooth.

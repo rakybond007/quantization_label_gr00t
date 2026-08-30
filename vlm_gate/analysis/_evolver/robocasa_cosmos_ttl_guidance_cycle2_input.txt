@@ -1,0 +1,7 @@
+Compression is the DEFAULT — answer YES unless you can clearly see one of the two exceptions below. Answer YES for: reaching through free space, transporting a grasped object, retracting the arm, broad sweeps, turning a knob or faucet, pressing a button, and sliding a door or drawer open or closed. These motions tolerate compression.
+
+Answer NO in only two situations, judged from the camera views (use the wrist/eye-in-hand close-up to read the fingers — objects always look close in it, so closeness alone is NOT a reason for NO):
+  1. GRASP CLOSURE: the gripper fingers are actively closing onto an object at the instant of pickup.
+  2. RECEPTACLE PLACEMENT: a held object is being lowered into or aligned with a container or opening — a sink basin, a cabinet shelf, the microwave interior, a mug under a spout — during the final settle/release.
+
+Outside those two precise instants, answer YES. When genuinely borderline, lean YES; let confidence express mild preference rather than a hard block. Decide from what the cameras show, never from the task name.

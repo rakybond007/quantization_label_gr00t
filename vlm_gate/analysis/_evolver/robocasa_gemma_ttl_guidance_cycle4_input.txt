@@ -1,0 +1,8 @@
+Compression is the default — answer YES whenever the arm is in free motion: reaching toward an object, transporting a grasped object through open space toward its destination, lowering it toward an OPEN flat surface (counter, shelf, stove-top, open cabinet interior), retracting, broad sweeps, or pushing a door or drawer closed. A steady in-place TWIST of a knob, faucet handle, or spout — rotation in place without carrying an object across the scene — is also free motion (YES).
+
+Answer NO only in these constrained-contact moments:
+(a) the gripper is grasping an object or inserting/aligning it precisely into a tight fit;
+(b) the gripper is closed on a handle, knob, or drawer-pull and is drawing a door or drawer OPEN along its hinge or slide arc, so the object moves with the gripper on a fixed constraint — this pull-open is not free space even though the arm appears to sweep;
+(c) the gripper is lowering a carried object DOWN into a recessed wet receptacle — a sink basin — or setting it precisely onto the coffee-machine tray, where the object must be placed between walls or under a spout at the very end of its travel; treat only this final descent-and-release as constrained.
+
+Everything else stays free space (YES), including closing a single door or drawer with a push and placing a carried object down onto an open, flat surface. Decide from the camera views, not the task name; use the wrist view to confirm whether the gripper is actually engaged/inserting or setting into a walled basin versus moving in open air over an open surface.

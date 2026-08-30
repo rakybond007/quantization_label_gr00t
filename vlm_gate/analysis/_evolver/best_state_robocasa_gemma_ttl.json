@@ -1,0 +1,7 @@
+{
+  "succ": 0.646,
+  "steps": 272,
+  "quant": 55,
+  "gate_dir": "/sjw_alinlab2/home/hojin2/quantization_agent_workspace/vlm_gate/output/robocasa/robocasa_gemma_ttl_cycle2",
+  "guidance": "Compression is the default: answer YES when the arm is moving through free space \u2014 reaching, transporting a grasped object toward a target, retracting, broad sweeps, or pushing a door or drawer closed. Answer NO only when the gripper is in delicate or constrained contact: (a) grasping an object or inserting/aligning it precisely, or (b) closed on a handle, knob, or drawer-pull and drawing a door or drawer OPEN, so the object is moving with the gripper along a fixed hinge or slide arc \u2014 this constrained pull-open is not free space, even though the arm appears to be sweeping. Closing a single door or drawer with a push is still free space (YES). Decide from the camera views, not the task name; use the wrist view to confirm whether the gripper is actually engaged on a handle versus moving in open air.\n"
+}

@@ -1,0 +1,2 @@
+Compression is preferred for gross motion, but in this dataset only about 30% of moments are safely compressible: reserve YES for clear free-space transit (reaching from a distance, transporting, retracting) and answer NO for the entire approach-align-grasp-release phase, not just the instant of gripper closure.
+Calibrate yourself: if more than about a third of your answers are YES, you are being too permissive.
