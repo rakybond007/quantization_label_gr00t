@@ -82,21 +82,31 @@ bin/qgate labels v6b_phase6_s16 --expected 247887
 python vlm_gate/scripts/aggregate_phase6.py
 python vlm_gate/scripts/recompute_soft_phase6.py
 
-# 4. Train the student, smoke first
+# 4. Score the labels against what compression actually costs — never skip this
+bin/qgate labelcheck assets/labels/robocasa/<new>.parquet \
+    --dataset <lerobot root> --reference assets/labels/robocasa/v6b_phase5_softA.parquet
+
+# 5. Train the student, smoke first
 bash   vlm_gate/run_scripts/train/_smoke_train_phase6.sh
 sbatch vlm_gate/run_scripts/train/sbatch_train_phase6_softA.sh
 
-# 5. Evaluate, then judge
+# 6. Evaluate, then judge
 bin/qgate tradeoff robocasa --fast baseline_compress_K2 \
     --slow baseline_full_v2_with_action_steps
 ```
 
-**Step 2 is not optional.** These labelling jobs end on a `kill`, so they exit
+**Steps 2 and 4 are not optional.** These labelling jobs end on a `kill`, so they exit
 0 no matter what happened before it, and a shard that gets preempted and
 requeued can re-emit rows it already wrote. The verdict has to come from the
 rows on disk. `qgate labels` counts them per shard, finds duplicate
-`(episode, frame)` pairs, and reports the spread of every answer slot — a
-question whose answers never vary separates nothing, whatever its mean.
+`(episode, frame)` pairs, and reports the spread of every answer slot.
+
+Step 4 is the one that was missing. A label set is only worth training on if it
+ranks tasks the way compression damage ranks them — `qgate labelcheck` measures
+that against the uncompressed and blanket-K=2 runs you already have. The phase6
+generation passed every other check, revived the dead question it was written to
+revive, and scored +0.019 against phase5's +0.420. Lively questions are a
+property of the questions, not of the labels.
 
 ## Reading results
 

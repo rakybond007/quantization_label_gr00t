@@ -1,4 +1,8 @@
 #!/bin/bash
+# REJECTED — do not run. The phase6 labels this trains on rank tasks
+# uncorrelated with what compression actually costs them: Spearman against
+# measured per-task K=2 damage is +0.019, against +0.420 for phase5.
+# Check any new generation first:  qgate labelcheck <parquet> --reference <phase5>
 # phase6(5문항) softA 라벨로 학생 학습 — 스모크 1에폭. 산출물이 나오면 본학습 sbatch.
 # 계산층·집계식·학습설정을 phase5 softA 와 동일하게 두어 프롬프트만 달라지게 한다.
 set -u

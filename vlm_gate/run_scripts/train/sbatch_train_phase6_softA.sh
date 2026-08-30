@@ -1,4 +1,8 @@
 #!/bin/bash
+# REJECTED — do not run. The phase6 labels this trains on rank tasks
+# uncorrelated with what compression actually costs them: Spearman against
+# measured per-task K=2 damage is +0.019, against +0.420 for phase5.
+# Check any new generation first:  qgate labelcheck <parquet> --reference <phase5>
 #SBATCH --job-name=train_gate_module_A_phase6_five_axis_prompt_softA_matched_to_phase5_control
 #SBATCH --nodes=1
 #SBATCH --gpus=1
