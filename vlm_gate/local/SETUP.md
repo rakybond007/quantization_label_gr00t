@@ -7,27 +7,52 @@
 에이전트는 명령마다 ssh를 부른다. 매번 새로 붙으면 느리고 서버에도 부담이다.
 `~/.ssh/config`에 아래를 넣으면 연결 하나를 10분간 재사용한다.
 
+세 대의 로그인 노드가 같은 `/sjw_alinlab` 를 공유한다. 어느 쪽으로 붙어도
+파일과 slurm 큐는 같다 — 고르는 기준은 그 노드의 부하뿐이다.
+
 ```
-Host login-node1
-    HostName        <서버 주소>
+Host rlwrld2_0 rlwrld2_1 rlwrld2_2
     User            hojin2
+    IdentityFile    ~/.ssh/id_rlwrld2
     ControlMaster   auto
     ControlPath     ~/.ssh/cm-%r@%h:%p
     ControlPersist  10m
     ServerAliveInterval 30
+
+Host rlwrld2_0
+    HostName 210.109.80.159
+Host rlwrld2_1
+    HostName 210.109.80.118
+Host rlwrld2_2
+    HostName 210.109.80.237
 ```
 
-키 로그인이 되는지 먼저 확인: `ssh login-node1 hostname` → `login-node1` 이 나와야 한다.
-비밀번호를 묻는다면 `ssh-copy-id login-node1` 로 키를 올린다.
+| 별칭 | 노드 | 2026-08-31 관측 |
+|---|---|---|
+| `rlwrld2_2` | login-node2 | load 3, 11명, 여유 113G — **기본값** |
+| `rlwrld2_1` | login-node3 | load 14, 56명, 여유 38G |
+| `rlwrld2_0` | login-node1 | 동시 로그인 한도 초과로 거부 중 |
+
+`rlwrld2_0` 은 `There were too many logins for 'hojin2'` 로 막힌다. 세션이 남아
+있어서지 서버가 죽은 게 아니다. 붙는 노드를 바꿀 일이 생기면 `DEV_HOST` 만
+바꾸면 된다 — tmux 세션은 노드마다 따로 살아있으므로 `dev up` 을 다시 한다.
+
+키 로그인 확인: `ssh rlwrld2_2 hostname` → `login-node2` 가 나와야 한다.
 
 ### 2. 저장소 클론
 
 ```bash
-git clone -b action-quantization-gate-v2 \
-  git@github.com:rakybond007/GR00T-action-quantization.git ~/quant
-cd ~/quant
-export DEV_HOST=login-node1      # ~/.zshrc 에도 넣어두기
+git clone git@github.com:rakybond007/quantization_label_gr00t.git
+cd quantization_label_gr00t
+export DEV_HOST=rlwrld2_2        # ~/.zshrc 에도 넣어두기
 ```
+
+이 저장소가 지금의 원본이다. `GR00T-action-quantization` 의
+`action-quantization-gate-v2` 브랜치가 예전 자리였는데, 8/30 에 작업 트리
+전체를 옮겨 담으면서 대체됐다 — 두 이력은 이어져 있지 않으니 옛 브랜치를
+참고하지 말 것. (`GR00T-action-quantization` 의 `action-quantization-impl`
+브랜치는 아직 살아있는 별개의 줄기다: `~/multigpu_workspace` 의 ATQ
+MoE·라우터 작업.)
 
 이 디렉터리에서 Claude Code를 연다. 루트의 `CLAUDE.md`가 자동으로 읽힌다.
 
@@ -37,10 +62,10 @@ export DEV_HOST=login-node1      # ~/.zshrc 에도 넣어두기
 `gemini_key`, `openai_key`가 평문으로 있다. 맥북으로 내리고 서버에서 지운다.
 
 ```bash
-scp login-node1:~/quantization_agent_workspace/gemini_key ~/.config/quant/gemini_key
-scp login-node1:~/quantization_agent_workspace/openai_key ~/.config/quant/openai_key
+scp rlwrld2_2:~/quantization_agent_workspace/gemini_key ~/.config/quant/gemini_key
+scp rlwrld2_2:~/quantization_agent_workspace/openai_key ~/.config/quant/openai_key
 chmod 600 ~/.config/quant/*
-ssh login-node1 'shred -u ~/quantization_agent_workspace/gemini_key ~/quantization_agent_workspace/openai_key'
+ssh rlwrld2_2 'shred -u ~/quantization_agent_workspace/gemini_key ~/quantization_agent_workspace/openai_key'
 ```
 
 이후 API를 쓰는 잡은 키를 그때만 주입한다:

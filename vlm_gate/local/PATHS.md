@@ -14,6 +14,9 @@
 | `gr00t` | `$WS/Isaac-GR00T/gr00t` |
 | `tools` | `$WS/tools` |
 
+`vlm_gate/qgate` 와 `bin/qgate` 는 이 표에 없다 — `dev` 가 올리지 않는다.
+읽기 도구를 고쳤으면 커밋하고 서버에서 `git pull` 해야 반영된다.
+
 주의: 서버의 `$WS/Isaac-GR00T/vlm_gate`는 **git 씨앗일 뿐 실제 작업 트리가 아니다.**
 스크립트들이 `$WS/vlm_gate` 를 하드코딩하고 있다. 그쪽을 고치지 말 것.
 
@@ -70,6 +73,12 @@ gr00t import를 깨뜨림 → npz가 numpy2 pickle로 저장됨).
 
 | 저장소 | 리모트 | 브랜치 |
 |---|---|---|
-| 본 저장소 | `quant` = `rakybond007/GR00T-action-quantization` | `action-quantization-gate-v2` |
-| | `origin` = `ismty0805/Isaac-GR00T` (업스트림, 푸시 금지) | |
+| **본 저장소** | `origin` = `rakybond007/quantization_label_gr00t` | `main` |
+| N1.7 이식본 | `rakybond007/gr00t-n17-quant-gate` | `main` |
+| ATQ MoE·라우터 (별개 줄기) | `rakybond007/GR00T-action-quantization` | `action-quantization-impl` |
 | alin-skills | `alinlab/alin-skills` | `add-work-board` (PR 대기 중) |
+
+`GR00T-action-quantization` 의 `action-quantization-gate-v2` 는 이 저장소로
+옮겨오기 전 자리다. 이력이 이어져 있지 않으므로 거기서 무언가를 가져오지 말 것.
+서버의 `$WS/Isaac-GR00T` 가 아직 그 브랜치에 있는데, 그건 gr00t 코드를 얹어두는
+자리일 뿐 이 프로젝트의 원본이 아니다.

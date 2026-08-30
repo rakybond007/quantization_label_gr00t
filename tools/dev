@@ -14,9 +14,12 @@
 #   dev keys '<원문>'           원문 키 전송, 대기 없음 (pdb 명령, C-c 등)
 #   dev sync                    코드만 올리기
 #   dev where                   세션이 지금 어느 노드에 있나
+#   dev hosts                   로그인 노드 3대의 부하를 보고 어디에 붙을지 고른다
 #   dev free                    할당 반납        dev down   세션 종료
 set -uo pipefail
-HOST="${DEV_HOST:?export DEV_HOST=hojin2@login-node1 을 먼저 설정하세요}"
+# 로그인 노드 세 대는 같은 /sjw_alinlab 을 공유한다. 어디에 붙어도 파일과 큐는
+# 같으니, 고르는 기준은 부하뿐이다. 'dev hosts' 로 보고 DEV_HOST 로 바꾼다.
+HOST="${DEV_HOST:-rlwrld2_2}"
 ROOT="${DEV_ROOT:-quantization_agent_workspace}"      # 서버 홈 기준 상대경로
 S="${DEV_SESSION:-dev}"
 RUNDIR=".dev_run"
@@ -47,7 +50,7 @@ sync_code() {
 
 case "${1:-}" in
 up)
-  sshx "tmux has-session -t $S 2>/dev/null || tmux new-session -d -s $S -c '~/$ROOT'
+  sshx "tmux has-session -t $S 2>/dev/null || tmux new-session -d -s $S -c \"\$HOME/$ROOT\"
         mkdir -p ~/$RUNDIR
         echo \"세션 $S 준비 — \$(tmux display -p -t $S '#{pane_current_path}')\""
   ;;
@@ -78,6 +81,18 @@ run|bg)
 tail)  id=$(cat .dev_last 2>/dev/null); sshx "tail -n ${2:-60} ~/$RUNDIR/$id.log 2>/dev/null || echo '(출력 없음)'" ;;
 cap)   sshx "tmux capture-pane -t $S -p -S -${2:-80}" ;;
 keys)  shift; sshx "tmux send-keys -t $S '$*' Enter" ;;
+hosts)
+  # tmux 세션은 노드마다 따로 산다 — DEV_HOST 를 바꿨으면 'dev up' 을 다시 할 것.
+  printf '%-11s %-12s %7s %6s %6s  %s\n' alias node load1m users freeGB state
+  for h in rlwrld2_2 rlwrld2_1 rlwrld2_0; do
+    mark=''; [ "$h" = "$HOST" ] && mark='  <- DEV_HOST'
+    if out=$(ssh $SSHOPT -o BatchMode=yes -o ConnectTimeout=10 "$h" \
+      'printf "%s %s %s %s" "$(hostname)" "$(cut -d" " -f1 /proc/loadavg)" "$(who|wc -l)" "$(free -g|awk "/^Mem:/{print \$7}")"' 2>&1)
+    then printf '%-11s %-12s %7s %6s %6s  ok%s\n' "$h" $out "$mark"
+    else printf '%-11s %-12s %7s %6s %6s  %s\n' "$h" - - - - "$(printf '%s' "$out" | grep -m1 . || echo 붙지못함)"
+    fi
+  done
+  ;;
 where) exec "$0" run 'hostname; echo "SLURM_JOB_ID=${SLURM_JOB_ID:-없음(로그인노드)}"; pwd' ;;
 sync)  sync_code && echo "코드 동기화 완료" ;;
 free)  sshx "tmux send-keys -t $S 'exit' Enter"; echo "할당 반납" ;;

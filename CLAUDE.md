@@ -19,10 +19,15 @@
 ## 기본 루프
 
 ```bash
+tools/dev hosts               # 로그인 노드 3대 중 어디가 한가한지
 tools/dev up                  # 하루에 한 번
 tools/dev alloc --gpus=1      # 대기열은 이때 한 번만 선다
 tools/dev run 'python vlm_gate/scripts/foo.py --limit 4'   # 이후 전부 그 GPU 노드 안에서
 ```
+
+`DEV_HOST` 기본값은 `rlwrld2_2`(login-node2)다. 세 노드는 같은 `/sjw_alinlab` 과
+같은 slurm 큐를 보므로 어디에 붙어도 결과는 같다 — 고르는 기준은 부하뿐이다.
+바꾸면 `dev up` 을 다시 해야 한다(tmux 세션이 노드마다 따로 산다).
 
 `dev run`은 바뀐 코드를 먼저 올리고(코드만 ~3MB), 서버에서 돌리고, **출력 전문과 종료코드**를
 돌려준다. traceback이 그대로 온다. tmux 셸이 살아있어서 `cd`/`export`/`conda activate`/
@@ -48,7 +53,21 @@ tools/dev run 'python vlm_gate/scripts/foo.py --limit 4'   # 이후 전부 그 G
 - `vlm_gate/local/STATE.md` — 현재 연구 진행 상황
 - `vlm_gate/local/memory/` — 이전 세션에서 쌓인 교훈 (읽고 시작할 것)
 
+## 헷갈리기 쉬운 이웃 저장소
+
+같은 서버 홈에 비슷한 이름의 줄기가 셋 있다. 이 저장소만 이 프로젝트의 원본이다.
+
+| | 서버 위치 | 무엇 |
+|---|---|---|
+| **이 저장소** | `~/quantization_agent_workspace` | VLM 티처 라벨 → 학생 게이트 증류 (지금 하는 일) |
+| `GR00T-action-quantization` | `~/multigpu_workspace` | ATQ MoE 디코더 + 라우터. 별개로 살아있는 줄기 |
+| `gr00t-n17-quant-gate` | `~/quantization_agent_workspace/groot-n17-quant-gate` | 이 게이트의 N1.7 이식본 |
+
+`GR00T-action-quantization` 의 `action-quantization-gate-v2` 브랜치는 이 저장소가
+생기기 전 자리다. 8/30 에 작업 트리를 통째로 옮겨 담았고 **두 이력은 이어져 있지
+않다.** 그 브랜치에서 코드를 가져오지 말 것.
+
 ## 커밋
 
-맥북의 클론이 코드의 원본이다. 의미 있는 진전마다 커밋하고 `quant` 리모트에 푸시한다.
+맥북의 클론이 코드의 원본이다. 의미 있는 진전마다 커밋하고 `origin`(rakybond007/quantization_label_gr00t)에 푸시한다.
 `dev`의 rsync는 이터레이션용 임시 전송일 뿐 이력이 아니다.
