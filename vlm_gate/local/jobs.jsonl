@@ -4,3 +4,5 @@
 {"id":"145369","what":"N1.7 joint training, gate (softA)","expect":{"kind":"path","path":"assets/checkpoints/n17_robocasa_gate_m60k_softA/checkpoint-60000"}}
 {"id":"145370","what":"N1.7 joint training, baseline (matched)","expect":{"kind":"path","path":"assets/checkpoints/n17_robocasa_baseline_m60k_softA/checkpoint-60000"}}
 {"id": "145075", "what": "LIBERO dense labelling, first attempt", "expect": {"kind": "labels", "tag": "libero_v1_s16"}}
+{"id": "148466", "what": "phase6 closed loop, matched to phase5 softA", "expect": {"kind": "glob", "path": "vlm_gate/output/robocasa/phase6_softA_module_tau0p5/*/prediction.txt", "min": 24}}
+{"id": "148511", "what": "phase6-nomerge student (clip flag dropped)", "expect": {"kind": "path", "path": "assets/modules_A/robocasa_module_A_phase6_softA_nomerge/gate_module_best.pt"}}

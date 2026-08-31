@@ -64,12 +64,13 @@ def auc_ci(y, s, B=2000, seed=0):
 
 
 gens = {}
-for tag in ("phase5", "phase6"):
-    d = pd.read_parquet(f"{LAB}/v6b_{tag}_softA.parquet",
+TAGS = ("phase5_softA", "phase6_softA", "phase6_softA_nomerge")
+for tag in TAGS:
+    d = pd.read_parquet(f"{LAB}/v6b_{tag}.parquet",
                         columns=["episode_index", "frame_index", "task", COL])
     gens[tag] = d.rename(columns={"episode_index": "ep", "frame_index": "f", COL: "p"})
 
-eps = sorted(set(gens["phase5"].ep.unique()) & set(gens["phase6"].ep.unique()))
+eps = sorted(set.intersection(*[set(g.ep.unique()) for g in gens.values()]))
 rng = np.random.default_rng(0)
 eps = sorted(rng.choice(eps, size=min(N_EP, len(eps)), replace=False))
 print(f"sampled {len(eps)} episodes\n")

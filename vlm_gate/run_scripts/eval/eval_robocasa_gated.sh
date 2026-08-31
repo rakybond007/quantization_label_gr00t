@@ -4,7 +4,6 @@
 #SBATCH --nodes=1
 #SBATCH --gpus=2
 #SBATCH --partition=background
-#SBATCH --exclude=worker-node100
 #SBATCH --array=0-7
 #SBATCH --output=out/%A_%a-eval_robocasa_gated.out
 #SBATCH --error=out/%A_%a-eval_robocasa_gated.err

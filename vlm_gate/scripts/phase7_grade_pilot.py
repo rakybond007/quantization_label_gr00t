@@ -29,6 +29,7 @@ from PIL import Image
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from vlm_gate import VLMGate  # noqa: E402
+from robocasa_descriptors import descriptors, facts_text  # noqa: E402
 
 BASE = os.path.expanduser("~/quantization_agent_workspace/vlm_gate")
 DS = ("/sjw_alinlab2/home/myungkyu/.cache/huggingface/lerobot/kimtaey/"
@@ -71,6 +72,22 @@ ASK_GRADED = (
     "  1 = it plainly does not hold\n"
     "A grade refers only to the check on that line.\n" + _AXES + "Answer:")
 
+info = json.load(open(f"{DS}/meta/info.json"))
+_acts = {}
+
+
+def actions(ep):
+    """Episode actions, needed for the computed facts the questions refer to."""
+    if ep not in _acts:
+        ch = ep // info["chunks_size"]
+        try:
+            _acts[ep] = np.stack(pd.read_parquet(
+                f"{DS}/data/chunk-{ch:03d}/episode_{ep:06d}.parquet")["action"].values)
+        except Exception:
+            _acts[ep] = None
+    return _acts[ep]
+
+
 instr = {}
 for line in open(f"{DS}/meta/episodes.jsonl"):
     d = json.loads(line)
@@ -95,10 +112,22 @@ for nm in names:
     try:
         ep = int(nm.split("ep")[1].split("_")[0])
         fr = int(nm.split("_f")[1])
-        views = [Image.open(f"{TILES}/{nm}.png").convert("RGB")]
     except Exception:
         continue
-    ins = instr.get(ep, "")
+    a = actions(ep)
+    if a is None or fr >= len(a) - 4:
+        continue
+    try:
+        im = np.array(Image.open(f"{TILES}/{nm}.png").convert("RGB"))
+        h, w, _ = im.shape
+        views = [Image.fromarray(im[:, k * w // 3:(k + 1) * w // 3]) for k in range(3)]
+    except Exception:
+        continue
+    # The questions open with "the measurements above already tell you..." — so the
+    # measurements have to be there. Without them the model is told not to repeat
+    # something it was never given.
+    x = descriptors(a, fr)
+    ins = f"{instr.get(ep, '')}\n{facts_text(x)}"
     try:
         rb = gate.judge(views, ins, G, question=ASK_BINARY, n_ask=5)
         rg = gate.judge(views, ins, G, question=ASK_GRADED, n_ask=5, n_grade=NGRADE)
