@@ -98,6 +98,14 @@ def run_server(model_id, port, host, max_new_tokens, dtype):
     N_IDS = _first_ids(["N", " N", "n", " n"])
     print(f"[judge] Y ids={Y_IDS} N ids={N_IDS}", flush=True)
 
+    # Graded slots. The binary path reads two token groups at the answer slot;
+    # nothing about it is specific to two. Reading N grade tokens instead gives
+    # the model a scale to choose on AND keeps the full distribution over that
+    # scale, which an API cannot do — top_logprobs truncates at 5, which is why
+    # a 20-level API run collapsed while a 10-level one held.
+    GRADE_IDS = [_first_ids([str(g), f" {g}"]) for g in range(1, 11)]
+    print(f"[judge] grade ids 1..10={[g[:2] for g in GRADE_IDS]}", flush=True)
+
     def _pyes(lp, yes_ids, no_ids):
         ly = torch.logsumexp(lp[yes_ids], dim=0) if yes_ids else lp.new_tensor(-1e9)
         ln = torch.logsumexp(lp[no_ids], dim=0) if no_ids else lp.new_tensor(-1e9)
@@ -151,6 +159,57 @@ def run_server(model_id, port, host, max_new_tokens, dtype):
         return {"confidences": confs, "answer": ",".join(answers),
                 "labels": labels}
 
+    def judge_multi_graded(pil_imgs, instruction, guidance="", question="",
+                           n_ask=5, n_grade=5):
+        """Same scaffold as judge_multi, but each slot is scored over 1..n_grade.
+
+        Returns both readings of the same forward, so the aggregation can be
+        chosen afterwards rather than baked in here:
+          - `grades`  the level the model actually picks (argmax), which is what
+            a text answer would have given;
+          - `expected` the probability-weighted mean over the levels, which is
+            what the binary path's continuous confidence is the two-level case of.
+        Both are normalized to [0,1] so they drop into the existing aggregation.
+        """
+        labels = [chr(ord("A") + i) for i in range(n_ask)]
+        ids = GRADE_IDS[:n_grade]
+        messages = build_messages(pil_imgs, instruction, guidance, question)
+        inputs = processor.apply_chat_template(
+            messages, add_generation_prompt=True, tokenize=True,
+            return_dict=True, return_tensors="pt",
+        ).to(model.device)
+        grades, expected, dists, answers = [], [], [], []
+
+        with torch.inference_mode():
+            out = model(**inputs, use_cache=True)
+            past, logits = out.past_key_values, out.logits[0, -1].float()
+
+            def feed(text):
+                nonlocal past, logits
+                t = tok.encode(text, add_special_tokens=False)
+                if not t:
+                    return
+                step = model(input_ids=torch.tensor([t], device=model.device),
+                             past_key_values=past, use_cache=True)
+                past, logits = step.past_key_values, step.logits[0, -1].float()
+
+            for i, lab in enumerate(labels):
+                feed(("" if i == 0 else "\n") + f"{lab}) ")
+                lp = torch.log_softmax(logits, dim=-1)
+                per = torch.stack([
+                    torch.logsumexp(lp[g], dim=0) if g else lp.new_tensor(-1e9)
+                    for g in ids])
+                pr = torch.softmax(per, dim=0)
+                k = int(pr.argmax().item())
+                lev = torch.arange(n_grade, device=pr.device, dtype=pr.dtype)
+                grades.append(k / (n_grade - 1))
+                expected.append(float((pr * lev).sum().item()) / (n_grade - 1))
+                dists.append([round(float(x), 5) for x in pr.tolist()])
+                answers.append(str(k + 1))
+                feed(str(k + 1))                # force the chosen level
+        return {"grades": grades, "expected": expected, "dist": dists,
+                "answer": ",".join(answers), "labels": labels}
+
     def judge(pil_imgs, instruction, guidance="", question=""):
         """Single forward; return P(YES) over the {YES,NO} answer tokens."""
         messages = build_messages(pil_imgs, instruction, guidance, question)
@@ -202,9 +261,15 @@ def run_server(model_id, port, host, max_new_tokens, dtype):
                 else:
                     imgs = [Image.open(io.BytesIO(base64.b64decode(req["image_b64"]))).convert("RGB")]
                 n_ask = int(req.get("n_ask", 0))
-                fn = judge_multi if n_ask > 0 else judge          # n_ask>0: one prefill, n answers
-                res = fn(imgs, req.get("instruction", ""), req.get("guidance", ""),
-                         req.get("question", ""), **({"n_ask": n_ask} if n_ask > 0 else {}))
+                n_grade = int(req.get("n_grade", 0))
+                args = (imgs, req.get("instruction", ""), req.get("guidance", ""),
+                        req.get("question", ""))
+                if n_grade > 0:                                   # graded slots
+                    res = judge_multi_graded(*args, n_ask=n_ask or 5, n_grade=n_grade)
+                elif n_ask > 0:                                   # one prefill, n answers
+                    res = judge_multi(*args, n_ask=n_ask)
+                else:
+                    res = judge(*args)
                 self._send(200, res)
             except Exception as e:  # noqa
                 self._send(500, {"error": f"{type(e).__name__}: {e}"})

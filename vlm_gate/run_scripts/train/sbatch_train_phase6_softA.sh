@@ -1,8 +1,11 @@
 #!/bin/bash
-# REJECTED — do not run. The phase6 labels this trains on rank tasks
-# uncorrelated with what compression actually costs them: Spearman against
-# measured per-task K=2 damage is +0.019, against +0.420 for phase5.
-# Check any new generation first:  qgate labelcheck <parquet> --reference <phase5>
+# HELD, not rejected — this is the run that decides phase6.
+# labelcheck ranks its labels badly against per-task K=2 damage (+0.019 against
+# phase5's +0.420), but that statistic is a per-task mean and the gate decides
+# per chunk. Measured per chunk, phase6 separates the risky windows BETTER than
+# phase5: AUC 0.758 [0.746,0.771] against 0.690 [0.676,0.705], and 0.831 against
+# 0.782 once each task's mean is removed. The two metrics disagree and neither
+# settles it, so the closed loop does. See scripts/phase6_recheck.py.
 #SBATCH --job-name=train_gate_module_A_phase6_five_axis_prompt_softA_matched_to_phase5_control
 #SBATCH --nodes=1
 #SBATCH --gpus=1

@@ -25,7 +25,7 @@ stay at full strength because one such event in a window is already decisive.
 | RoboCasa | phase5 | guidance v3, 4Q | event-kept | SmallGate 1.3M | yes, ep6 | 0.906 | 1200 ep / 24 tasks | 0.627 | 252.0 | +0.0099 |
 | RoboCasa | phase5 | guidance v3, 4Q | binary | DINOv3 ViT-S/16 87M | yes, ep9 | 0.639 | 1152 ep / 24 tasks | 0.642 | 276.4 | +0.0128 |
 | RoboCasa | **phase6** | guidance v5, 5Q | binary | — | rejected | — | no | | | |
-| RoboCasa | **phase6** | guidance v5, 5Q | ratio | — | **rejected** | — | not run | | | |
+| RoboCasa | **phase6** | guidance v5, 5Q | ratio | SmallGate 1.3M | retraining | — | **decides it** | | | |
 | RoboCasa | phase6 | guidance v5, 5Q | event-kept | — | blocked | — | no | | | |
 | LIBERO | v1 | guidance v1, 5Q | — | — | no | — | no | | | |
 | dexjoco | v1 | guidance v1, 5Q | — | — | no | — | no | | | |
@@ -45,32 +45,39 @@ AUC does not compare across rows with different aggregations** — 0.918 against
 better gate. It is only useful as a distillation-collapse detector, which is
 why the closed-loop columns exist.
 
-### phase6 was rejected
+### phase6 is held, not rejected
 
-Its labels do not rank tasks the way compression damage does. Spearman between
-per-task label confidence and the measured cost of blanket K=2 is **+0.019**,
-against **+0.420** for phase5 — not inverted, uncorrelated.
+It was rejected on one number and that number answers the wrong question. The
+rejection said its labels rank tasks uncorrelated with what compression costs
+them — Spearman +0.019 against phase5's +0.420 — which is true. But that
+statistic is a **per-task mean**, and the gate decides **per chunk**.
 
-It was built to fix a dead question: phase5's fourth question answered 0.007 on
-average, and the diagnosis was that the guidance never described that axis. The
-rewrite achieved exactly what it set out to — that question went to 0.067 — and
-the labels stopped predicting the only thing they exist to predict. Question
-liveness is a property of the questions, not of the labels, and it was never
-checked against anything external.
+Measured per chunk, against whether the gripper command changes inside the
+window, phase6 is the better label set:
 
-The check now exists and takes twenty seconds:
+| | phase5 | phase6 |
+|---|---|---|
+| per-task ranking vs K=2 damage | **+0.420** | +0.019 |
+| per-chunk AUC | 0.690 [0.676, 0.705] | **0.758 [0.746, 0.771]** |
+| per-chunk AUC, task means removed | 0.782 [0.770, 0.794] | **0.831 [0.820, 0.843]** |
 
-    qgate labelcheck <parquet> --dataset <root> --reference <phase5 parquet>
+The intervals do not overlap in either direction. phase6 cannot say which task
+tolerates compression; inside a task it finds the dangerous windows better, and
+that is the job. The two metrics disagree, neither is decisive, so the closed
+loop decides. `scripts/phase6_recheck.py` reproduces the table.
 
-Run it on a pilot before labelling a full pass. The student and its evaluation
-were deleted; the label parquets are kept as the evidence for this.
+The student and its evaluation were deleted when it was rejected, so the
+comparison needs a retrain first; the labels survive. What this cost is a
+reminder that `labelcheck` measures one thing well and is silent about
+granularity — read it as a veto on task-level nonsense, never as an acceptance
+test on its own.
 
 ### Stage completion
 
 | | Prompt | Labelling | Student | Closed loop |
 |---|---|---|---|---|
 | **RoboCasa phase5** | final | 247,887 verified | 4 architectures | 4 of 4 evaluated |
-| **RoboCasa phase6** | **rejected** | 247,887 verified | none | none |
+| **RoboCasa phase6** | held | 247,887 verified | retraining | 0 of 1 — this decides it |
 | **LIBERO** | final | none | none | baselines only |
 | **dexjoco** | final | none | none | baselines only |
 | **allex** | final | 14,809 done | n/a | impossible — no policy |
@@ -107,8 +114,11 @@ C, D and E answer low. They were **not** dropped for it: the values are
 continuous and feed noisy-OR whatever their mean, and the only instrument that
 can retire a question is the closed loop.
 
-phase6 disagrees with phase5 on 32.8% of chunk decisions (Spearman 0.598 on
-`p_yes`), so the two are materially different labellings and the comparison is
+phase6 disagrees with phase5 on **48.5%** of chunk decisions (Spearman 0.180)
+on the continuous `softA` labels both students were trained on. The 32.8% and
+0.598 recorded here before came from the *binary* parquets, which no student
+used — a supporting statistic quoted off the wrong pair. Half the decisions
+differ, so the two labellings are materially different and the comparison is
 worth running.
 
 **One finding that is not about prompts.** With binary computed flags, any
@@ -117,10 +127,11 @@ what the VLM answered: 29.51% of chunks, *identical* in phase5 and phase6. No
 prompt change could ever have moved it. Recomputing the flags continuously
 takes it to 0.08%. This is why every comparison runs on continuous flags.
 
-**Students.** Four trained on phase5 labels; a fifth is training on phase6
-(`robocasa_module_A_phase6_softA`, job 144470). It is matched to phase5's
-softA in computed layer, aggregation and recipe — 10 epochs, batch 256,
-lr 3e-4 — so the prompt is the only variable.
+**Students.** Four trained on phase5 labels. The phase6 student was trained
+(job 144470, val AUC 0.781) and then deleted when phase6 was rejected; it is
+being retrained to settle the disagreement described above. It is matched to
+phase5's softA in computed layer, aggregation and recipe — 10 epochs, batch
+256, lr 3e-4 — so the prompt is the only variable.
 
 **Closed loop.** 99 runs. Anchors: uncompressed 0.656 at 330 steps, blanket
 K=2 0.599 at 216, over the 23 tasks every run finished.
