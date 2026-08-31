@@ -18,6 +18,18 @@ The LIBERO prompts had to be rewritten from scratch, and
 So: **commit anything you create before you rely on it**, and assume anything
 uncommitted that sat in those directories before 8/31 04:05 is already lost.
 
+## Reading the gate teacher
+
+How the teacher's confidence is actually obtained (logits at a forced slot, not a
+decoded word), what the 24 answer-format ablations showed, what labelling costs,
+and the three numbers this project had wrong — kept as one page rather than
+copied into each repository, so every machine reads the same copy:
+
+<https://claude.ai/code/artifact/26fe5378-b800-4a9d-a634-231a3a143ec0>
+
+Update it in place rather than pasting its contents here; the repositories carry
+the link and the scripts that reproduce its tables.
+
 ## What the project is
 
 A gate that decides, per 16-step action chunk, whether a GR00T policy can

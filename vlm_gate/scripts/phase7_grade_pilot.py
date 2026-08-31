@@ -77,7 +77,9 @@ for line in open(f"{DS}/meta/episodes.jsonl"):
     c = [t for t in d.get("tasks", []) if isinstance(t, str) and len(t.split()) > 1 and t != "Valid"]
     instr[d["episode_index"]] = c[0] if c else ""
 
-names = [l.strip() for l in open(MAN) if l.strip()]
+# manifest lines carry the .png; the tile stem is what the ids are parsed from
+names = [l.strip()[:-4] if l.strip().endswith(".png") else l.strip()
+         for l in open(MAN) if l.strip()]
 random.Random(0).shuffle(names)
 names = names[:N]
 print(f"pilot over {len(names)} chunks, {NGRADE} levels", flush=True)

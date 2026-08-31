@@ -103,8 +103,15 @@ def run_server(model_id, port, host, max_new_tokens, dtype):
     # the model a scale to choose on AND keeps the full distribution over that
     # scale, which an API cannot do — top_logprobs truncates at 5, which is why
     # a 20-level API run collapsed while a 10-level one held.
-    GRADE_IDS = [_first_ids([str(g), f" {g}"]) for g in range(1, 11)]
-    print(f"[judge] grade ids 1..10={[g[:2] for g in GRADE_IDS]}", flush=True)
+    # The slot is fed as "A) ", so the next token is a bare digit — no leading
+    # space variant. Including " 1" would take the tokenizer's space token as
+    # the first id and put that SAME id in every grade group, which collapses
+    # the distribution. Single digits only: "10" tokenizes as "1","0" and would
+    # collide with grade 1.
+    GRADE_IDS = [_first_ids([str(g)]) for g in range(1, 10)]
+    _bad = [i for i, g in enumerate(GRADE_IDS) if not g]
+    _dup = len({tuple(g) for g in GRADE_IDS}) != len(GRADE_IDS)
+    print(f"[judge] grade ids 1..9={GRADE_IDS} distinct={not _dup} empty={_bad}", flush=True)
 
     def _pyes(lp, yes_ids, no_ids):
         ly = torch.logsumexp(lp[yes_ids], dim=0) if yes_ids else lp.new_tensor(-1e9)
