@@ -54,11 +54,20 @@ def seg_for(task, avoid=(0,), want=170):
     b = min(s["end_frame"], a + want)
     return (s["episode_index"], a, b, task)
 
-CLIPS = [(0, 0, max(rec[0]) + CHUNK, "episode 0 — all four subtasks")] if 0 in rec else []
-for t in ["Bring Object", "Rotate Box", "Pass Object", "Rotate PolyBag"]:
-    s = seg_for(t)
-    if s:
-        CLIPS.append((s[0], s[1], s[2], f"episode {s[0]} — {t}"))
+# ONLY_TASK renders that subtask's segment alone, so the four can be played
+# side by side and compared instead of watched in sequence. WANT sets its length.
+ONLY = os.environ.get("ONLY_TASK", "")
+if ONLY:
+    s = seg_for(ONLY, want=int(os.environ.get("WANT", "170")))
+    if not s:
+        raise SystemExit(f"no segment for {ONLY!r}")
+    CLIPS = [(s[0], s[1], s[2], f"episode {s[0]} — {ONLY}")]
+else:
+    CLIPS = [(0, 0, max(rec[0]) + CHUNK, "episode 0 — all four subtasks")] if 0 in rec else []
+    for t in ["Bring Object", "Rotate Box", "Pass Object", "Rotate PolyBag"]:
+        s = seg_for(t)
+        if s:
+            CLIPS.append((s[0], s[1], s[2], f"episode {s[0]} — {t}"))
 if not CLIPS:                                   # no ep0 labelled: use what we have
     ep = sorted(rec)[0]
     CLIPS = [(ep, 0, max(rec[ep]) + CHUNK, f"episode {ep}")]
