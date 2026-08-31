@@ -1,0 +1,6 @@
+# What was submitted, one line each. Append on sbatch, never later.
+# `expect` is the artefact that proves it finished; slurm state is not evidence.
+{"id":"145246","what":"LIBERO dense labelling, 16 shards","expect":{"kind":"labels","tag":"libero_dense_s16","rows":266693}}
+{"id":"145369","what":"N1.7 joint training, gate (softA)","expect":{"kind":"path","path":"assets/checkpoints/n17_robocasa_gate_m60k_softA/checkpoint-60000"}}
+{"id":"145370","what":"N1.7 joint training, baseline (matched)","expect":{"kind":"path","path":"assets/checkpoints/n17_robocasa_baseline_m60k_softA/checkpoint-60000"}}
+{"id": "145075", "what": "LIBERO dense labelling, first attempt", "expect": {"kind": "labels", "tag": "libero_v1_s16"}}

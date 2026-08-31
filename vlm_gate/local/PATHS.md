@@ -55,6 +55,19 @@
 평가가 10일간 조용히 죽었다 (robocasa가 numpy 1.23.x를 요구 → transformers 5.x가
 gr00t import를 깨뜨림 → npz가 numpy2 pickle로 저장됨).
 
+## ssh 동시 접속
+
+**계정당 5개까지.** 사용자 몫으로 **최소 하나는 비워둔다.**
+
+`~/.ssh/config` 의 ControlMaster 덕분에 `ssh cluster` 를 몇 번을 부르든 연결은
+**하나**를 공유한다. 슬롯을 먹는 것은 호출 횟수가 아니라 **서로 다른 호스트**다.
+세 로그인 노드를 각각 찔러보면 10분짜리 마스터가 셋 남는다. 그래서 `dev hosts` 는
+`ControlPath=none` 으로 조회하고 바로 닫는다.
+
+쓰지 않는 마스터는 `ssh -O exit <host>` 로 닫는다. 열려 있는 것은
+`ls ~/.ssh/cm-*` 로 보인다. 한도를 넘기면 `too many logins for 'hojin2'` 가 뜨는데,
+장애가 아니라 이 한도다.
+
 ## slurm 정책
 
 - `--wckey=project-short-name:sub_fast` **필수**

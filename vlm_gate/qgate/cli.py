@@ -11,7 +11,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-from . import actions, ckpt, evalscan, labelcheck, labels, paths, trace, tradeoff
+from . import (actions, board, ckpt, evalscan, labelcheck, labels, paths, trace,
+               tradeoff)
 
 
 def _human(nbytes):
@@ -42,6 +43,39 @@ def cmd_jobs(args):
     if out.returncode != 0:
         sys.exit(out.stderr.strip() or "squeue failed")
     print(out.stdout.rstrip() or "no jobs queued or running")
+
+
+def cmd_board(args):
+    if args.add:
+        jid, what = args.add[0], " ".join(args.add[1:])
+        if not what:
+            sys.exit("usage: qgate board --add <jobid> <what it is>")
+        expect = json.loads(args.expect) if args.expect else None
+        e = board.add(jid, what, expect)
+        print(f"recorded {e['id']}: {e['what']}")
+        return
+
+    rows = board.survey(args.user)
+
+    def table():
+        if not rows:
+            print(f"nothing recorded in {board.LEDGER}")
+            return
+        order = {"NO OUTPUT": 0, "FAILED": 1, "running": 2,
+                 "unknown": 3, "unchecked": 4, "done": 5}
+        rows.sort(key=lambda r: order.get(board.verdict(r), 9))
+        w = max(len(r["what"]) for r in rows)
+        for r in rows:
+            print(f"{board.verdict(r):>10s}  {r['id']:>9s}  {r['what']:<{w}s}  "
+                  f"{r['slurm']}")
+            print(f"{'':10s}  {'':>9s}  {r['artefact']}")
+        stuck = [r for r in rows if board.verdict(r) == "NO OUTPUT"]
+        if stuck:
+            print(f"\n{len(stuck)} job(s) ended clean and produced nothing. "
+                  "COMPLETED is not evidence here — these are the ones to look "
+                  "at.")
+
+    _emit(args, rows, table)
 
 
 def cmd_results(args):
@@ -296,6 +330,16 @@ def build_parser():
     j = sub.add_parser("jobs", help="slurm queue for this workspace")
     j.add_argument("--user", default=None)
     j.set_defaults(fn=cmd_jobs)
+
+    b = sub.add_parser("board",
+                       help="submitted work reconciled against slurm and artefacts")
+    b.add_argument("--user", default=None)
+    b.add_argument("--add", nargs="+", metavar=("JOBID", "WHAT"),
+                   help="record a submission: --add <jobid> <what it is>")
+    b.add_argument("--expect", metavar="JSON",
+                   help='what proves it done, e.g. \'{"kind":"labels",'
+                        '"tag":"libero_dense_s16","rows":266693}\'')
+    b.set_defaults(fn=cmd_board)
 
     def bench(sp):
         sp.add_argument("benchmark", choices=paths.BENCHMARKS)

@@ -29,6 +29,11 @@ tools/dev run 'python vlm_gate/scripts/foo.py --limit 4'   # 이후 전부 그 G
 같은 slurm 큐를 보므로 어디에 붙어도 결과는 같다 — 고르는 기준은 부하뿐이다.
 바꾸면 `dev up` 을 다시 해야 한다(tmux 세션이 노드마다 따로 산다).
 
+제출한 잡은 **그 자리에서** `vlm_gate/local/jobs.jsonl` 에 적는다 — 무엇이고,
+무엇이 나와야 끝난 것인지. 나중에 적을 수 없다. 맥에서 적어야 한다(동기화는
+맥 → 서버 한 방향이다). `qgate board` 가 그걸 squeue·sacct·산출물 셋과 맞춰본다.
+**COMPLETED 는 증거가 아니다** — 라벨링 잡은 `kill` 로 끝나 항상 0 을 낸다.
+
 `dev run`은 바뀐 코드를 먼저 올리고(코드만 ~3MB), 서버에서 돌리고, **출력 전문과 종료코드**를
 돌려준다. traceback이 그대로 온다. tmux 셸이 살아있어서 `cd`/`export`/`conda activate`/
 **srun 할당**이 명령 사이에 유지된다 — 매번 대기열을 서지 않는다.
@@ -37,6 +42,7 @@ tools/dev run 'python vlm_gate/scripts/foo.py --limit 4'   # 이후 전부 그 G
 |---|---|
 | 짧은 스모크 | `dev run '<명령>'` |
 | 긴 잡 (라벨링·학습·평가) | `dev bg 'sbatch ...'` → `dev tail` |
+| 뭘 제출했고 뭐가 끝났나 | `dev run 'bin/qgate board'` |
 | pdb·대화형 | `dev keys 'p x.shape'` → `dev cap` |
 | 지금 어느 노드? | `dev where` |
 

@@ -34,10 +34,12 @@ vlm_gate/run_scripts:$ROOT/vlm_gate/
 vlm_gate/analysis:$ROOT/vlm_gate/
 vlm_gate/local:$ROOT/vlm_gate/
 vlm_gate/n17:$ROOT/vlm_gate/
+vlm_gate/qgate:$ROOT/vlm_gate/
+bin:$ROOT/
 gr00t:$ROOT/Isaac-GR00T/
 tools:$ROOT/"
 
-# 업로드만 한다. --delete 를 쓰지 않는 이유가 있다: 이 MAP 의 다섯 디렉터리는
+# 업로드만 한다. --delete 를 쓰지 않는 이유가 있다: 이 MAP 의 디렉터리들은
 # 맥 클론의 사본이 아니라 서버에서도 파일이 만들어지는 곳이고, 아직 커밋되지 않은
 # 그 파일들을 --delete 가 매 sync 마다 지웠다. LIBERO 가이던스·문항,
 # libero_task_index.py, tools/build_n17_env.sh, tools/fetch_dexjoco.sh 가 그렇게
@@ -93,10 +95,14 @@ cap)   sshx "tmux capture-pane -t $S -p -S -${2:-80}" ;;
 keys)  shift; sshx "tmux send-keys -t $S '$*' Enter" ;;
 hosts)
   # tmux 세션은 노드마다 따로 산다 — DEV_HOST 를 바꿨으면 'dev up' 을 다시 할 것.
+  # 여기서만 ControlPath=none 을 쓴다. 계정당 동시 ssh 가 5개로 제한돼 있는데,
+  # 공유 마스터로 세 노드를 찔러보면 10분짜리 마스터가 세 개 남아 슬롯을 먹는다.
+  # 사용자 몫을 최소 하나는 비워둬야 하므로, 조회용 연결은 끝나면 바로 닫는다.
   printf '%-11s %-12s %7s %6s %6s  %s\n' alias node load1m users freeGB state
   for h in rlwrld2_2 rlwrld2_1 rlwrld2_0; do
     mark=''; [ "$h" = "$HOST" ] && mark='  <- DEV_HOST'
-    if out=$(ssh $SSHOPT -o BatchMode=yes -o ConnectTimeout=10 "$h" \
+    if out=$(ssh -o ControlMaster=no -o ControlPath=none \
+      -o BatchMode=yes -o ConnectTimeout=10 "$h" \
       'printf "%s %s %s %s" "$(hostname)" "$(cut -d" " -f1 /proc/loadavg)" "$(who|wc -l)" "$(free -g|awk "/^Mem:/{print \$7}")"' 2>&1)
     then printf '%-11s %-12s %7s %6s %6s  ok%s\n' "$h" $out "$mark"
     else printf '%-11s %-12s %7s %6s %6s  %s\n' "$h" - - - - "$(printf '%s' "$out" | grep -m1 . || echo 붙지못함)"
@@ -104,7 +110,7 @@ hosts)
   done
   ;;
 where) exec "$0" run 'hostname; echo "SLURM_JOB_ID=${SLURM_JOB_ID:-없음(로그인노드)}"; pwd' ;;
-sync)  sync_code && echo "코드 동기화 완료" ;;
+sync)  sync_code "${2:-}" && echo "코드 동기화 완료${2:+ (--prune)}" ;;
 free)  sshx "tmux send-keys -t $S 'exit' Enter"; echo "할당 반납" ;;
 down)  sshx "tmux kill-session -t $S"; echo "세션 종료" ;;
 *) sed -n '2,20p' "$0"; exit 2 ;;
