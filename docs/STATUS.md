@@ -240,9 +240,23 @@ descriptors are written; the judge harness is not wired for this embodiment.
 Labelled and delivered; it can never have a closed loop.
 
 **Prompt.** Two-stage, with a task-specific second stage that sets a per-task
-compression ceiling rather than assuming K=2 everywhere: Pass Object 3x,
-Rotate PolyBag 2.5x, Rotate Box 2x, Bring Object 1x (it has to stop precisely,
-so it does not compress at all).
+compression ceiling rather than assuming K=2 everywhere. The ceiling is a prior
+the second stage moves, not a fixed number, so what each task actually gets is
+a distribution. Measured over the 14,809 labelled chunks:
+
+| task | chunks | ceiling K, mean / max | ratio applied, mean |
+|---|---|---|---|
+| Pass Object | 2,534 | 2.63 / 3.00 | 2.05 |
+| Rotate PolyBag | 965 | 2.50 / 2.50 | 1.27 |
+| Rotate Box | 5,581 | 2.00 / 2.00 | 1.21 |
+| Bring Object | 5,729 | 1.79 / 3.00 | 1.52 |
+
+`Bring Object` was previously described here as 1x, compressing not at all.
+That is wrong and this table is the correction: its ceiling is the same 3.0
+prior as the others, and stage-2 question B pulls it down during the precise
+stop, which is why the mean lands at 1.79 and the applied ratio at 1.52. It
+does compress. See HANDOFF, which has the mechanism and the check:
+chunks ending near K=1 answer B at 0.819, chunks near K=3 at 0.426.
 
 **Labelling.** 14,809 chunks across 6 shards, with the variable ratio applied
 and a labelled video rendered.
