@@ -256,7 +256,8 @@ class VLMGate:
         self.url = url.rstrip("/")
         self.timeout = timeout
 
-    def judge(self, imgs, instruction, guidance="", question="", n_ask=0, n_grade=0):
+    def judge(self, imgs, instruction, guidance="", question="", n_ask=0, n_grade=0,
+              mode=""):
         try:
             if not isinstance(imgs, (list, tuple)):
                 imgs = [imgs]
@@ -272,6 +273,7 @@ class VLMGate:
                 "question": question,
                 "n_ask": n_ask,            # >0: answer n checks off ONE image prefill
                 "n_grade": n_grade,        # >0: score each slot over 1..n_grade instead of YES/NO
+                "mode": mode,              # "text": model writes the answer, server parses it
             }).encode()
             req = urllib.request.Request(
                 self.url + "/judge", data=payload,

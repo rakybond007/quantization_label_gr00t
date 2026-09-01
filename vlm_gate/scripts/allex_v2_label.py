@@ -20,6 +20,13 @@ from allex_common_v5 import GUIDANCE, ASK
 from allex_v2_common import (descriptors, facts_text, stage1_confidence,
                              STAGE2_GUIDANCE, STAGE2_ASK, stage2_facts,
                              ceiling_from_stage2, final_ratio, TASKS)
+# STAGE2_MODE=graded replaces the four yes/no checks with one graded question the
+# model answers from the scene. Needed where there are no subtask labels to look
+# a prior ceiling up from; the shipped path is untouched and stays the default.
+STAGE2_MODE = os.environ.get("STAGE2_MODE", "checks")
+if STAGE2_MODE == "graded":
+    from allex_graded_ceiling import (LEVELS, STAGE2_GRADED_ASK, STAGE2_GRADED_GUIDANCE,
+                                      argmax_ceiling, ceiling_from_graded)
 
 # The recording is an argument, not a constant: a second allex capture (v3) is
 # labelled with this same prompt, and its output must not land on v1's.
@@ -96,18 +103,30 @@ for ep, N in episodes:
             if not c1 or len(c1) != 4:
                 raise ValueError(f"stage1 parse: {r1.get('error','')}")
             p = stage1_confidence(c1, x)
-            # ---- stage 2: task-specific ceiling
-            r2 = gate.judge(views, f"{task}\n{stage2_facts(task, x)}", STAGE2_GUIDANCE,
-                            question=STAGE2_ASK, n_ask=4)
-            c2 = r2.get("confidences")
-            if not c2 or len(c2) != 4:
-                raise ValueError(f"stage2 parse: {r2.get('error','')}")
-            K_max = ceiling_from_stage2(task, *c2)
+            # ---- stage 2: the ceiling
+            if STAGE2_MODE == "graded":
+                r2 = gate.judge(views, f"{task}\n{stage2_facts(task, x)}",
+                                STAGE2_GRADED_GUIDANCE, question=STAGE2_GRADED_ASK,
+                                n_ask=1, n_grade=len(LEVELS))
+                d2 = (r2.get("dist") or [[]])[0]
+                if len(d2) != len(LEVELS):
+                    raise ValueError(f"stage2 graded parse: {r2.get('error','')}")
+                K_max = ceiling_from_graded(d2)
+                c2 = d2                       # stored per level, not per check
+                r2["_pick"] = argmax_ceiling(d2)
+            else:
+                r2 = gate.judge(views, f"{task}\n{stage2_facts(task, x)}", STAGE2_GUIDANCE,
+                                question=STAGE2_ASK, n_ask=4)
+                c2 = r2.get("confidences")
+                if not c2 or len(c2) != 4:
+                    raise ValueError(f"stage2 parse: {r2.get('error','')}")
+                K_max = ceiling_from_stage2(task, *c2)
             K_pre = final_ratio(p, K_max)
             rec = {"ep": ep, "f": f, "task": task, "p": float(p), "K_max": float(K_max),
                    "K_pre": float(K_pre),
                    **{f"s1_{k}": float(v) for k, v in zip("ABCD", c1)},
                    **{f"s2_{k}": float(v) for k, v in zip("ABCD", c2)},
+                   **({"K_max_pick": r2.get("_pick")} if STAGE2_MODE == "graded" else {}),
                    "ans1": r1.get("answer", ""), "ans2": r2.get("answer", ""),
                    **{k: (int(v) if isinstance(v, bool) else float(v)) for k, v in x.items()}}
             out.write(json.dumps(rec) + "\n"); ntot += 1

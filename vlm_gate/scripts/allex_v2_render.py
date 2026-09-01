@@ -15,8 +15,11 @@ import json, os, sys, collections
 import numpy as np, pandas as pd, av
 from PIL import Image, ImageDraw, ImageFont
 
-DS = "/rlwrld2/home/david/action_quantization/v1/subtask_labeled_data_update_eef_256x256_hojin"
-OUTDIR = os.path.expanduser("~/quantization_agent_workspace/vlm_gate/output/allex_v2")
+DS = os.environ.get(
+    "ALLEX_DS",
+    "/rlwrld2/home/david/action_quantization/v1/subtask_labeled_data_update_eef_256x256_hojin")
+OUTDIR = os.path.expanduser(os.environ.get(
+    "ALLEX_OUT", "~/quantization_agent_workspace/vlm_gate/output/allex_v2"))
 REC = f"{OUTDIR}/records.jsonl"
 OUT = sys.argv[1] if len(sys.argv) > 1 else os.path.expanduser(
     "~/quantization_agent_workspace/assets/videos/allex_v2_variable_ratio.mp4")

@@ -24,6 +24,7 @@ import os
 import base64
 import io
 import json
+import re
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 from PIL import Image
@@ -237,6 +238,61 @@ def run_server(model_id, port, host, max_new_tokens, dtype):
             "p_yes_marginal": float(ly.exp().item()),  # full-vocab mass on YES (diag)
         }
 
+    def judge_text(pil_imgs, instruction, guidance="", question="",
+                   max_new_tokens=192, n_ask=0, n_grade=0):
+        """Let the model WRITE its answers, then parse what it wrote.
+
+        Every other path here reads token logits at a forced answer slot. That
+        scaffold came from the binary YES/NO case and was carried into the
+        graded case unchanged, so the model has never actually been asked to
+        answer -- an argmax has been answering for it. This path asks.
+
+        Handles both answer scales, because both are in use: a graded question
+        is parsed as "A) 3", a phase6-style question as "A) YES". With n_ask > 0
+        the answers are returned positionally, so a slot the model skipped stays
+        None instead of shifting the ones after it.
+
+        Nothing is defaulted on a parse failure. How often the model declines to
+        answer in the requested form IS the measurement, and filling it in would
+        destroy exactly the number this path exists to produce.
+        """
+        messages = build_messages(pil_imgs, instruction, guidance, question)
+        inputs = processor.apply_chat_template(
+            messages, add_generation_prompt=True, tokenize=True,
+            return_dict=True, return_tensors="pt",
+        ).to(model.device)
+        n_in = inputs["input_ids"].shape[1]
+        with torch.inference_mode():
+            out = model.generate(**inputs, max_new_tokens=int(max_new_tokens),
+                                 do_sample=False)
+        text = tok.decode(out[0][n_in:], skip_special_tokens=True).strip()
+
+        if n_grade > 0:
+            pat, conv = r"([A-Z])\)\s*([1-9])", int
+            ok = lambda v: 1 <= v <= n_grade                       # noqa: E731
+        else:
+            pat = r"([A-Z])\)\s*(YES|NO|Yes|No|yes|no)"
+            conv = lambda t: t.upper()                            # noqa: E731
+            ok = lambda v: v in ("YES", "NO")                     # noqa: E731
+        found = {}
+        for lab, val in re.findall(pat, text):
+            v = conv(val)
+            if lab not in found and ok(v):
+                found[lab] = v
+
+        n = n_ask if n_ask > 0 else 1
+        picks = [found.get(chr(ord("A") + i)) for i in range(n)]
+        if n == 1 and picks[0] is None:                # unlabelled bare answer
+            m = (re.search(r"\b([1-9])\b", text) if n_grade > 0
+                 else re.search(r"\b(YES|NO|Yes|No|yes|no)\b", text))
+            if m:
+                v = conv(m.group(1))
+                if ok(v):
+                    picks = [v]
+        return {"text": text, "picks": picks, "pick": picks[0],
+                "n_parsed": sum(p is not None for p in picks),
+                "n_new": int(out.shape[1] - n_in)}
+
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *a):
             pass
@@ -271,7 +327,10 @@ def run_server(model_id, port, host, max_new_tokens, dtype):
                 n_grade = int(req.get("n_grade", 0))
                 args = (imgs, req.get("instruction", ""), req.get("guidance", ""),
                         req.get("question", ""))
-                if n_grade > 0:                                   # graded slots
+                if req.get("mode") == "text":                     # model writes it
+                    res = judge_text(*args, n_ask=n_ask, n_grade=n_grade,
+                                     max_new_tokens=int(req.get("max_new_tokens", 192)))
+                elif n_grade > 0:                                   # graded slots
                     res = judge_multi_graded(*args, n_ask=n_ask or 5, n_grade=n_grade)
                 elif n_ask > 0:                                   # one prefill, n answers
                     res = judge_multi(*args, n_ask=n_ask)

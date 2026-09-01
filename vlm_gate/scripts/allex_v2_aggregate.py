@@ -15,7 +15,9 @@ from allex_v2_ratio import compress_episode, realised_ratio, ALLOWED_RATIOS
 from allex_v2_common import (stage1_confidence, ceiling_from_stage2, final_ratio,
                              label_risk_v2 as label_risk)
 
-OUTDIR = os.path.expanduser("~/quantization_agent_workspace/vlm_gate/output/allex_v2")
+# ALLEX_OUT selects the recording, so v3 aggregates into its own directory.
+OUTDIR = os.path.expanduser(os.environ.get(
+    "ALLEX_OUT", "~/quantization_agent_workspace/vlm_gate/output/allex_v2"))
 PAT = sys.argv[1] if len(sys.argv) > 1 else f"{OUTDIR}/labels_*.jsonl"
 REC = f"{OUTDIR}/records.jsonl"
 SUM = f"{OUTDIR}/summary.json"

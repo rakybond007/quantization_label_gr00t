@@ -12,12 +12,20 @@ import numpy as np, pandas as pd
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from allex_v2_common import descriptors
 
-DS = "/rlwrld2/home/david/action_quantization/v1/subtask_labeled_data_update_eef_256x256_hojin"
+# Which recording to calibrate against is the whole point of this script, so it
+# is an argument. v5's constants came from a different, slower capture and fired
+# on a third of chunks here purely because this data moves faster; the same trap
+# is waiting for every new recording.
+DS = os.environ.get(
+    "ALLEX_DS",
+    "/rlwrld2/home/david/action_quantization/v1/subtask_labeled_data_update_eef_256x256_hojin")
 STRIDE = int(sys.argv[1]) if len(sys.argv) > 1 else 6
 CHUNK = 16
 
 step, ds = [], []
-eps = list(range(0, 80, STRIDE))
+# episode count comes from the recording, not a constant: the replay set has 10.
+_n_ep = json.load(open(f"{DS}/meta/info.json"))["total_episodes"]
+eps = list(range(0, _n_ep, STRIDE))
 for ep in eps:
     d = pd.read_parquet(f"{DS}/data/chunk-000/episode_{ep:06d}.parquet")
     A = np.stack(d["action"].values)

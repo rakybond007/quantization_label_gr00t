@@ -17,6 +17,8 @@ stage 1 already judged unsafe - a low p pins K near 1 whatever the ceiling says.
 That is deliberate: on "Bring Object" stage 1 already senses the precise stop in
 front of the robot, and stage 2 must not be able to undo it.
 """
+import json
+import os
 import numpy as np
 
 from allex_common_v5 import (_rot6_to_R, _ang, RA, LA, ARM, RH, LH,  # noqa: F401
@@ -29,7 +31,12 @@ TASKS = ["Bring Object", "Rotate Box", "Pass Object", "Rotate PolyBag"]
 # is 0.753).  v5's 0.159 rad came from a DIFFERENT, slower allex recording - used
 # here it flagged 32% of chunks as infeasible purely for being faster than a
 # demonstration that is not this one.
-MERGE_LIMIT_V2 = 0.385
+# Calibrated on THIS recording, never carried in from another. v5's 0.159 rad
+# came from a slower capture and flagged 32% of v1's chunks as infeasible purely
+# for being faster than a demonstration that was not theirs. v3 is faster again
+# — its p99.9 is 0.478 against v1's 0.385 — so the same constant cannot serve
+# both. Override per dataset; run allex_v2_calibrate.py to get the numbers.
+MERGE_LIMIT_V2 = float(os.environ.get("ALLEX_MERGE_LIMIT", 0.385))
 HAND_SCALE = 0.08        # ~p95 of hand_change here (p90 0.053, p99 0.24)
 REORIENT_W = 0.30        # see stage1_confidence
 GRIP_EMPTY_RELIEF = 0.5  # ditto
@@ -134,13 +141,24 @@ def facts_text(x):
 #                       to keep it, so only mild compression survives.
 #   Rotate PolyBag 2.5  the bag is flipped with ONE hand, so there is no
 #                       two-hand hold to lose; it is soft, so not fully coarse.
-TASK_CEILING = {
+# The per-subtask ceiling, as specified: not every subtask is allowed to reach
+# 3x. Bring Object has to stop precisely on its target, so its specification is
+# 1.0 — it does not compress at all. It sat at 3.0 here, which matched neither
+# the specification nor STATUS.md, and the only thing holding it down was
+# stage-2 question B firing on 96% of chunks; 1.3% still reached 3x.
+#
+# ALLEX_CEILINGS overrides it as JSON for a labelling run that wants different
+# limits, e.g. raising Bring Object to 2.0:
+#   ALLEX_CEILINGS='{"Bring Object": 2.0}'
+_CEILING_SPEC = {
     "Pass Object": 3.0,
-    "Bring Object": 3.0,
+    "Bring Object": 1.0,
     "Rotate Box": 2.0,
     "Rotate PolyBag": 2.5,
 }
-DEFAULT_CEILING = 2.0
+TASK_CEILING = dict(_CEILING_SPEC)
+TASK_CEILING.update(json.loads(os.environ.get("ALLEX_CEILINGS", "{}")))
+DEFAULT_CEILING = float(os.environ.get("ALLEX_DEFAULT_CEILING", 2.0))
 
 STAGE2_GUIDANCE = (
     "You are looking at the same moment again. This time the question is not whether the robot "
@@ -270,8 +288,8 @@ def stage1_confidence(c, x):
 #
 # Both are set at the worst decile / ventile of held chunks, which is what the v1
 # numbers represented on the slower recording they were measured on.
-ROT_ACCUM_LIMIT_V2 = 55.0     # deg over the last 3 chunks (~p90 of held chunks)
-GAP_RATE_LIMIT_V2 = 0.0065    # m/step (~p95 of held chunks)
+ROT_ACCUM_LIMIT_V2 = float(os.environ.get("ALLEX_ROT_LIMIT", 55.0))   # deg / 3 chunks, ~p90 held
+GAP_RATE_LIMIT_V2 = float(os.environ.get("ALLEX_GAP_LIMIT", 0.0065))  # m/step, ~p95 held
 
 
 def hard_block_v2(x, rot_accum):
