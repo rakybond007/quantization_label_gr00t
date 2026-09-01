@@ -21,8 +21,13 @@ from allex_v2_common import (descriptors, facts_text, stage1_confidence,
                              STAGE2_GUIDANCE, STAGE2_ASK, stage2_facts,
                              ceiling_from_stage2, final_ratio, TASKS)
 
-DS = "/rlwrld2/home/david/action_quantization/v1/subtask_labeled_data_update_eef_256x256_hojin"
-OUTDIR = os.path.expanduser("~/quantization_agent_workspace/vlm_gate/output/allex_v2")
+# The recording is an argument, not a constant: a second allex capture (v3) is
+# labelled with this same prompt, and its output must not land on v1's.
+DS = os.environ.get(
+    "ALLEX_DS",
+    "/rlwrld2/home/david/action_quantization/v1/subtask_labeled_data_update_eef_256x256_hojin")
+OUTDIR = os.path.expanduser(os.environ.get(
+    "ALLEX_OUT", "~/quantization_agent_workspace/vlm_gate/output/allex_v2"))
 os.makedirs(OUTDIR, exist_ok=True)
 CHUNK = 16
 

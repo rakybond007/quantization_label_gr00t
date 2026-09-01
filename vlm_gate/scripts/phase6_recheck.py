@@ -64,7 +64,8 @@ def auc_ci(y, s, B=2000, seed=0):
 
 
 gens = {}
-TAGS = ("phase5_softA", "phase6_softA", "phase6_softA_nomerge")
+TAGS = ("phase5_softA", "phase6_softA", "phase6_softA_nomerge",
+        "phase6_softA_qsel")
 for tag in TAGS:
     d = pd.read_parquet(f"{LAB}/v6b_{tag}.parquet",
                         columns=["episode_index", "frame_index", "task", COL])

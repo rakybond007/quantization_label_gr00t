@@ -6,8 +6,9 @@ WS=$HOME/quantization_agent_workspace
 BASE=$WS/vlm_gate; cd $BASE
 export MODEL_OUTPUT_DIR=/rlwrld-unified-checkpoints/hojin2/quant_gate_modules
 PORT=$1; S=$2; NSH=$3
-LOG=$BASE/output/allex_v2/judge_${NSH}_$S.log
-mkdir -p $BASE/output/allex_v2
+OUTDIR=${ALLEX_OUT:-$BASE/output/allex_v2}
+LOG=$OUTDIR/judge_${NSH}_$S.log
+mkdir -p $OUTDIR
 $WS/cosmos_judge_venv/bin/python -u scripts/vlm_gate_cosmos.py --serve --port $PORT > $LOG 2>&1 &
 JP=$!
 for i in $(seq 1 120); do
