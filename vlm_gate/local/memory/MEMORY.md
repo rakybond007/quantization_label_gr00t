@@ -22,3 +22,4 @@
 - [로컬 에이전트 전환(tmux)](local-agent-via-tmux.md) — 8/31부터 맥북에서 실행, 서버 영속 tmux 셸 원격조종, 로컬 스모크 금지
 - [클리핑은 판단 근거가 아니다](clipping.md) — 하네스 제약은 평가에서 풀 대상, 문항에 넣으면 폐기
 - [텍스트 답변과 logit](text_vs_logit.md) — VLM 은 형식대로 답한다. logit 판독은 모델이 안 한 답을 짓는 것
+- [LIBERO 는 K2 에서 안 깨진다](libero-k2-lossless.md) — 위험은 그리퍼 전환 순간에 몰려 있고, K4 가 깨뜨리는 것은 파지다
