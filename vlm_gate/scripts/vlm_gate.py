@@ -256,6 +256,34 @@ class VLMGate:
         self.url = url.rstrip("/")
         self.timeout = timeout
 
+
+    def judge_batch(self, items, guidance="", question="", n_ask=0, n_grade=0,
+                    max_new_tokens=192):
+        """Judge many frames in one forward. items: [(imgs, instruction), ...]"""
+        try:
+            bat = []
+            for imgs, instruction in items:
+                if not isinstance(imgs, (list, tuple)):
+                    imgs = [imgs]
+                b64s = []
+                for im in imgs:
+                    buf = io.BytesIO()
+                    to_pil(im).save(buf, format="PNG")
+                    b64s.append(base64.b64encode(buf.getvalue()).decode())
+                bat.append({"images_b64": b64s, "instruction": instruction})
+            payload = json.dumps({"batch": bat, "guidance": guidance,
+                                  "question": question, "n_ask": n_ask,
+                                  "n_grade": n_grade,
+                                  "max_new_tokens": max_new_tokens}).encode()
+            req = urllib.request.Request(
+                self.url + "/judge", data=payload,
+                headers={"Content-Type": "application/json"})
+            with urllib.request.urlopen(req, timeout=self.timeout) as r:
+                out = json.loads(r.read())
+            return out.get("results") or [{"error": out.get("error", "no results")}] * len(items)
+        except Exception as e:  # noqa
+            return [{"error": f"{type(e).__name__}: {e}"}] * len(items)
+
     def judge(self, imgs, instruction, guidance="", question="", n_ask=0, n_grade=0,
               mode=""):
         try:

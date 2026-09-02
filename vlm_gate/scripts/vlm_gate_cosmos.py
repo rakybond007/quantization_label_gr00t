@@ -238,6 +238,100 @@ def run_server(model_id, port, host, max_new_tokens, dtype):
             "p_yes_marginal": float(ly.exp().item()),  # full-vocab mass on YES (diag)
         }
 
+    def _parse_text(text, n_ask=0, n_grade=0, n_new=0):
+        """Pull the answers out of what the model wrote.
+
+        Nothing is defaulted on a failure: a slot the model skipped stays None
+        and the raw text comes back with it, because how often the model fails
+        to answer in the requested form IS the measurement, and filling it in
+        would destroy the number this path exists to produce.
+        """
+        if n_grade > 0:
+            pat, conv = r"([A-Z])\)\s*([1-9])", int
+            ok = lambda v: 1 <= v <= n_grade                       # noqa: E731
+        else:
+            pat = r"([A-Z])\)\s*(YES|NO|Yes|No|yes|no)"
+            conv = lambda t: t.upper()                            # noqa: E731
+            ok = lambda v: v in ("YES", "NO")                     # noqa: E731
+        found = {}
+        for lab, val in re.findall(pat, text):
+            v = conv(val)
+            if lab not in found and ok(v):
+                found[lab] = v
+        n = n_ask if n_ask > 0 else 1
+        picks = [found.get(chr(ord("A") + i)) for i in range(n)]
+        if n == 1 and picks[0] is None:
+            m = (re.search(r"\b([1-9])\b", text) if n_grade > 0
+                 else re.search(r"\b(YES|NO|Yes|No|yes|no)\b", text))
+            if m:
+                v = conv(m.group(1))
+                if ok(v):
+                    picks = [v]
+        return {"text": text, "picks": picks, "pick": picks[0],
+                "n_parsed": sum(p is not None for p in picks), "n_new": int(n_new)}
+
+    def judge_text_batch(items, guidance="", question="", max_new_tokens=192,
+                         n_ask=0, n_grade=0):
+        """One forward for many frames.
+
+        Per-frame calls leave a small model idle on a big card: the batch is one
+        deep, and the cost is dominated by launching the forward rather than by
+        the arithmetic in it. Labelling every frame of 7,200 episodes is about
+        two million forwards, so the batch is where the hours are.
+
+        `items` is [{"imgs": [...], "instruction": str}]; guidance and question
+        are shared, since every frame is asked the same thing. Prompts differ in
+        length (the measurements differ), so they are LEFT-padded -- generation
+        reads from the end, and right padding would make the model continue from
+        pad tokens.
+        """
+        seqs, n_in = [], []
+        for it in items:
+            msg = build_messages(it["imgs"], it.get("instruction", ""), guidance, question)
+            enc = processor.apply_chat_template(
+                msg, add_generation_prompt=True, tokenize=True,
+                return_dict=True, return_tensors="pt")
+            seqs.append(enc)
+            n_in.append(enc["input_ids"].shape[1])
+
+        width = max(n_in)
+        pad_id = tok.pad_token_id if tok.pad_token_id is not None else tok.eos_token_id
+        # EVERY per-token field has to be padded alongside input_ids, not just the
+        # attention mask. The processor also returns mm_token_type_ids, which says
+        # for each position whether it is text or an image slot. Leaving it at its
+        # own length made torch.cat fail, the old code then silently fell back to
+        # the FIRST sample's copy, and the image slots no longer lined up with the
+        # ids -- the model emitted EOS immediately and 17 of 32 answers came back
+        # empty. Anything else the processor returns (pixel_values, image_grid_thw)
+        # is per-image, not per-token, and simply concatenates.
+        PER_TOKEN = ("input_ids", "attention_mask", "mm_token_type_ids", "token_type_ids")
+        batch, extra = {}, {}
+        for enc in seqs:
+            padw = width - enc["input_ids"].shape[1]
+            for k, v in enc.items():
+                if k in PER_TOKEN:
+                    fill = pad_id if k == "input_ids" else 0
+                    v = torch.cat([torch.full((1, padw), fill, dtype=v.dtype), v], dim=1)
+                    extra.setdefault(k, []).append(v)
+                else:
+                    extra.setdefault(k, []).append(v)
+            if "attention_mask" not in enc:
+                am = torch.cat([torch.zeros((1, padw), dtype=torch.long),
+                                torch.ones((1, enc["input_ids"].shape[1]), dtype=torch.long)], dim=1)
+                extra.setdefault("attention_mask", []).append(am)
+        for k, vs in extra.items():
+            batch[k] = torch.cat(vs).to(model.device)
+
+        with torch.inference_mode():
+            out = model.generate(**batch, max_new_tokens=int(max_new_tokens),
+                                 do_sample=False)
+        res = []
+        for i in range(len(items)):
+            text = tok.decode(out[i][width:], skip_special_tokens=True).strip()
+            res.append(_parse_text(text, n_ask, n_grade,
+                                   int(out.shape[1] - width)))
+        return res
+
     def judge_text(pil_imgs, instruction, guidance="", question="",
                    max_new_tokens=192, n_ask=0, n_grade=0):
         """Let the model WRITE its answers, then parse what it wrote.
@@ -266,32 +360,7 @@ def run_server(model_id, port, host, max_new_tokens, dtype):
             out = model.generate(**inputs, max_new_tokens=int(max_new_tokens),
                                  do_sample=False)
         text = tok.decode(out[0][n_in:], skip_special_tokens=True).strip()
-
-        if n_grade > 0:
-            pat, conv = r"([A-Z])\)\s*([1-9])", int
-            ok = lambda v: 1 <= v <= n_grade                       # noqa: E731
-        else:
-            pat = r"([A-Z])\)\s*(YES|NO|Yes|No|yes|no)"
-            conv = lambda t: t.upper()                            # noqa: E731
-            ok = lambda v: v in ("YES", "NO")                     # noqa: E731
-        found = {}
-        for lab, val in re.findall(pat, text):
-            v = conv(val)
-            if lab not in found and ok(v):
-                found[lab] = v
-
-        n = n_ask if n_ask > 0 else 1
-        picks = [found.get(chr(ord("A") + i)) for i in range(n)]
-        if n == 1 and picks[0] is None:                # unlabelled bare answer
-            m = (re.search(r"\b([1-9])\b", text) if n_grade > 0
-                 else re.search(r"\b(YES|NO|Yes|No|yes|no)\b", text))
-            if m:
-                v = conv(m.group(1))
-                if ok(v):
-                    picks = [v]
-        return {"text": text, "picks": picks, "pick": picks[0],
-                "n_parsed": sum(p is not None for p in picks),
-                "n_new": int(out.shape[1] - n_in)}
+        return _parse_text(text, n_ask, n_grade, int(out.shape[1] - n_in))
 
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *a):
@@ -318,13 +387,24 @@ def run_server(model_id, port, host, max_new_tokens, dtype):
             n = int(self.headers.get("Content-Length", 0))
             try:
                 req = json.loads(self.rfile.read(n))
-                if "images_b64" in req:
-                    imgs = [Image.open(io.BytesIO(base64.b64decode(b))).convert("RGB")
-                            for b in req["images_b64"]]
-                else:
-                    imgs = [Image.open(io.BytesIO(base64.b64decode(req["image_b64"]))).convert("RGB")]
                 n_ask = int(req.get("n_ask", 0))
                 n_grade = int(req.get("n_grade", 0))
+                _dec = lambda b: Image.open(io.BytesIO(base64.b64decode(b))).convert("RGB")
+
+                # A batch request carries its images per item, so it has to be
+                # taken before the single-request image fields are read -- those
+                # are absent here, and reading them raised KeyError('image_b64')
+                # before this branch was ever reached.
+                if "batch" in req:                                # many frames, one forward
+                    bat = [{"imgs": [_dec(b) for b in it["images_b64"]],
+                            "instruction": it.get("instruction", "")} for it in req["batch"]]
+                    self._send(200, {"results": judge_text_batch(
+                        bat, req.get("guidance", ""), req.get("question", ""),
+                        int(req.get("max_new_tokens", 192)), n_ask, n_grade)})
+                    return
+
+                imgs = ([_dec(b) for b in req["images_b64"]] if "images_b64" in req
+                        else [_dec(req["image_b64"])])
                 args = (imgs, req.get("instruction", ""), req.get("guidance", ""),
                         req.get("question", ""))
                 if req.get("mode") == "text":                     # model writes it

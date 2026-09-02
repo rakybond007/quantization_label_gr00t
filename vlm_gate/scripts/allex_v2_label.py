@@ -24,7 +24,11 @@ from allex_v2_common import (descriptors, facts_text, stage1_confidence,
 # model answers from the scene. Needed where there are no subtask labels to look
 # a prior ceiling up from; the shipped path is untouched and stays the default.
 STAGE2_MODE = os.environ.get("STAGE2_MODE", "checks")
-if STAGE2_MODE == "graded":
+if STAGE2_MODE == "twosided":
+    # five one-thing checks weighted by the hand-set subtask ceilings
+    from allex_twosided_ceiling import (ASK as TS_ASK, GUIDANCE as TS_GUIDANCE,
+                                        ceiling_from_twosided)
+elif STAGE2_MODE == "graded":
     from allex_graded_ceiling import (LEVELS, STAGE2_GRADED_ASK, STAGE2_GRADED_GUIDANCE,
                                       argmax_ceiling, ceiling_from_graded)
 
@@ -102,9 +106,21 @@ for ep, N in episodes:
             c1 = r1.get("confidences")
             if not c1 or len(c1) != 4:
                 raise ValueError(f"stage1 parse: {r1.get('error','')}")
-            p = stage1_confidence(c1, x)
+            p = stage1_confidence(c1, x, task)
             # ---- stage 2: the ceiling
-            if STAGE2_MODE == "graded":
+            if STAGE2_MODE == "twosided":
+                from allex_twosided_ceiling import CEILING as TS_CEIL
+                n_ts = len(TS_CEIL)
+                r2 = gate.judge(views, f"{task}\n{stage2_facts(task, x)}",
+                                TS_GUIDANCE, question=TS_ASK, n_ask=n_ts,
+                                n_grade=5, mode="text")
+                picks = r2.get("picks") or [None] * n_ts
+                if all(p is None for p in picks):
+                    raise ValueError(f"stage2 twosided parse: {r2.get('error', r2.get('text',''))[:80]}")
+                K_max = ceiling_from_twosided(picks)
+                c2 = [float(p) if p is not None else 0.0 for p in picks]
+                r2["_pick"] = K_max
+            elif STAGE2_MODE == "graded":
                 r2 = gate.judge(views, f"{task}\n{stage2_facts(task, x)}",
                                 STAGE2_GRADED_GUIDANCE, question=STAGE2_GRADED_ASK,
                                 n_ask=1, n_grade=len(LEVELS))
@@ -125,9 +141,18 @@ for ep, N in episodes:
             rec = {"ep": ep, "f": f, "task": task, "p": float(p), "K_max": float(K_max),
                    "K_pre": float(K_pre),
                    **{f"s1_{k}": float(v) for k, v in zip("ABCD", c1)},
-                   **{f"s2_{k}": float(v) for k, v in zip("ABCD", c2)},
-                   **({"K_max_pick": r2.get("_pick")} if STAGE2_MODE == "graded" else {}),
-                   "ans1": r1.get("answer", ""), "ans2": r2.get("answer", ""),
+                   # slot count follows the mode: checks/graded write four, the
+                   # two-sided set writes five. Hardcoding "ABCD" silently dropped
+                   # the fifth answer while K_max was still computed from all five,
+                   # so the stored record could not reproduce its own ceiling.
+                   **{f"s2_{k}": float(v) for k, v in zip("ABCDE", c2)},
+                   **({"K_max_pick": r2.get("_pick")}
+                      if STAGE2_MODE in ("graded", "twosided") else {}),
+                   "ans1": r1.get("answer", ""),
+                   # text mode returns "text"; "answer" is the logit path's key,
+                   # so reading only that stored 115 empty strings and hid what
+                   # the model actually wrote.
+                   "ans2": r2.get("text") or r2.get("answer", ""),
                    **{k: (int(v) if isinstance(v, bool) else float(v)) for k, v in x.items()}}
             out.write(json.dumps(rec) + "\n"); ntot += 1
             if ntot % 100 == 0:

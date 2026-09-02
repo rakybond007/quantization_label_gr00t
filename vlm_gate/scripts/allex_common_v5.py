@@ -93,6 +93,7 @@ ASK=("The measurements above are exact - do not re-estimate them. Judge only wha
  "A) Is the item a bag, sack, or otherwise soft and liable to shift, rather than a rigid box?\n"
  "B) Is the package being turned or tipped to change which way it faces, rather than simply being\n"
  "   carried from one place to another?\n"
- "C) Is the package's final resting position or facing being established right now - lowered onto\n"
- "   the conveyor, straightened, or lined up?\n"
+ "C) Has the package already been PUT DOWN and the hands come away from it, so that nothing is\n"
+ "   held any more and the robot is between one package and the next - looking at what it just\n"
+ "   released rather than reaching for anything?\n"
  "D) Are the hands empty, or reaching toward a package they have not yet touched?\nAnswer:")

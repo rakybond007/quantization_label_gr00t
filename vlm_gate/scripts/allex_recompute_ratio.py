@@ -47,7 +47,7 @@ for f in files:
             continue
         n += 1
         # the two stages, rerun over the answers already stored
-        p = stage1_confidence((r["s1_A"], r["s1_B"], r["s1_C"], r["s1_D"]), r)
+        p = stage1_confidence((r["s1_A"], r["s1_B"], r["s1_C"], r["s1_D"]), r, r.get("task"))
         k_max = ceiling_from_stage2(r["task"], r["s2_A"], r["s2_B"], r["s2_C"], r["s2_D"])
         k_pre = final_ratio(p, k_max)
         if abs(float(r.get("K_pre", -1)) - k_pre) > 1e-9:

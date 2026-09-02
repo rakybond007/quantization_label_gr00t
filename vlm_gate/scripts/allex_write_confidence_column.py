@@ -12,10 +12,10 @@ an episode, shorter than one chunk — take the last chunk's value rather than a
 default, because the alternative is an invented number at exactly the moment the
 robot is finishing the task.
 
-Our value is a ratio K on the grid {1, 2, 2.5, 3}; the column is normalised.
-`hojin = (K - 1) / (3 - 1)`, so K=1 gives 0 and K=3 gives 1, matching david's
-clip((alpha-1)/(alpha_max-1)). The raw K stays in the meta JSON for anyone who
-needs the grid the robot actually executes.
+Our value is a ratio K on the grid {1, 2, 2.5, 3} and that is what goes in the
+column, unnormalised: david's column runs 1.000 to 4.162, so the shared unit is
+the speed-up itself and not a 0-1 confidence. Pass --normalise to write
+(K-1)/(3-1) instead, which is what an earlier reading of the contract produced.
 
 A ramp is applied across chunk boundaries for the same reason david ramps across
 segment boundaries: the underlying decision is piecewise constant, and stepping
@@ -38,6 +38,7 @@ rest = [a for a in sys.argv[3:] if not a.startswith("--")]
 COL = rest[0] if rest else "hojin"
 APPLY = "--apply" in sys.argv
 CHUNK, GRID_MAX = 16, 3.0
+RAW = "--normalise" not in sys.argv   # default: the executed ratio, as david writes it
 RAMP = 9                     # frames, matching the ramp david uses (0.3 s at 30 fps)
 
 by_ep = {}
@@ -46,7 +47,9 @@ for line in open(REC):
         r = json.loads(line)
     except Exception:
         continue
-    by_ep.setdefault(r["ep"], {})[r["f"]] = float(r.get("K", 1.0))
+    # records.jsonl carries K (after the hard blocks); labels files carry only
+    # K_pre, which is the ratio before a block pins it to 1.
+    by_ep.setdefault(r["ep"], {})[r["f"]] = float(r.get("K", r.get("K_pre", 1.0)))
 print(f"{sum(len(v) for v in by_ep.values())} chunks over {len(by_ep)} episodes")
 
 files = sorted(glob.glob(os.path.join(DSD, "data", "*", "*.parquet")))
@@ -67,15 +70,15 @@ for p in files:
     # step function over frames, held across each chunk, last chunk covers the tail
     v = np.full(n, np.nan, dtype=np.float64)
     for f, K in ch.items():
-        v[f:min(f + CHUNK, n)] = (K - 1.0) / (GRID_MAX - 1.0)
+        v[f:min(f + CHUNK, n)] = K if RAW else (K - 1.0) / (GRID_MAX - 1.0)
     last = max(ch)
-    v[np.isnan(v)] = (ch[last] - 1.0) / (GRID_MAX - 1.0)
+    v[np.isnan(v)] = ch[last] if RAW else (ch[last] - 1.0) / (GRID_MAX - 1.0)
 
     # linear ramp across level changes, so the column is followable
     if RAMP > 1:
         k = np.ones(RAMP) / RAMP
         v = np.convolve(np.pad(v, (RAMP // 2, RAMP // 2), mode="edge"), k, mode="valid")[:n]
-    v = np.clip(v, 0.0, 1.0).astype(np.float32)
+    v = np.clip(v, 1.0 if RAW else 0.0, GRID_MAX if RAW else 1.0).astype(np.float32)
 
     vals.append(v)
     tot += n

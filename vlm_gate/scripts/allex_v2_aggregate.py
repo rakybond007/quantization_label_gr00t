@@ -43,7 +43,7 @@ for p in sorted(glob.glob(PAT)):
 for ep in by_ep:
     for r in by_ep[ep].values():
         r["K_pre_run"] = r.get("K_pre")
-        r["p"] = stage1_confidence([r[f"s1_{q}"] for q in "ABCD"], r)
+        r["p"] = stage1_confidence([r[f"s1_{q}"] for q in "ABCD"], r, r.get("task"))
         r["K_max"] = ceiling_from_stage2(r["task"], *[r[f"s2_{q}"] for q in "ABCD"])
         r["K_pre"] = final_ratio(r["p"], r["K_max"])
 

@@ -1,0 +1,42 @@
+### INSTRUCTION (에피소드 지시문 + 계산 사실)
+turn on the front right burner of the stove
+MEASURED FROM THE PLANNED MOTION over the next ~1 second (these are computed facts, not estimates): the gripper stays open throughout; the end-effector keeps a consistent direction; it is moving at a normal pace (mean step 0.25, peak 0.34); it is not creeping along with something held; it is decelerating to a near stop.
+
+### GUIDANCE
+You are judging one second of a kitchen robot's motion, to decide how much of it could be thinned out -- how many of its commanded poses could be dropped, letting the arm travel further between the ones that remain, without changing the outcome.
+
+Two things decide that. Some moments hinge on one exact contact or one exact placement, and thinning them destroys the thing that mattered. Other moments have their path held by a mechanism, or a destination so forgiving that arriving a few centimetres off changes nothing.
+
+Judge the moment in front of you, not the task as a whole. One task passes through both kinds from one second to the next.
+
+### QUESTION
+The measurements above are stated as fact -- do not re-estimate or repeat them. Answer each check from what the cameras show about the MOMENT in front of you, read together with those measurements.
+Answer each check on its own line as "A) 3", in order, nothing else -- one digit from 1 to 5 per check, rating how far that check describes this moment:
+  5 = it is happening right now -- the picture shows the contact, the grip or
+      the position the check describes
+  4 = not yet, but the hand is right up against it, a centimetre or a single
+      motion away
+  3 = the hand is heading for it and still some way off
+  2 = the thing the check is about is there in the picture, but the arm is busy
+      with something else
+  1 = there is nothing in this picture the check could be about
+A grade refers only to the check on that line.
+A) Does what this motion achieves come down to ONE small contact -- pressing a
+   button, flicking a switch, turning a dial to a set position -- so that the
+   contact either lands correctly or the task fails?
+B) Is the place the held object is going INTO closed in on more than one side by
+   walls, a door frame or a shelf, leaving little room around it?
+C) Is the thing being moved carried on a hinge or a rail -- a door, a drawer --
+   so the mechanism, not the arm, decides the path it takes?
+D) Is an object being set down on a wide open surface, where landing a few
+   centimetres off would change nothing?
+E) Is the gripper carrying something across open space, with nothing near enough
+   to be struck?
+Answer:
+
+### SIGN / WEIGHT
+  A  감점  0.667
+  B  감점  0.333
+  C  가점  0.267
+  D  가점  0.333
+  E  가점  0.400

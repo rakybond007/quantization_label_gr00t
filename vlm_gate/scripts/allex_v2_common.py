@@ -37,9 +37,18 @@ TASKS = ["Bring Object", "Rotate Box", "Pass Object", "Rotate PolyBag"]
 # — its p99.9 is 0.478 against v1's 0.385 — so the same constant cannot serve
 # both. Override per dataset; run allex_v2_calibrate.py to get the numbers.
 MERGE_LIMIT_V2 = float(os.environ.get("ALLEX_MERGE_LIMIT", 0.385))
-HAND_SCALE = 0.08        # ~p95 of hand_change here (p90 0.053, p99 0.24)
+# Finger-pose change that counts as a full grasp transition. Like the three
+# limits above this is a property of the recording and must not be carried in
+# from another: 0.08 came from a different capture and sits at about p88 here
+# (p50 0.017, p90 0.093, p95 0.161), so a third of the chunks were docked for
+# ordinary finger drift. A multi-jointed hand is always moving a little; only a
+# real closing onto something should count, which is what this recording's p95
+# marks. allex_v2_calibrate.py prints the number.
+HAND_SCALE = float(os.environ.get("ALLEX_HAND_SCALE", 0.08))
 REORIENT_W = 0.30        # see stage1_confidence
 GRIP_EMPTY_RELIEF = 0.5  # ditto
+SOFT_RELIEF = 0.5        # softness raises confidence; see stage1_confidence
+HOLD_RELIEF = 0.5        # so does the held-and-looking interval (check C)
 
 # ---------------------------------------------------------------- descriptors
 
@@ -150,12 +159,18 @@ def facts_text(x):
 # ALLEX_CEILINGS overrides it as JSON for a labelling run that wants different
 # limits, e.g. raising Bring Object to 2.0:
 #   ALLEX_CEILINGS='{"Bring Object": 2.0}'
+# The object decides how roughly a phase may be handled: a box has to be treated
+# with care, a bag can be thrown about. That is already why Rotate splits 2.0 /
+# 2.5, and Bring splits the same way -- but the annotation says only "Bring
+# Object", so which of the two applies is read off stage 2's own check D, "is
+# the thing being handled a soft plastic bag rather than a firm box".
 _CEILING_SPEC = {
     "Pass Object": 3.0,
-    "Bring Object": 1.0,
+    "Bring Object": 2.0,          # a box; a bag lifts it to BRING_SOFT
     "Rotate Box": 2.0,
     "Rotate PolyBag": 2.5,
 }
+BRING_SOFT = float(os.environ.get("ALLEX_BRING_SOFT", 2.5))
 TASK_CEILING = dict(_CEILING_SPEC)
 TASK_CEILING.update(json.loads(os.environ.get("ALLEX_CEILINGS", "{}")))
 DEFAULT_CEILING = float(os.environ.get("ALLEX_DEFAULT_CEILING", 2.0))
@@ -227,7 +242,19 @@ def ceiling_from_stage2(task, pA, pB, pC, pD):
     """
     wA, wB, wC, wD = (slot_weight(p) for p in (pA, pB, pC, pD))
     K = float(TASK_CEILING.get(task, DEFAULT_CEILING))
-    for w, c in ((wD, 2.5), (wC, 2.0), (wB, 1.0)):
+    # Each check clamps toward the ceiling of the situation it recognises, so
+    # those targets are the spec's own numbers and have to be read from it.
+    # Written out as 2.5/2.0/1.0 they were the spec of the day; when Bring
+    # Object was raised from 1.0 to 2.0 this line kept pulling to 1.0, and
+    # every one of the 132 Bring Object chunks came out at 1.0 as before -- the
+    # raise had no effect at all.
+    # Bring Object is specified for a box; when the model says the thing is a soft
+    # bag (check D), the same phase gets the bag's allowance instead.
+    if task == "Bring Object":
+        K = max(K, wD * BRING_SOFT + (1 - wD) * K)
+    for w, c in ((wD, TASK_CEILING["Rotate PolyBag"]),
+                 (wC, TASK_CEILING["Rotate Box"]),
+                 (wB, TASK_CEILING["Bring Object"])):
         K -= w * max(0.0, K - c)
     # A lifts at half strength: the model may argue the segment is more coarse
     # than its task prior suggests, but it does not get to overrule it outright.
@@ -242,7 +269,10 @@ def final_ratio(p, K_max):
     return snap_ratio(1.0 + float(p) * (float(K_max) - 1.0))
 
 
-def stage1_confidence(c, x):
+ROTATION_SUBTASKS = ("Rotate Box", "Rotate PolyBag")
+
+
+def stage1_confidence(c, x, task=None):
     """Base confidence p in [0,1] from the four general checks + the physics.
 
     v5 aggregated these for a gate whose scores were RANK-normalised inside an
@@ -263,15 +293,34 @@ def stage1_confidence(c, x):
     import numpy as _np
     A, B, C, D = c
     held = bool(x["held"])                       # two-palm hold (see descriptors)
-    v_risk = 1 - (1 - C) * (1 - REORIENT_W * B)  # C: final pose being established
+    # B is worth counting as UNEXPECTED rotation only. Where the annotation
+    # already says the phase is a rotation, B answers 0.98 on essentially every
+    # chunk -- it separates nothing there and just lays a flat -0.24 over the
+    # whole segment, which is the risk the 2.0 ceiling was written to express.
+    # On Bring (0.04) and Pass (0.11) it does carry news, and there it stays.
+    b = 0.0 if task in ROTATION_SUBTASKS else B
+    # C marks the interval where the package has been brought in front and is
+    # merely being held -- not yet turned, not yet put down. The subtask labels
+    # do not mark it, so vision has to find it, and finding it should RELEASE
+    # the limit toward Bring rather than tighten it: nothing is being placed or
+    # reoriented, so there is no pose to lose. It used to enter v_risk, docking
+    # the confidence for the one interval inside a rotation segment that is not
+    # a rotation. Same inversion as `soft` had.
+    v_risk = REORIENT_W * b
+    # Softness is a reason the moment is SAFE to thin out, not a risk: a bag has
+    # no exact pose to lose, which is why the spec gives Rotate PolyBag 2.5
+    # against Rotate Box's 2.0. It used to enter as (1 - 0.5*soft), docking the
+    # confidence for the very property the ceiling was raised for, and PolyBag
+    # chunks averaged K=1.49 against a 2.5 ceiling. Same double-count the
+    # REORIENT_W note below describes, in the opposite direction.
     soft = A * (1.0 if held else 0.4)            # a soft object matters when held
     safe = 0.75 + 0.25 * D                       # D: hands empty / not yet touching
     infeas = float(_np.clip(x["merge_demand_k2"] / MERGE_LIMIT_V2 - 1.0, 0, 1))
     rot_hold = float(held) * float(_np.clip((x["wrist_rot"] - 10.0) / 20.0, 0, 1))
     grip_tr = float(_np.clip(x["hand_change"] / HAND_SCALE, 0, 1)) * (1 - GRIP_EMPTY_RELIEF * D)
     c_risk = 1 - (1 - infeas) * (1 - rot_hold) * (1 - grip_tr)
-    total = 1 - (1 - v_risk) * (1 - 0.5 * soft) * (1 - c_risk)
-    return float((1 - total) * safe)
+    total = 1 - (1 - v_risk) * (1 - c_risk)
+    return float(min(1.0, (1 - total) * safe * (1 + SOFT_RELIEF * soft + HOLD_RELIEF * C)))
 
 
 # ------------------------------------------------------- deterministic blocks

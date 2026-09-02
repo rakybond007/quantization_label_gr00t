@@ -38,22 +38,33 @@ def descriptors(a, f, n=16):
             "gripper_closed":float((g>0.5).mean())}
 
 def facts_text(x):
-    """계산값을 사실 문장으로. 임계 판정까지 끝내고 결론만 준다."""
-    parts=[]
+    """계산값을 사실 문장으로. 임계 판정까지 끝내고 결론만 준다.
+
+    문장 다섯 줄이 조건과 무관하게 항상 나오고, 각 줄은 정해진 문구 중 하나를
+    고를 뿐이다. 조건부로 줄이 붙었다 빠졌다 하면 프롬프트 길이가 프레임마다
+    달라지고, 그러면 배치가 패딩을 필요로 한다 -- 그 패딩이 mm_token_type_ids
+    를 어긋나게 해서 배치 8 에서 32 개 중 17 개가 빈 답으로 돌아왔다. 숫자는
+    이미 %.2f 고정 폭이므로, 줄 수만 고정하면 길이가 완전히 같아진다.
+
+    컨트롤러 클리핑 초과율을 알려주던 꼬리는 뺐다. 클리핑은 평가에서 풀어야 할
+    하네스 제약이지 이 순간의 성질이 아니다.
+    """
+    parts = []
     parts.append("the gripper opens or closes during this window" if x["grip_change"]
-                 else ("the gripper stays closed throughout" if x["gripper_closed"]>0.5
+                 else ("the gripper stays closed throughout" if x["gripper_closed"] > 0.5
                        else "the gripper stays open throughout"))
     parts.append("the end-effector reverses direction sharply" if x["reversal"]
                  else "the end-effector keeps a consistent direction")
-    sp = ("barely moving" if x["speed_mean"]<0.12 else
-          "moving at a normal pace" if x["speed_mean"]<0.50 else "moving fast")
+    sp = ("barely moving" if x["speed_mean"] < 0.12 else
+          "moving at a normal pace" if x["speed_mean"] < 0.50 else "moving fast")
     parts.append(f"it is {sp} (mean step {x['speed_mean']:.2f}, peak {x['speed_max']:.2f})")
-    if x["closed_slow"]: parts.append("it is holding something while creeping along")
-    if x["decel"]:       parts.append("it is decelerating to a near stop")
-    tail = (" Merging pairs of steps would exceed the controller limit on "
-            f"{x['clip_excess']:.0%} of the merged commands." if x["clip_excess"]>0.05 else "")
+    parts.append("it is holding something while creeping along" if x["closed_slow"]
+                 else "it is not creeping along with something held")
+    parts.append("it is decelerating to a near stop" if x["decel"]
+                 else "it is not decelerating to a stop")
     return ("MEASURED FROM THE PLANNED MOTION over the next ~1 second (these are computed "
-            "facts, not estimates): " + "; ".join(parts) + "." + tail)
+            "facts, not estimates): " + "; ".join(parts) + ".")
+
 
 # 계산에서 바로 나오는 위험 플래그 — VLM에게 묻지 않는다
 def computed_risk(x):
