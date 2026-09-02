@@ -212,9 +212,24 @@ class GR00TTransform(InvertibleModalityTransform):
     # Private attributes to keep track of shapes/dimensions across apply/unapply
     _language_key: Optional[list[str]] = PrivateAttr(default=None)
 
-    eagle_processor: ProcessorMixin = Field(default=build_eagle_processor(DEFAULT_EAGLE_PATH))
-    qwen_processor: ProcessorMixin = Field(default=build_qwen_processor(backbone_path if backbone_path is not None else DEFAULT_QWEN_PATH))
-    paligemma_processor: ProcessorMixin = Field(default=build_paligemma_processor(backbone_path if backbone_path is not None else DEFAULT_PALIGEMMA_PATH))
+    # Built lazily. As Field defaults these ran at class-definition time, so
+    # importing this module paid for all three backbones' processors when a run
+    # uses one -- and paligemma-3b-pt-224 is a gated repo, so with no token in
+    # the process environment the fetch 401s and the policy server never starts,
+    # over a model the run never touches. default_factory defers each to first
+    # access, which for a given run means the one backbone it actually has.
+    #
+    # The paths are the DEFAULT_* constants rather than `backbone_path`. That is
+    # not a change: `backbone_path` is a field of this class, so in the old
+    # class-body expression it read the annotation's value, None, and the
+    # conditional always fell through to the default. Reading it per instance
+    # would need a validator and would alter which weights get loaded.
+    eagle_processor: ProcessorMixin = Field(
+        default_factory=lambda: build_eagle_processor(DEFAULT_EAGLE_PATH))
+    qwen_processor: ProcessorMixin = Field(
+        default_factory=lambda: build_qwen_processor(DEFAULT_QWEN_PATH))
+    paligemma_processor: ProcessorMixin = Field(
+        default_factory=lambda: build_paligemma_processor(DEFAULT_PALIGEMMA_PATH))
     # XEmbDiT arguments
     default_instruction: str = Field(default="Perform the default behavior.")
     max_state_dim: int

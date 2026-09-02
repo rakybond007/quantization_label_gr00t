@@ -396,6 +396,7 @@ def eval_libero(args: Args) -> None:
 
                     if not action_plan:
                         # Finished executing previous action chunk -- compute new chunk
+                        _blk_spans = None
                         # Prepare observations dict
 
                         # element = {
@@ -483,10 +484,25 @@ def eval_libero(args: Args) -> None:
                                 agg = blk.sum(axis=0)
                                 agg[6] = blk[-1, 6]   # gripper latch
                                 blocks.append(agg)
+                            spans = [K] * nfull
                             for j in range(nfull * K, T):
                                 blocks.append(action_chunk[j])  # raw tail
+                                spans.append(1)
                             action_chunk = np.stack(blocks)
-                        rs = min(args.replan_steps, len(action_chunk))
+                            _blk_spans = spans
+                        # replan_steps counts RAW timesteps, not compressed blocks.
+                        # Slicing the compressed chunk directly let one block stand for
+                        # K raw steps, so K2 replanned every 10 raw steps and K4 every
+                        # 20 -- the horizon grew with the compression instead of staying
+                        # at LIBERO's 5, and what was measured as the cost of compression
+                        # was partly the cost of replanning less often. Take whole blocks
+                        # until their raw span reaches replan_steps, always at least one.
+                        spans = _blk_spans if _blk_spans else [1] * len(action_chunk)
+                        rs, raw = 0, 0
+                        for sp in spans:
+                            if rs and raw + sp > args.replan_steps:
+                                break
+                            rs += 1; raw += sp
                         action_plan.extend(action_chunk[: rs])
 
                     action = action_plan.popleft()
