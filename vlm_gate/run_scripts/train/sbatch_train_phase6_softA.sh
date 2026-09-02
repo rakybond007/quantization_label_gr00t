@@ -28,7 +28,7 @@ OUT="$WS/assets/modules_A/robocasa_module_A_phase6_softA"; mkdir -p "$OUT"
   --task-emb "$WS/assets/robocasa_task_embeddings.npz" \
   --out-dir "$OUT" --epochs 10 --bs 256 --lr 3e-4 --num-workers 8 \
   --wandb "gateA_phase6_softA"
-python - "$OUT" <<'PY' > "$OUT/summary.json"
+"$HOME/miniconda3/envs/quant_gate_eval/bin/python" - "$OUT" <<'PY' > "$OUT/summary.json"
 import json,os,sys; O=sys.argv[1]
 print(json.dumps({"out":O,"best":os.path.exists(f"{O}/gate_module_best.pt"),
                   "final":os.path.exists(f"{O}/gate_module.pt")},ensure_ascii=False))

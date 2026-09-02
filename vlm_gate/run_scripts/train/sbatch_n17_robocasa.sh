@@ -74,7 +74,7 @@ echo "max_steps=$_MS global_batch=$_BS gate_labels=${GATE_LABELS:-none} $(date -
   --global-batch-size "${BS:-64}" \
   --dataloader-num-workers 4
 
-python - "$OUT" "$RUN" <<'PY' > "$OUT/summary.json"
+"$HOME/miniconda3/envs/quant_gate_eval/bin/python" - "$OUT" "$RUN" <<'PY' > "$OUT/summary.json"
 import json, os, sys, glob
 O, R = sys.argv[1], sys.argv[2]
 ck = sorted(glob.glob(os.path.join(O, "checkpoint-*")))

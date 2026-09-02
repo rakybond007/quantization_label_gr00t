@@ -23,7 +23,7 @@ export HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 HF_HUB_DISABLE_XET=1
   --task-emb "$WS/assets/robocasa_task_embeddings.npz" \
   --out-dir "$OUT" --epochs 10 --bs 128 --lr 3e-4 --num-workers 8 \
   --wandb gateA_phase5_dinov3s
-python - "$OUT" <<'PY' > "$OUT/summary.json"
+"$HOME/miniconda3/envs/quant_gate_eval/bin/python" - "$OUT" <<'PY' > "$OUT/summary.json"
 import json,os,sys; O=sys.argv[1]
 print(json.dumps({"out":O,"best":os.path.exists(f"{O}/gate_module_best.pt"),
                   "final":os.path.exists(f"{O}/gate_module.pt")},ensure_ascii=False))

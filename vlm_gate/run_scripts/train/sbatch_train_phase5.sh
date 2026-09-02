@@ -22,7 +22,7 @@ mkdir -p "$OUT"
   --epochs 30 --bs 256 --lr 3e-4 --num-workers 8 \
   --wandb gateA_phase5_full
 # 끝날 때 요약 JSON — 로컬 에이전트가 ls 없이 확인할 수 있도록
-python - <<'PY' >> "$OUT/summary.json"
+"$HOME/miniconda3/envs/quant_gate_eval/bin/python" - <<'PY' >> "$OUT/summary.json"
 import json,os,glob,re
 OUT=os.path.expanduser("~/quantization_agent_workspace/assets/modules_A/robocasa_module_A_phase5")
 logs=sorted(glob.glob(os.path.expanduser("~/quantization_agent_workspace/vlm_gate/out/*-train_gate_module_A_phase5*.out")))
