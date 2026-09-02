@@ -20,3 +20,5 @@
 - [체크포인트 보관 정책](checkpoint-storage-archival.md) — unified-checkpoints는 이관 후 90일 삭제; 쓰는 자산은 홈 assets/로
 - [스모크 후 제출 원칙](smoke-before-submit.md) — 학습·eval은 srun 스모크로 산출물 확인 후에만 sbatch, 판정은 잡 상태가 아니라 산출물 개수
 - [로컬 에이전트 전환(tmux)](local-agent-via-tmux.md) — 8/31부터 맥북에서 실행, 서버 영속 tmux 셸 원격조종, 로컬 스모크 금지
+- [클리핑은 판단 근거가 아니다](clipping.md) — 하네스 제약은 평가에서 풀 대상, 문항에 넣으면 폐기
+- [텍스트 답변과 logit](text_vs_logit.md) — VLM 은 형식대로 답한다. logit 판독은 모델이 안 한 답을 짓는 것
