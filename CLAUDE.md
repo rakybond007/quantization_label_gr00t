@@ -51,23 +51,47 @@ tools/dev run 'python vlm_gate/scripts/foo.py --limit 4'   # 이후 전부 그 G
 파일시스템을 훑을 수 없으므로 `vlm_gate/local/CHEATSHEET.md`의 명령을 쓴다.
 새 스크립트를 만들 때는 **끝날 때 요약 JSON을 남기도록** 짠다. 그래야 다음에 확인할 수 있다.
 
+## 라벨 프롬프트를 건드릴 때
+
+`vlm_gate/local/PROMPT_METHOD.md` 를 먼저 읽는다. 문항은 장면 인상으로 짓는 것이
+아니라 **측정된 손상**에서 끌어낸다. 확정된 robocasa 문항 전문은
+`vlm_gate/prompts/robocasa_phase9.txt` 에 있다.
+
+되돌리지 말아야 할 것 넷:
+
+1. **logit 을 읽지 않는다.** 강제된 답변 슬롯의 로짓을 읽는 것은 모델이 하지 않은
+   답을 짓는 것이다. VLM 은 물어보면 형식대로 100% 답한다.
+2. **하네스 제약을 판단 근거로 쓰지 않는다.** 컨트롤러 클리핑은 평가에서 풀 대상이다.
+   robocasa 와 libero 양쪽에서 클리핑을 풀어도 성공률이 그대로였다(+0.007, +0.003).
+3. **범주를 눈금으로 세우지 않는다.** 등급은 한 가지 판단의 강도이지 서로 다른 넷이
+   아니다.
+4. **같은 사실을 상한과 신뢰도에 두 번 세지 않는다.**
+
+프롬프트 파일을 편집할 때는 치환이 실제로 먹었는지 확인한다. `s.replace` 는 앵커를
+못 찾아도 조용히 넘어가고, 그러면 한 바퀴를 통째로 버린다.
+
 ## 참고 문서
 
 - `vlm_gate/local/SETUP.md` — 최초 1회 세팅 (사용자가 직접 할 일 포함)
 - `vlm_gate/local/PATHS.md` — 서버 경로·conda 환경·slurm 정책 지도
 - `vlm_gate/local/CHEATSHEET.md` — 상태 확인용 한 줄 명령 모음
-- `vlm_gate/local/STATE.md` — 현재 연구 진행 상황
+- `vlm_gate/local/STATE.md` — 현재 연구 진행 상황 (**여기부터 읽는다**)
+- `vlm_gate/local/PROMPT_METHOD.md` — 문항을 뽑는 절차와 검증
+- `vlm_gate/prompts/` — 확정된 프롬프트 전문
 - `vlm_gate/local/memory/` — 이전 세션에서 쌓인 교훈 (읽고 시작할 것)
 
 ## 헷갈리기 쉬운 이웃 저장소
 
 같은 서버 홈에 비슷한 이름의 줄기가 셋 있다. 이 저장소만 이 프로젝트의 원본이다.
 
-| | 서버 위치 | 무엇 |
-|---|---|---|
-| **이 저장소** | `~/quantization_agent_workspace` | VLM 티처 라벨 → 학생 게이트 증류 (지금 하는 일) |
-| `GR00T-action-quantization` | `~/multigpu_workspace` | ATQ MoE 디코더 + 라우터. 별개로 살아있는 줄기 |
-| `gr00t-n17-quant-gate` | `~/quantization_agent_workspace/groot-n17-quant-gate` | 이 게이트의 N1.7 이식본 |
+| | 맥 클론 | 서버 위치 | 무엇 |
+|---|---|---|---|
+| **이 저장소** | `~/workspace/quant_label_workspace/quantization_label_gr00t` | `~/quantization_agent_workspace` | VLM 티처 라벨 → 학생 게이트 증류 (지금 하는 일) |
+| `gr00t-n17-quant-gate` | `~/workspace/quant_label_workspace/gr00t-n17-quant-gate` | `~/quantization_agent_workspace/groot-n17-quant-gate` | 이 게이트의 N1.7 이식본. `docs/` 에 STATUS·HANDOFF 등 8개 문서가 따로 있다 |
+| `GR00T-action-quantization` | 없음 | `~/multigpu_workspace` | ATQ MoE 디코더 + 라우터. 별개로 살아있는 줄기 |
+
+**N1.7 레포는 맥에도 클론돼 있다.** 작업 디렉터리 밖이라 안 보일 뿐이니, 그쪽 코드를
+볼 일이 있으면 서버를 거치지 말고 로컬에서 읽는다.
 
 `GR00T-action-quantization` 의 `action-quantization-gate-v2` 브랜치는 이 저장소가
 생기기 전 자리다. 8/30 에 작업 트리를 통째로 옮겨 담았고 **두 이력은 이어져 있지
