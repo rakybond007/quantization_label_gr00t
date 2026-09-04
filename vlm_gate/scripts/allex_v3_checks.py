@@ -32,6 +32,11 @@ Rotate PolyBag was never replayed, so no check here claims it.
 """
 import os
 
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from allex_v2_common import MERGE_LIMIT_V2  # noqa: E402
+
 # Each check carries the ratio the phase it recognises was measured to survive.
 # There is no separate sign: a check that raises the answer and one that lowers
 # it differ only in the number, and the answer is their grade-weighted mean.
@@ -72,8 +77,26 @@ import os
 #
 # and the base is 2.5, the ratio given for the phases where nothing is being
 # handled. Nothing answered lands there, which is what it should mean.
-CEILING = {"A": 2.0, "B": 1.5, "C": 3.0}
-COVER = {"A": 1, "B": 1, "C": 2}
+# The object does NOT push one way. A mailer is worse to CARRY than a box --
+# it swings and slips, 28/30 down to 23/30 -- and better to TURN than a box --
+# there is no two-hand hold to lose, so flipping it fast is fine. Firmness
+# reverses sign depending on what is being done to the thing.
+#
+# A ratio hung on each check cannot say that. Whatever number "it goes out of
+# shape" carries, it lands on carrying and turning alike, and every earlier
+# draft that tried it either sent flipped mailers down to the box's 1.5 or
+# lifted carried mailers up to the box's 3.0. So the ratio is read off the
+# PAIR: what is being done, and what it is being done to.
+#
+#                     firm        goes out of shape
+#     taken somewhere  3.0              2.0
+#     turned over      1.5              2.5
+#     neither                2.5
+#
+# Three of the four are replayed (27/30, 23/30, 16/30 at the ratios above and
+# 22/30 for the box at 2x); turning a mailer is the operator's, not replayed.
+K_TABLE = {("move", "firm"): 3.0, ("move", "soft"): 2.0,
+           ("turn", "firm"): 1.5, ("turn", "soft"): 2.5}
 NGRADE = 5
 
 # There is no 4x here. The candidate ratios for this robot are these five, and a
@@ -182,38 +205,58 @@ ASK = ("The measurements above are stated as fact -- do not re-estimate or repea
        "digit per check, using that check's own grades:\n\n" + _AXES + "Answer:")
 
 
-def ceiling_from_checks(picks, levels=CEILING):
+def facts_v3(x):
+    """The measured facts, WITHOUT the human annotation.
+
+    v2 opened with 'The human annotation for this segment is "Bring Object"'.
+    That line cannot carry the ceiling here even if we wanted it to: the
+    annotation says Object, never which object, and the ratio for Bring splits
+    3.0 / 2.0 on exactly that. Which one it is has to be seen, which is check A.
+
+    With the pair read off the checks, the annotation has no work left to do,
+    so it is not sent -- a label the model can lean on is a label it will lean
+    on, and Rotate would pull every mailer toward the box's ratio.
+    """
+    hands = "one arm is moving" if x.get("one_handed") else "both arms are moving"
+    stop = ("the motion is running down toward a stop" if x.get("slowing")
+            else "the motion is not slowing down")
+    gap = ("closing" if x["closing"] else "separating" if x["opening"] else "steady")
+    return (f"MEASURED (computed, not estimates): {hands}; the palms are "
+            f"{x['gap_mean']:.2f} m apart and {gap}; the arms move "
+            f"{x['arm_speed']:.3f} rad per step and {stop}; the grasp centre "
+            f"travels {x['translation']*100:.0f} cm; the wrists turn "
+            f"{x['wrist_rot']:.0f} deg. Skipping to every 2nd target would demand "
+            f"{x['merge_demand_k2']:.3f} rad in one step, every 3rd "
+            f"{x['merge_demand_k3']:.3f} rad (this robot never exceeded "
+            f"{MERGE_LIMIT_V2} rad in the demonstrations).")
+
+
+def ceiling_from_checks(picks, table=K_TABLE):
     """The ratio this moment tolerates, in units of K.
 
-    A plain weighted mean cannot express a ceiling. A mailer being pushed along
-    the plate answers both A (it is limp) and C (it is being pushed); averaging
-    2.0 with 3.0 puts the mailer ABOVE the 2.0 it was measured at, because C's
-    ceiling was read off a box. A ceiling is not an average of opinions -- the
-    most restrictive evidence has the last word.
+    Two axes, read off three checks. B and C say what is being done -- turned,
+    or taken somewhere -- and A says what it is being done to. The pair picks a
+    cell of K_TABLE; the grades interpolate between cells rather than snapping
+    to one, because a moment is rarely purely one thing.
 
-    So the two sides are not symmetric:
+    The base is what a moment nothing recognises is worth: 2.5, the ratio for a
+    station where nothing is being handled. Evidence moves K away from it only
+    as far as the strongest action check is sure, which is what "3.0 as a weak
+    allowance" means -- a faint C does not buy the full 3.0.
 
-      the permissive check (C) sets how far ABOVE the base ratio this moment
-      could go, and only as far as it is sure. Faint evidence stays near the
-      base -- that is "3.0 as a weak allowance".
-
-      the restrictive checks (A, B) then clamp what is left, least restrictive
-      first, each in proportion to how sure it is. Nothing they do can be undone
-      by a permissive check that fired earlier.
-
-    With nothing answered at all, no check recognised the moment. That is the
-    base -- 2.5, the ratio for a station where nothing is being handled.
+    Nothing answered stays at the base. A did not fire either, so we do not
+    know what the object is; there is no cell to read.
     """
     g = {q: (float(p) - 1.0) / 4.0 for q, p in zip("ABC", picks) if p is not None}
-    up = {q: w for q, w in g.items() if q == "C" and w > 0}
-    if up:
-        aim = sum(w * levels[q] for q, w in up.items()) / sum(up.values())
-        k = BASE + max(up.values()) * (aim - BASE)
-    else:
-        k = BASE
-    for q in sorted(("A", "B"), key=lambda q: -levels[q]):   # least restrictive first
-        k -= g.get(q, 0.0) * max(0.0, k - levels[q])
-    return float(k)
+    soft = g.get("A", 0.0)                       # 0 = firm, 1 = goes out of shape
+    turn, move = g.get("B", 0.0), g.get("C", 0.0)
+    act = turn + move
+    if act <= 0:
+        return BASE
+    k_turn = (1 - soft) * table[("turn", "firm")] + soft * table[("turn", "soft")]
+    k_move = (1 - soft) * table[("move", "firm")] + soft * table[("move", "soft")]
+    aim = (turn * k_turn + move * k_move) / act
+    return float(BASE + max(turn, move) * (aim - BASE))
 
 
 def snap(k, candidates=CANDIDATES):

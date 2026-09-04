@@ -26,8 +26,9 @@ import pandas as pd
 from PIL import Image
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from allex_v2_common import TASKS, descriptors, stage2_facts  # noqa: E402
-from allex_v3_checks import ASK, GUIDANCE, NGRADE, ceiling_from_checks, snap  # noqa: E402
+from allex_v2_common import TASKS, descriptors  # noqa: E402
+from allex_v3_checks import (ASK, GUIDANCE, NGRADE, ceiling_from_checks,  # noqa: E402
+                             facts_v3, snap)
 from vlm_gate import VLMGate  # noqa: E402
 
 DS = os.environ.get(
@@ -89,7 +90,8 @@ for ep in EPS:
             x = descriptors(A, WR, WL, f, CHUNK)
             seg = ti[f:f + CHUNK]
             task = TASKS[int(np.bincount(seg, minlength=len(TASKS)).argmax())]
-            payload.append(([L[f], R[f]], f"{task}\n{stage2_facts(task, x)}"))
+            # The subtask name is recorded but NOT sent: see facts_v3.
+            payload.append(([L[f], R[f]], facts_v3(x)))
             meta.append((f, task, x))
         try:
             rs = gate.judge_batch(payload, GUIDANCE, question=ASK, n_ask=3, n_grade=NGRADE)
