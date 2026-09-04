@@ -104,8 +104,13 @@ from allex_v2_common import MERGE_LIMIT_V2  # noqa: E402
 # dangerous to turn and safe to move. A check that names only one of the two
 # covers a damaged subtask and an undamaged one equally and cancels. So every
 # phase here is (what, done how) as one thing.
-CEILING = {"A": 2.0, "B": 1.5, "C": 2.5, "D": 3.0}
-COVER = {"A": 1, "B": 1, "C": 1, "D": 2}      # step 5, recorded; the ratio carries
+# B(봉투)의 상한은 하나가 아니다. 봉투를 뒤집는 것은 2.5, 옮기는 것은 2.0
+# 인데 그 둘은 정지 화면에서 같은 장면이다 -- 다섯 번 물었고 다섯 번 다
+# 중간 등급에 붙박였다. 가르는 것은 손바닥 간격이고(AUC 0.827) 그건 이미
+# 계산돼 사실로 나간다. 그래서 코드가 고른다: 묻지 않고 준다는 원칙 그대로다.
+CEILING = {"A": 1.5, "B": 2.5, "C": 3.0}
+BAG_FLIP, BAG_MOVE = 2.5, 2.0
+COVER = {"A": 1, "B": 2, "C": 2}      # step 5, recorded; the ratio carries
 NGRADE = 5
 
 # There is no 4x here. The candidate ratios for this robot are these five, and
@@ -198,32 +203,32 @@ GUIDANCE = (
 #   USED THE MIDDLE AS A HEDGE. Grades 2 and 4 went unused across 763 chunks.
 #     Grade 2 is now the shape that worked in robocasa -- the subject IS on the
 #     plate and the hands are on something else.
+# 문항은 행동을 이름 붙이고, 정지 화면이 담는 배치는 등급표가 진다. 앞 판은
+# 문항 문장까지 배치로 내려서("상자가 두 손 사이에 끼어 있다") 이 작업장
+# 밖에서는 말이 안 되는 문장이 됐다. 모델이 스틸을 본다는 제약은 등급표가
+# 감당할 짐이지 문항이 감당할 짐이 아니다.
 _CHECKS = (
- ("A", "Is a hand bearing on a BAG with its FINGERS OPEN -- not closed around it?",
-  ("the fingers are straight and the flat of the hand is against its side",
-   "the back or heel of the hand is on it and the fingers point away from it",
-   "the fingertips alone touch it and the rest of the hand is off it",
-   "a bag is on the plate and the hands are on something else",
-   "the fingers are closed round it and part of it is inside the grip")),
- ("B", "Is a SQUARE-EDGED BOX caught BETWEEN TWO HANDS, one on each of two opposite faces?",
-  ("it is up on an edge between the two hands, a face that was down now showing",
-   "it is between the two hands with one side lifted clear of the plate",
-   "a hand is flat on each of two opposite faces, the box still down",
-   "such a box is on the plate and only one hand is at it",
-   "nothing is caught between two hands")),
- ("C", "Is a FLAT WRINKLED SHEET on the plate being worked by a hand ON TOP OF IT, with the\n"
-       "   sheet still lying there?",
-  ("it is folding over under the hand and its underside is coming into view",
-   "an edge of it is up under the hand, the rest flat on the plate",
-   "the hand is down on it and it lies flat",
-   "such a sheet is on the plate and the hands are on something else",
-   "there is no flat wrinkled thing under a hand")),
- ("D", "Is a SQUARE-EDGED BOX held by ONE HAND ONLY, with nothing on its far side?",
+ ("A", "Is the robot TURNING something over -- working it round with both hands, one\n"
+       "   against each of two opposite sides, so a different face comes up?",
+  ("it is up on an edge between the hands and a face that was down now shows",
+   "it is between the hands with one side lifted clear of what it sat on",
+   "a hand is flat on each of two opposite sides, the thing not yet moved",
+   "something that would be turned is there and only one hand is at it",
+   "nothing is held between two hands")),
+ ("B", "Is the robot handling something that GIVES WAY UNDER THE HAND -- a bag, a sack,\n"
+       "   anything that creases and stays creased?",
+  ("the hand is down on it and it is creased and pushed out of shape",
+   "the hand is on it and its surface is dented where the fingers press",
+   "the hand has come to it and it still holds its own shape",
+   "such a thing is in the picture and the hands are on something else",
+   "what the hands are at holds square edges, or the hands are at nothing")),
+ ("C", "Is the robot MOVING something from one place to another with a SINGLE HAND --\n"
+       "   pushing it, dragging it, carrying it -- with no second hand on it?",
   ("one hand is on it and the far side of it is open, no second hand there",
    "one hand is on it and the other hand is away doing something else",
    "one hand is near it, not yet touching, and no second hand is coming",
-   "such a box is on the plate and the hands are on something else",
-   "it is caught between two hands, one on each of two opposite faces")),
+   "something to be moved is there and the hands are on something else",
+   "it is held between two hands, one on each of two opposite sides")),
 )
 
 _AXES = "".join(
@@ -288,29 +293,31 @@ def facts_v3(x):
             "rad in the demonstrations).")
 
 
-def ceiling_from_checks(picks, levels=CEILING):
+def ceiling_from_checks(picks, x=None, levels=CEILING):
     """The ratio this moment tolerates, in units of K.
 
-    Each check names one phase and carries the ratio that phase was measured
-    at, so the grade-weighted mean of the ratios is already in units of K. The
-    phases do not overlap -- a limp thing lifted clear of the plate is not a
-    limp thing lying on it, a box between two hands is not a box standing alone
-    with one hand on it -- so a mean is the right way to blend the moments that
-    are two things at once, and no clamping is needed.
+    Three checks. A fourth was tried five times -- a bag being carried somewhere
+    rather than flipped where it lies -- and died at the middle grade every
+    time, under five different wordings. The two are the same picture: a hand on
+    a plump mailer on the plate. What separates them is not in the frame.
 
-    An earlier design split this into "what the object is" and "what is being
-    done" and could not put them back together: a mailer being carried and a
-    mailer being flipped got the same object answer, and whatever ratio that
-    answer carried was wrong for one of them. The phase is the unit.
+    It is in the numbers. The palms sit at 0.44 m when a bag is being turned and
+    0.51 m when it is being taken somewhere, which is AUC 0.827 -- so when B
+    fires, the palm gap picks which of the two bag ratios applies. That is the
+    method's own division of labour: what the arithmetic can settle is stated,
+    not asked.
 
     Nothing answered means no phase was recognised, which takes the base -- 2.5,
     the ratio for a station where nothing is being handled.
     """
-    g = {q: (float(p) - 1.0) / 4.0 for q, p in zip("ABCD", picks) if p is not None}
+    lv = dict(levels)
+    if x is not None:
+        lv["B"] = BAG_FLIP if x["gap_mean"] < GAP_NEAR else BAG_MOVE
+    g = {q: (float(p) - 1.0) / 4.0 for q, p in zip("ABC", picks) if p is not None}
     g = {q: w for q, w in g.items() if w > 0}
     if not g:
         return BASE
-    aim = sum(w * levels[q] for q, w in g.items()) / sum(g.values())
+    aim = sum(w * lv[q] for q, w in g.items()) / sum(g.values())
     return float(BASE + max(g.values()) * (aim - BASE))
 
 
