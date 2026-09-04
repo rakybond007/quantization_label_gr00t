@@ -25,6 +25,7 @@ import base64
 import io
 import json
 import re
+import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 from PIL import Image
@@ -71,14 +72,22 @@ SYSTEM = _vg.SYSTEM
 
 def run_server(model_id, port, host, max_new_tokens, dtype):
     import torch
-    from transformers import AutoProcessor, Cosmos3OmniForConditionalGeneration
+    from transformers import AutoProcessor
 
     td = {"bfloat16": torch.bfloat16, "float16": torch.float16}.get(dtype, torch.bfloat16)
-    print(f"[judge] loading {model_id} (Cosmos3 reasoner, dtype={dtype}) ...", flush=True)
+    # The class was pinned to Cosmos3Omni. Everything else in this file -- the
+    # message scaffold, the forced answer slots, the graded and text paths -- is
+    # generic across image-text models, so the class is chosen from the id and a
+    # different judge can be served without touching any of it.
+    if "cosmos" in model_id.lower():
+        from transformers import Cosmos3OmniForConditionalGeneration as _Cls
+        _tag = "Cosmos3 reasoner"
+    else:
+        from transformers import AutoModelForImageTextToText as _Cls
+        _tag = "auto image-text"
+    print(f"[judge] loading {model_id} ({_tag}, dtype={dtype}) ...", flush=True)
     processor = AutoProcessor.from_pretrained(model_id)
-    model = Cosmos3OmniForConditionalGeneration.from_pretrained(
-        model_id, dtype=td, device_map="auto",
-    ).eval()
+    model = _Cls.from_pretrained(model_id, dtype=td, device_map="auto").eval()
     print("[judge] model loaded", flush=True)
 
     tok = processor.tokenizer
@@ -285,6 +294,7 @@ def run_server(model_id, port, host, max_new_tokens, dtype):
         reads from the end, and right padding would make the model continue from
         pad tokens.
         """
+        _t_pre = time.time()
         seqs, n_in = [], []
         for it in items:
             msg = build_messages(it["imgs"], it.get("instruction", ""), guidance, question)
@@ -322,9 +332,20 @@ def run_server(model_id, port, host, max_new_tokens, dtype):
         for k, vs in extra.items():
             batch[k] = torch.cat(vs).to(model.device)
 
+        _t_gen = time.time()
         with torch.inference_mode():
             out = model.generate(**batch, max_new_tokens=int(max_new_tokens),
                                  do_sample=False)
+        # The training dataloader runs its transforms in workers, not in the
+        # step. Here apply_chat_template -- which resizes and patchifies three
+        # images per item -- runs serially in this loop before any of the GPU
+        # work starts, so it is worth knowing what share it is before moving it.
+        if os.environ.get("JUDGE_PROFILE"):
+            _now = time.time()
+            print(f"[prof] n={len(items)} pre={_t_gen - _t_pre:.2f}s "
+                  f"gen={_now - _t_gen:.2f}s "
+                  f"pre_share={(_t_gen - _t_pre) / max(_now - _t_pre, 1e-9):.0%}",
+                  flush=True)
         res = []
         for i in range(len(items)):
             text = tok.decode(out[i][width:], skip_special_tokens=True).strip()
