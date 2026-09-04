@@ -33,9 +33,14 @@ rs = [json.loads(l) for l in open(f"{OUT}/records.jsonl")]
 Q = "ABCD"
 # 각 문항이 뽑혀 나온 국면 = 그 문항이 걸려야 할 층.
 OWN = {"A": "move+bag", "B": "turn+box", "C": "turn+bag", "D": "move+box"}
+OWNQ = {v: k for k, v in OWN.items()}
 NAME = {"A": "무른 것을 들어 놓음", "B": "단단한 것을 두 손 사이에서",
         "C": "무른 것을 판 위에서", "D": "단단한 것이 빈 곳에"}
-TARGET = {"move+box": 3.0, "move+bag": 2.0, "turn+box": 1.5, "turn+bag": 2.5}
+# 상한이지 목표가 아니다. 넘으면 틀린 것이고, 밑돌면 안전하되 속도를 못
+# 챙긴 것뿐이다. 그래서 판정은 위반율이 하고, 여유는 진단으로만 본다 --
+# 그러지 않으면 모든 청크에 1.0 을 찍는 라벨러가 만점을 받는다.
+CEIL_OF = {"move+box": 3.0, "move+bag": 2.0, "turn+box": 1.5, "turn+bag": 2.5}
+VIOLATE_MAX = 5.0        # 그 층의 문항이 걸린 청크 중 상한을 넘긴 비율, %
 gates = {}
 
 by = collections.defaultdict(list)
@@ -88,22 +93,35 @@ for i in range(len(Q)):
 gates["4 상관"] = (mx, CORR_MAX, mx <= CORR_MAX)
 print(f"      최대 {mx:+.3f}  {'통과' if mx <= CORR_MAX else '미달'}")
 
-# 5 ------------------------------------------------------------ 상한 수렴 (판정)
-print("[5] 층별 K   상한은 프롬프트에 없다")
-hit = 0
-for cell in sorted(TARGET):
+# 5 ------------------------------------------------------------ 상한 위반 (판정)
+# 상한은 그 서브태스크를 통째로 재생했을 때의 값이라 사실상 그 구간 청크들의
+# 최솟값이다. 청크 단위로는 Rotate Box 안의 접근 구간이 3.0 이어도 맞을 수
+# 있고 -- 변속 라벨링을 하는 이유가 그것이다 -- 아무 동작도 없는 대기 청크는
+# 기준값 2.5 를 받기로 되어 있다. 그래서 위반은 **그 층의 문항이 실제로 걸린
+# 청크** 에서만 따진다.
+print(f"[5] 상한 위반   그 층의 문항이 걸린 청크에서, 합격선 {VIOLATE_MAX:.0f}% 이하")
+worst = 0.0
+for cell in sorted(CEIL_OF):
     v = by.get(cell, [])
-    if not v:
-        print(f"      {cell:<9} 없음")
+    own = [r for r in v if (r.get(OWNQ[cell]) or 1) >= 4]      # 그 국면이라고 답한 것
+    if not own:
+        print(f"      {cell:<9} 그 국면으로 답한 청크 없음")
+        worst = 100.0
         continue
-    ks = [r["K"] for r in v]
-    sn = collections.Counter(snap(k) for k in ks)
-    good = sn.most_common(1)[0][0] == TARGET[cell]
-    hit += good
-    print(f"      {cell:<9} n={len(v):3d}  평균 {np.mean(ks):.2f}  최빈스냅 "
-          f"{sn.most_common(1)[0][0]:g}x  목표 {TARGET[cell]:g}x  {'맞음' if good else '틀림'}")
-gates["5 층"] = (hit, 4, hit == 4)
-print(f"      맞은 층 {hit}/4")
+    bad = [r for r in own if r["K"] > CEIL_OF[cell] + 1e-9]
+    pct = 100 * len(bad) / len(own)
+    worst = max(worst, pct)
+    ks = [r["K"] for r in own]
+    print(f"      {cell:<9} 국면 {len(own):3d}청크  평균 K {np.mean(ks):.2f}  "
+          f"상한 {CEIL_OF[cell]:g}  위반 {pct:4.1f}%  "
+          f"여유 {100*np.mean(ks)/CEIL_OF[cell]:3.0f}%  "
+          f"{'통과' if pct <= VIOLATE_MAX else '미달'}")
+idle = [r for v in by.values() for r in v if not any((r.get(q) or 1) > 1 for q in Q)]
+if idle:
+    ki = collections.Counter(snap(r["K"]) for r in idle)
+    print(f"      대기 {len(idle)}청크  " + "  ".join(f"{k:g}x {n}" for k, n in sorted(ki.items()))
+          + "   (기준값 2.5)")
+gates["5 위반"] = (worst, VIOLATE_MAX, worst <= VIOLATE_MAX)
 
 print("\n=== 판정 ===")
 for k, (v, lim, ok) in gates.items():

@@ -237,30 +237,55 @@ ASK = ("The measurements above are stated as fact -- do not re-estimate or repea
        "digit per check, using that check's own grades:\n\n" + _AXES + "Answer:")
 
 
+# 임계값은 층별 중앙값에서 잡았다. 이 값들이 두 봉투 층을 가르는 자리다:
+# gap_mean 은 뒤집기 0.41~0.44 / 옮기기 0.51 (AUC 0.827), arm_speed 는
+# 뒤집기 0.045 / 옮기기 0.027 (0.716), hand_change 는 0.022 / 0.013 (0.638).
+GAP_NEAR, GAP_FAR = 0.45, 0.52
+SPEED_SLOW, SPEED_FAST = 0.020, 0.040
+FING_STILL, FING_WORK = 0.010, 0.020
+ROT_LITTLE, ROT_LOT = 15.0, 25.0
+
+
 def facts_v3(x):
-    """The measured facts, WITHOUT the human annotation.
+    """계산값을 사실 문장으로. 임계 판정까지 끝내고 결론만 준다.
 
-    v2 opened with 'The human annotation for this segment is "Bring Object"'.
-    That line cannot carry the ceiling here even if we wanted it to: the
-    annotation says Object, never which object, and the ratio for Bring splits
-    3.0 / 2.0 on exactly that. Which one it is has to be seen, which is check A.
+    robocasa 의 facts_text 와 같은 형식이다. 앞 판은 날숫자를 그대로 넘겼고
+    ("the palms are 0.44 m apart"), 그러면 해석이 모델 몫이 된다. gap_mean 이
+    봉투를 옮기는 구간과 뒤집는 구간을 AUC 0.827 로 가르는데도 모델이 그것을
+    쓰지 않은 이유가 이것이다 -- 가르는 것은 숫자가 아니라 그 숫자에 대한
+    판정이고, 판정은 코드가 해야 한다.
 
-    With the pair read off the checks, the annotation has no work left to do,
-    so it is not sent -- a label the model can lean on is a label it will lean
-    on, and Rotate would pull every mailer toward the box's ratio.
+    여섯 줄이 조건과 무관하게 항상 나온다. 조건부로 줄이 붙었다 빠졌다 하면
+    프롬프트 길이가 프레임마다 달라지고, 배치에서 패딩이 필요해진다.
+
+    사람이 붙인 서브태스크 이름은 들어가지 않는다. 주석은 "Bring Object" 라고만
+    하고 어느 물체인지는 안 쓰는데 배속이 정확히 거기서 갈린다.
     """
-    hands = "one arm is moving" if x.get("one_handed") else "both arms are moving"
-    stop = ("the motion is running down toward a stop" if x.get("slowing")
-            else "the motion is not slowing down")
-    gap = ("closing" if x["closing"] else "separating" if x["opening"] else "steady")
-    return (f"MEASURED (computed, not estimates): {hands}; the palms are "
-            f"{x['gap_mean']:.2f} m apart and {gap}; the arms move "
-            f"{x['arm_speed']:.3f} rad per step and {stop}; the grasp centre "
-            f"travels {x['translation']*100:.0f} cm; the wrists turn "
-            f"{x['wrist_rot']:.0f} deg. Skipping to every 2nd target would demand "
-            f"{x['merge_demand_k2']:.3f} rad in one step, every 3rd "
-            f"{x['merge_demand_k3']:.3f} rad (this robot never exceeded "
-            f"{MERGE_LIMIT_V2} rad in the demonstrations).")
+    p = []
+    p.append("only one arm is moving" if x.get("one_handed") else "both arms are moving")
+    g = x["gap_mean"]
+    p.append("the palms are close in to each other" if g < GAP_NEAR else
+             "the palms are a middling distance apart" if g < GAP_FAR else
+             "the palms are well apart")
+    p.append("and drawing together" if x["closing"] else
+             "and moving apart" if x["opening"] else "and holding that distance")
+    v = x["arm_speed"]
+    p.append("the arms are barely moving" if v < SPEED_SLOW else
+             "the arms are moving at a normal pace" if v < SPEED_FAST else
+             "the arms are moving fast")
+    h = x["hand_change"]
+    p.append("the fingers are still" if h < FING_STILL else
+             "the fingers are shifting a little" if h < FING_WORK else
+             "the fingers are working")
+    r = x["wrist_rot"]
+    p.append("the wrists barely turn" if r < ROT_LITTLE else
+             "the wrists turn a fair amount" if r < ROT_LOT else
+             "the wrists turn a great deal")
+    return ("MEASURED FROM THE PLANNED MOTION over the next ~1 second (these are computed "
+            "facts, not estimates): " + "; ".join(p) + ". Skipping to every 2nd target "
+            f"would demand {x['merge_demand_k2']:.3f} rad in one step, every 3rd "
+            f"{x['merge_demand_k3']:.3f} rad (this robot never exceeded {MERGE_LIMIT_V2} "
+            "rad in the demonstrations).")
 
 
 def ceiling_from_checks(picks, levels=CEILING):
