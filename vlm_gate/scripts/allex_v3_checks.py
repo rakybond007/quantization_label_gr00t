@@ -207,23 +207,33 @@ GUIDANCE = (
 # 문항 문장까지 배치로 내려서("상자가 두 손 사이에 끼어 있다") 이 작업장
 # 밖에서는 말이 안 되는 문장이 됐다. 모델이 스틸을 본다는 제약은 등급표가
 # 감당할 짐이지 문항이 감당할 짐이 아니다.
+# 행동을 이름 붙이되, 판정 가능하게 하는 배치를 한정어로 단다. robocasa 가
+# 그 형식이다 -- "고정된 것을 누르거나 밀거나 돌리는가 -- 버튼, 다이얼, 서랍
+# 앞판 -- 아무것도 안 쥔 채로". 행동이 앞에 오고, "고정된" 과 "아무것도 안 쥔
+# 채로" 가 한 장에서 판정되게 하며, 예시가 물체를 일반화한다.
+#
+# 양 끝은 둘 다 재봤고 둘 다 나쁘다. 배치만 쓴 판(t=6)은 "상자가 두 손 사이에
+# 끼어 있다" 가 되어 이 작업장 밖에서 말이 안 됐고, 행동만 쓴 판(t=8)은
+# "돌리고 있는가" 가 정지 화면에서 답할 수 없어 A 가 +2.01 에서 +0.03 으로,
+# C 가 +1.95 에서 +0.45 로 무너졌다. B 만 살아남았는데 "모양이 무너지는 것을
+# 다루는가" 는 원래 한 장에서 보이는 성질이라서다.
 _CHECKS = (
- ("A", "Is the robot TURNING something over -- working it round with both hands, one\n"
-       "   against each of two opposite sides, so a different face comes up?",
-  ("it is up on an edge between the hands and a face that was down now shows",
+ ("A", "Is the robot bringing a DIFFERENT SIDE of something to the top -- turning, tipping\n"
+       "   or rolling it -- with a hand set against each of two opposite sides of it?",
+  ("it is up on an edge between the hands and a side that was down now shows",
    "it is between the hands with one side lifted clear of what it sat on",
    "a hand is flat on each of two opposite sides, the thing not yet moved",
    "something that would be turned is there and only one hand is at it",
    "nothing is held between two hands")),
- ("B", "Is the robot handling something that GIVES WAY UNDER THE HAND -- a bag, a sack,\n"
-       "   anything that creases and stays creased?",
+ ("B", "Is the robot working on something that GIVES WAY UNDER THE HAND -- a bag, a sack,\n"
+       "   cloth -- anything that creases and stays creased?",
   ("the hand is down on it and it is creased and pushed out of shape",
    "the hand is on it and its surface is dented where the fingers press",
    "the hand has come to it and it still holds its own shape",
    "such a thing is in the picture and the hands are on something else",
    "what the hands are at holds square edges, or the hands are at nothing")),
- ("C", "Is the robot MOVING something from one place to another with a SINGLE HAND --\n"
-       "   pushing it, dragging it, carrying it -- with no second hand on it?",
+ ("C", "Is the robot taking something TO ANOTHER PLACE -- pushing, dragging or carrying it\n"
+       "   -- with only ONE HAND on it and its far side left open?",
   ("one hand is on it and the far side of it is open, no second hand there",
    "one hand is on it and the other hand is away doing something else",
    "one hand is near it, not yet touching, and no second hand is coming",
