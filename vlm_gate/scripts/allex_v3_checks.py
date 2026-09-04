@@ -108,6 +108,10 @@ CEILING = {"A": 2.0, "B": 1.5, "C": 2.5, "D": 3.0}
 COVER = {"A": 1, "B": 1, "C": 1, "D": 2}      # step 5, recorded; the ratio carries
 NGRADE = 5
 
+# There is no 4x here. The candidate ratios for this robot are these five, and
+# a label that is not one of them cannot be replayed.
+CANDIDATES = (1.0, 1.5, 2.0, 2.5, 3.0)
+
 BASE = float(os.environ.get("ALLEX_BASE_K", 2.5))
 
 # Candidates that were dropped, and why -- the ranking is the method's step 3.
@@ -138,6 +142,14 @@ GUIDANCE = (
 # is held or touched sit inside every subtask, the damaged ones included, so a
 # phase common to all of them can never separate the pools. With no object in
 # hand there is no hold to lose, so it takes the safe ceiling by construction.
+# t=2 -> t=3, 등급표 축 하나. 검증 3 에서 A(-0.08)와 D(+0.46)가 떨어졌고
+# 원인이 같다: **1등급이 경쟁 배치를 담고 있지 않았다.** A 의 1등급은 "손
+# 가까이 주름진 것이 없다" 였는데 turn+bag 장면에는 주름진 것이 손 밑에 있다.
+# 그 층에서 1을 고를 수 없으니 3으로 올라오고, 봉투 층 둘이 똑같아진다.
+# D 도 같은 이유로 turn+box 에서 켜졌고 그것이 B-D 상관 +0.62 다.
+# 이제 각 문항의 1등급이 그 문항이 아닌 쪽의 배치를 이름으로 부른다 --
+# A 의 1등급은 C 의 장면이고, D 의 1등급은 B 의 장면이다.
+#
 # WHAT THE EARLIER DRAFTS GOT WRONG, so the next one does not walk back in.
 #
 #   ASKED WHAT THE FACTS ALREADY SAY. A draft asked whether the object was
@@ -161,13 +173,13 @@ GUIDANCE = (
 #     Grade 2 is now the shape that worked in robocasa -- the subject IS on the
 #     plate and the hands are on something else.
 _CHECKS = (
- ("A", "Is a hand holding something WRINKLED AND LIMP -- a mailer, a sack -- clear of the\n"
-       "   plate, over the place it is to end up?",
-  ("it is gathered in the hand, off the plate, out over a clear spot",
-   "it is gathered in the hand and off the plate",
-   "one end of it is up in the hand, the rest still down on the plate",
+ ("A", "Is something WRINKLED AND LIMP -- a mailer, a sack -- PICKED UP by the fingers,\n"
+       "   lifted off the plate rather than left lying on it?",
+  ("fingers have it gathered up and it sags below them, clear of the plate",
+   "fingers have a fold of it and that part is up off the plate",
+   "fingers are pinching an edge of it, all of it still down",
    "something wrinkled is on the plate and the hands are on something else",
-   "what the hands have holds its own edges, or the hands have nothing")),
+   "it lies flat on the plate with a hand resting on top of it")),
  ("B", "Is a SQUARE-EDGED BOX caught BETWEEN TWO HANDS, one on each of two opposite faces?",
   ("it is up on an edge between the two hands, a face that was down now showing",
    "it is between the two hands with one side lifted clear of the plate",
@@ -181,13 +193,12 @@ _CHECKS = (
    "the hand is down on it and it lies flat",
    "such a sheet is on the plate and the hands are on something else",
    "there is no flat wrinkled thing under a hand")),
- ("D", "Is a SQUARE-EDGED BOX with a hand on it standing out in clear space -- away from the\n"
-       "   other boxes, nothing around it?",
-  ("the hand is on it and it stands alone with clear plate all round",
-   "the hand is on it and one side of it is clear",
-   "the hand is on it and it is still among the others",
+ ("D", "Is a SQUARE-EDGED BOX held by ONE HAND ONLY, with nothing on its far side?",
+  ("one hand is on it and the far side of it is open, no second hand there",
+   "one hand is on it and the other hand is away doing something else",
+   "one hand is near it, not yet touching, and no second hand is coming",
    "such a box is on the plate and the hands are on something else",
-   "no hand is on a square-edged box")),
+   "it is caught between two hands, one on each of two opposite faces")),
 )
 
 _AXES = "".join(
