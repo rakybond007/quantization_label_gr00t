@@ -41,7 +41,19 @@ CHUNK = 16
 BATCH = int(os.environ.get("ALLEX_BATCH", 8))
 
 PORT = sys.argv[1]
-EPS = [int(e) for e in sys.argv[2].split(",")] if len(sys.argv) > 2 else [0]
+# 표본 파일(allex_v3_sample.py 가 만든 D.json/H.json)이면 그 (ep, f) 만 돈다.
+# 층 이름도 같이 읽어 기록에 넣는다 -- 검증이 쓰고, 모델에는 안 간다.
+SAMPLE = sys.argv[2] if len(sys.argv) > 2 and sys.argv[2].endswith(".json") else ""
+if SAMPLE:
+    _wl = json.load(open(SAMPLE))
+    CELL = {(int(e), int(f)): lab for lab, v in _wl["strata"].items() for e, f in v}
+    WANT = {}
+    for (e, f) in CELL:
+        WANT.setdefault(e, []).append(f)
+    EPS = sorted(WANT)
+else:
+    CELL, WANT = {}, {}
+    EPS = [int(e) for e in sys.argv[2].split(",")] if len(sys.argv) > 2 else [0]
 OUT = f"{OUTDIR}/records.jsonl"
 
 gate = VLMGate(f"http://127.0.0.1:{PORT}", timeout=300)
@@ -78,7 +90,10 @@ for ep in EPS:
     WR = np.stack(d["action.right_wrist_wrt_base"].values)
     WL = np.stack(d["action.left_wrist_wrt_base"].values)
     ti = d["task_index"].values
-    starts = [f for f in range(0, len(A) - CHUNK, CHUNK) if (ep, f) not in done]
+    if SAMPLE:
+        starts = sorted(f for f in WANT.get(ep, []) if (ep, f) not in done)
+    else:
+        starts = [f for f in range(0, len(A) - CHUNK, CHUNK) if (ep, f) not in done]
     if not starts:
         print(f"ep{ep}: 이미 함", flush=True)
         continue
@@ -94,7 +109,7 @@ for ep in EPS:
             payload.append(([L[f], R[f]], facts_v3(x)))
             meta.append((f, task, x))
         try:
-            rs = gate.judge_batch(payload, GUIDANCE, question=ASK, n_ask=3, n_grade=NGRADE)
+            rs = gate.judge_batch(payload, GUIDANCE, question=ASK, n_ask=4, n_grade=NGRADE)
         except Exception as e:
             print(f"  ep{ep} f{grp[0]}+: {type(e).__name__}: {e}", flush=True)
             continue
@@ -108,10 +123,11 @@ for ep in EPS:
                     raise SystemExit(f"판정기가 답을 안 함: {r.get('error', 'empty')}")
                 continue
             nempty = 0
-            picks = r.get("picks") or [None] * 3
+            picks = r.get("picks") or [None] * 4
             K = ceiling_from_checks(picks)
             rec = {"ep": ep, "f": f, "task": task,
-                   **{q: picks[i] for i, q in enumerate("ABC")},
+                   "cell": CELL.get((ep, f)),
+                   **{q: picks[i] for i, q in enumerate("ABCD")},
                    "K": round(K, 3), "K_snap": snap(K),
                    "text": r.get("text", "").replace("\n", " | "),
                    **{k: (float(v) if isinstance(v, (int, float, np.floating)) else v)

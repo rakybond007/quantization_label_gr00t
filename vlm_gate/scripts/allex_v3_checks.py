@@ -77,39 +77,37 @@ from allex_v2_common import MERGE_LIMIT_V2  # noqa: E402
 #
 # and the base is 2.5, the ratio given for the phases where nothing is being
 # handled. Nothing answered lands there, which is what it should mean.
-# The object does NOT push one way. A mailer is worse to CARRY than a box --
-# it swings and slips, 28/30 down to 23/30 -- and better to TURN than a box --
-# there is no two-hand hold to lose, so flipping it fast is fine. Firmness
-# reverses sign depending on what is being done to the thing.
+# The checks came out of the pools, not out of these numbers. The measured
+# ratios were used the way PROMPT_METHOD says to use them -- as the hint for
+# which subtasks are the damaged ones and which are not -- and the ratio below
+# is only attached to each phase afterwards, once the phase had earned its
+# place by coverage.
 #
-# A ratio hung on each check cannot say that. Whatever number "it goes out of
-# shape" carries, it lands on carrying and turning alike, and every earlier
-# draft that tried it either sent flipped mailers down to the box's 1.5 or
-# lifted carried mailers up to the box's 3.0. So the ratio is read off the
-# PAIR: what is being done, and what it is being done to.
+#     위험 풀   Rotate Box     2x 22/30, 2.5x 16/30
+#               Bring PolyBag  2x 28/30, 2.5x 23/30
+#     안정 풀   Pass Object    ~30/30 at 2.5x
+#               Bring Box      27/30 at 2.5x
+#               Rotate PolyBag operator: flipping one fast is fine
 #
-#                     firm        goes out of shape
-#     taken somewhere  3.0              2.0
-#     turned over      1.5              2.5
-#     neither                2.5
+# Ranking the candidate phases by how many subtasks they cover, minus what they
+# wrongly cover on the other side:
 #
-# Three of the four are replayed (27/30, 23/30, 16/30 at the ratios above and
-# 22/30 for the box at 2x); turning a mailer is the operator's, not replayed.
-K_TABLE = {("move", "firm"): 3.0, ("move", "soft"): 2.0,
-           ("turn", "firm"): 1.5, ("turn", "soft"): 2.5}
+#     firm thing moved somewhere       +2 -0 = 2   kept, 안정
+#     limp thing set down at a place   +1 -0 = 1   kept, 위험
+#     firm thing turned in two hands   +1 -0 = 1   kept, 위험
+#     limp thing flipped over          +1 -0 = 1   kept, 안정
+#     set down at an exact place       +1 -1 = 0   dropped
+#     the thing is limp                +1 -1 = 0   dropped
+#
+# The last one is the finding. NEITHER the object NOR the action separates the
+# pools on its own: limp is dangerous to bring and safe to flip, firm is
+# dangerous to turn and safe to move. A check that names only one of the two
+# covers a damaged subtask and an undamaged one equally and cancels. So every
+# phase here is (what, done how) as one thing.
+CEILING = {"A": 2.0, "B": 1.5, "C": 2.5, "D": 3.0}
+COVER = {"A": 1, "B": 1, "C": 1, "D": 2}      # step 5, recorded; the ratio carries
 NGRADE = 5
 
-# There is no 4x here. The candidate ratios for this robot are these five, and a
-# label that is not one of them cannot be replayed.
-CANDIDATES = (1.0, 1.5, 2.0, 2.5, 3.0)
-
-# What "3.0 as a weak allowance" means arithmetically. A plain weighted mean
-# gives a check its full ceiling however faintly it fired: check C answered 3
-# and nothing else answered lands on 3.0 exactly as C answered 5 would, because
-# normalising divides the weight straight back out. So the mean sets the
-# DIRECTION and the strength of the evidence sets how far along it we go, from a
-# base of 2.0 -- the ratio this robot is simply run at. Faint evidence stays near
-# 2.0 in either direction; only an unambiguous scene reaches 3.0 or 1.5.
 BASE = float(os.environ.get("ALLEX_BASE_K", 2.5))
 
 # Candidates that were dropped, and why -- the ranking is the method's step 3.
@@ -140,58 +138,56 @@ GUIDANCE = (
 # is held or touched sit inside every subtask, the damaged ones included, so a
 # phase common to all of them can never separate the pools. With no object in
 # hand there is no hold to lose, so it takes the safe ceiling by construction.
-# WHAT THE FIRST DRAFT GOT WRONG, so the next one does not walk back into it.
+# WHAT THE EARLIER DRAFTS GOT WRONG, so the next one does not walk back in.
 #
-#   ASKED WHAT THE FACTS ALREADY SAY. The old A asked whether the object was
-#     pinched between two palms. descriptors() computes exactly that -- `held`
-#     is gap < 0.42 m with both arms moving -- and states it. Asked something it
-#     had already been told, the model answered the middle grade on 99% of
-#     chunks. `wrist_rot`, `rot_asym`, `one_handed`, `hand_change` are stated
-#     too; nothing here may ask for them again.
-#   ASKED SOMETHING ALWAYS TRUE. The old C asked whether there was open surface
-#     ahead with no slot at the far end. On a sorting plate there always is:
-#     95.4% answered 5.
-#   DESCRIBED A SCENE INSTEAD OF NAMING A BEHAVIOUR. Its replacement was worse
-#     in a quieter way -- "bearing on it from one side, with the object's weight
-#     still on the plate" pins down where the hand is, which face it touches and
-#     what the object rests on. robocasa's checks name an action and then give
-#     instances of it ("pressing, pushing or turning something FIXED IN PLACE --
-#     a button, a dial, a drawer front"), and that is what carries: the action
-#     is the question, the instances only show what it looks like here.
-#   NAMED SCENES THAT DO NOT OCCUR HERE. The old B topped out at "it hangs from
-#     the hand and its lower half droops". Nothing hangs at this station: things
-#     lie on the plate and are pressed and turned there. The model could not
-#     reach grade 5 and stopped at 3, so the one check that worked was still
-#     using half its range.
-#   USED THE MIDDLE AS A HEDGE. "closing onto it", "half wrapped" are
-#     defensible in any frame. Grades 2 and 4 were never used once across 763
-#     chunks, so the ladders were really three-valued and mostly the middle one.
-#
-# Hence: grade 2 on every ladder is now the shape that worked in robocasa --
-# the subject IS in the picture and the hands are on something else -- which is
-# a thing the eye can check, unlike "somewhat".
+#   ASKED WHAT THE FACTS ALREADY SAY. A draft asked whether the object was
+#     pinched between two palms; descriptors() computes that as `held`. 99% of
+#     chunks came back at the middle grade. `wrist_rot`, `rot_asym`,
+#     `one_handed`, `hand_change` are stated too.
+#   ASKED WHAT A STILL CANNOT SHOW. The next draft asked whether the object was
+#     "being taken somewhere" and "being turned over". The model sees one frame
+#     per camera; motion is not in it. 91% answered the rung that reads "the
+#     hands are on it and it has not moved yet", and the turn/move contrast came
+#     out at -0.03 and -0.07 -- no separation at all. Every rung below is a
+#     configuration that a single frame holds: what is on the plate, what is off
+#     it, where the hands are, whether an edge is up.
+#   ASKED SOMETHING ALWAYS TRUE. An earlier C asked whether open surface lay
+#     ahead. On a sorting plate it always does: 95.4% answered 5.
+#   LET THE MIDDLE RUNG SWALLOW THE SAFE CASE. "it mostly keeps its form and
+#     only the touched face dents in" describes a cardboard box exactly, so the
+#     firm case scored the same as the limp one (2.89 vs 3.00) and the one check
+#     that had been working stopped working.
+#   USED THE MIDDLE AS A HEDGE. Grades 2 and 4 went unused across 763 chunks.
+#     Grade 2 is now the shape that worked in robocasa -- the subject IS on the
+#     plate and the hands are on something else.
 _CHECKS = (
- ("A", "Does what is being handled GO OUT OF SHAPE under the hand -- a bag, a sack, cloth,\n"
-       "   anything that creases or sags -- rather than keeping its form?",
-  ("the hand marks it as it works, and the shape stays changed",
-   "it gives under the hand but springs back to roughly its form",
-   "it mostly keeps its form and only the touched face dents in",
-   "such a thing is in the picture and the hands are on something else",
-   "what the hands have keeps its shape and its edges")),
- ("B", "Is the object being TURNED so that a different side faces up -- flipped, tipped,\n"
-       "   rolled -- rather than left the way it lies?",
-  ("it is up off its resting side and a new one is coming to the top",
-   "it has begun to tip and one side is lifting clear",
-   "the hands are set to turn it and it has not gone over yet",
-   "something that would be turned is there and the hands are elsewhere",
-   "the same side stays up throughout")),
- ("C", "Is the object being TAKEN SOMEWHERE ELSE -- carried, slid, pushed across -- with the\n"
-       "   same side still facing up?",
-  ("it is on its way, travelling with the hands",
-   "the hands have it and it has just begun to go",
-   "the hands are on it and it has not moved yet",
-   "something to be moved is there and the hands are elsewhere",
-   "nothing is going anywhere")),
+ ("A", "Is a hand holding something WRINKLED AND LIMP -- a mailer, a sack -- clear of the\n"
+       "   plate, over the place it is to end up?",
+  ("it is gathered in the hand, off the plate, out over a clear spot",
+   "it is gathered in the hand and off the plate",
+   "one end of it is up in the hand, the rest still down on the plate",
+   "something wrinkled is on the plate and the hands are on something else",
+   "what the hands have holds its own edges, or the hands have nothing")),
+ ("B", "Is a SQUARE-EDGED BOX caught BETWEEN TWO HANDS, one on each of two opposite faces?",
+  ("it is up on an edge between the two hands, a face that was down now showing",
+   "it is between the two hands with one side lifted clear of the plate",
+   "a hand is flat on each of two opposite faces, the box still down",
+   "such a box is on the plate and only one hand is at it",
+   "nothing is caught between two hands")),
+ ("C", "Is a FLAT WRINKLED SHEET on the plate being worked by a hand ON TOP OF IT, with the\n"
+       "   sheet still lying there?",
+  ("it is folding over under the hand and its underside is coming into view",
+   "an edge of it is up under the hand, the rest flat on the plate",
+   "the hand is down on it and it lies flat",
+   "such a sheet is on the plate and the hands are on something else",
+   "there is no flat wrinkled thing under a hand")),
+ ("D", "Is a SQUARE-EDGED BOX with a hand on it standing out in clear space -- away from the\n"
+       "   other boxes, nothing around it?",
+  ("the hand is on it and it stands alone with clear plate all round",
+   "the hand is on it and one side of it is clear",
+   "the hand is on it and it is still among the others",
+   "such a box is on the plate and the hands are on something else",
+   "no hand is on a square-edged box")),
 )
 
 _AXES = "".join(
@@ -231,32 +227,30 @@ def facts_v3(x):
             f"{MERGE_LIMIT_V2} rad in the demonstrations).")
 
 
-def ceiling_from_checks(picks, table=K_TABLE):
+def ceiling_from_checks(picks, levels=CEILING):
     """The ratio this moment tolerates, in units of K.
 
-    Two axes, read off three checks. B and C say what is being done -- turned,
-    or taken somewhere -- and A says what it is being done to. The pair picks a
-    cell of K_TABLE; the grades interpolate between cells rather than snapping
-    to one, because a moment is rarely purely one thing.
+    Each check names one phase and carries the ratio that phase was measured
+    at, so the grade-weighted mean of the ratios is already in units of K. The
+    phases do not overlap -- a limp thing lifted clear of the plate is not a
+    limp thing lying on it, a box between two hands is not a box standing alone
+    with one hand on it -- so a mean is the right way to blend the moments that
+    are two things at once, and no clamping is needed.
 
-    The base is what a moment nothing recognises is worth: 2.5, the ratio for a
-    station where nothing is being handled. Evidence moves K away from it only
-    as far as the strongest action check is sure, which is what "3.0 as a weak
-    allowance" means -- a faint C does not buy the full 3.0.
+    An earlier design split this into "what the object is" and "what is being
+    done" and could not put them back together: a mailer being carried and a
+    mailer being flipped got the same object answer, and whatever ratio that
+    answer carried was wrong for one of them. The phase is the unit.
 
-    Nothing answered stays at the base. A did not fire either, so we do not
-    know what the object is; there is no cell to read.
+    Nothing answered means no phase was recognised, which takes the base -- 2.5,
+    the ratio for a station where nothing is being handled.
     """
-    g = {q: (float(p) - 1.0) / 4.0 for q, p in zip("ABC", picks) if p is not None}
-    soft = g.get("A", 0.0)                       # 0 = firm, 1 = goes out of shape
-    turn, move = g.get("B", 0.0), g.get("C", 0.0)
-    act = turn + move
-    if act <= 0:
+    g = {q: (float(p) - 1.0) / 4.0 for q, p in zip("ABCD", picks) if p is not None}
+    g = {q: w for q, w in g.items() if w > 0}
+    if not g:
         return BASE
-    k_turn = (1 - soft) * table[("turn", "firm")] + soft * table[("turn", "soft")]
-    k_move = (1 - soft) * table[("move", "firm")] + soft * table[("move", "soft")]
-    aim = (turn * k_turn + move * k_move) / act
-    return float(BASE + max(turn, move) * (aim - BASE))
+    aim = sum(w * levels[q] for q, w in g.items()) / sum(g.values())
+    return float(BASE + max(g.values()) * (aim - BASE))
 
 
 def snap(k, candidates=CANDIDATES):
