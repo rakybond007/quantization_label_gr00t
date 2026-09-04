@@ -24,7 +24,26 @@ import numpy as np
 from allex_common_v5 import (_rot6_to_R, _ang, RA, LA, ARM, RH, LH,  # noqa: F401
                              MERGE_LIMIT, GUIDANCE, ASK)
 
-TASKS = ["Bring Object", "Rotate Box", "Pass Object", "Rotate PolyBag"]
+# task_index -> 이름은 **데이터셋마다 다르다.** 여기 박아두었더니 replay10 에서
+# 2번과 3번이 뒤바뀌어 Rotate PolyBag 청크에 Pass 의 상한 3.0 이, Pass 청크에
+# Rotate PolyBag 의 2.5 가 붙었다. 프롬프트에 나가는 주석 이름도 틀렸다.
+#
+#   v1        0 Bring  1 Rotate Box  2 Pass            3 Rotate PolyBag
+#   replay10  0 Bring  1 Rotate Box  2 Rotate PolyBag  3 Pass
+#
+# 그러므로 읽어서 쓴다. 상수로 두면 새 촬영본마다 조용히 틀린다.
+def _load_tasks(ds):
+    try:
+        rows = [json.loads(l) for l in open(f"{ds}/meta/tasks.jsonl")]
+        return [r["task"] for r in sorted(rows, key=lambda r: r["task_index"])]
+    except Exception:
+        return ["Bring Object", "Rotate Box", "Pass Object", "Rotate PolyBag"]
+
+
+TASKS = _load_tasks(os.environ.get(
+    "ALLEX_DS",
+    "/rlwrld2/home/david/action_quantization/v1/"
+    "subtask_labeled_data_update_eef_256x256_hojin"))
 
 # Largest single-step joint move this dataset's own demonstrations contain
 # (p99.9 of ||A[i+1]-A[i]|| over 41,326 steps sampled from 14 episodes; the max

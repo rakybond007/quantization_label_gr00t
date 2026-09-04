@@ -34,7 +34,9 @@ f_mid = ImageFont.truetype(f"{FT}/DejaVuSans-Bold.ttf", 19)
 f_hd = ImageFont.truetype(f"{FT}/DejaVuSans-Bold.ttf", 15)
 f_sm = ImageFont.truetype(f"{FT}/DejaVuSansMono.ttf", 13)
 
-RCOL = {1.0: (226, 92, 84), 2.0: (232, 176, 84), 2.5: (150, 205, 120), 3.0: (86, 196, 124)}
+# 1.5 가 새로 생겼다 (Rotate Box 의 상한이 내려오면서). 없으면 회색으로 빠진다.
+RCOL = {1.0: (226, 92, 84), 1.5: (231, 130, 84), 2.0: (232, 176, 84),
+        2.5: (150, 205, 120), 3.0: (86, 196, 124)}
 S1Q = ["A soft/bag", "B reorienting", "C seating pose", "D empty/reaching"]
 S2Q = ["A sideways move", "B precise stop", "C two-hand turn", "D soft bag"]
 
