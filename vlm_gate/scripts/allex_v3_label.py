@@ -27,8 +27,8 @@ from PIL import Image
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from allex_v2_common import TASKS, descriptors  # noqa: E402
-from allex_v3_checks import (ASK, GUIDANCE, NGRADE, ceiling_from_checks,  # noqa: E402
-                             facts_v3, snap)
+from allex_v3_checks import (ACTIVE, ASK, GUIDANCE, NGRADE, confidence,  # noqa: E402
+                             facts_v3, ratio_for, snap)
 from vlm_gate import VLMGate  # noqa: E402
 
 DS = os.environ.get(
@@ -109,7 +109,7 @@ for ep in EPS:
             payload.append(([L[f], R[f]], facts_v3(x)))
             meta.append((f, task, x))
         try:
-            rs = gate.judge_batch(payload, GUIDANCE, question=ASK, n_ask=4, n_grade=NGRADE)
+            rs = gate.judge_batch(payload, GUIDANCE, question=ASK, n_ask=len(ACTIVE), n_grade=NGRADE)
         except Exception as e:
             print(f"  ep{ep} f{grp[0]}+: {type(e).__name__}: {e}", flush=True)
             continue
@@ -123,11 +123,12 @@ for ep in EPS:
                     raise SystemExit(f"판정기가 답을 안 함: {r.get('error', 'empty')}")
                 continue
             nempty = 0
-            picks = r.get("picks") or [None] * 4
-            K = ceiling_from_checks(picks)
+            picks = r.get("picks") or [None] * len(ACTIVE)
+            cell = CELL.get((ep, f))
+            K = ratio_for(picks, cell)
             rec = {"ep": ep, "f": f, "task": task,
-                   "cell": CELL.get((ep, f)),
-                   **{q: picks[i] for i, q in enumerate("ABCD")},
+                   "cell": cell, "conf": round(confidence(picks), 3),
+                   **{q: picks[i] for i, q in enumerate(ACTIVE)},
                    "K": round(K, 3), "K_snap": snap(K),
                    "text": r.get("text", "").replace("\n", " | "),
                    **{k: (float(v) if isinstance(v, (int, float, np.floating)) else v)

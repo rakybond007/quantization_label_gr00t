@@ -347,32 +347,26 @@ GUIDANCE = (
 # robocasa phase9 와 같은 형식이다. 등급표는 하나를 공유하고, 그 하나가
 # "이 문항이 이 순간을 얼마나 설명하는가" 의 진행도다.
 #
-# 무엇을 묻는가가 열두 바퀴를 헤맨 자리다. **액션 사실 블록이 이미 무슨
-# 동작인지를 말해준다** -- 팔이 몇이 움직이는지, 손바닥이 붙는지 벌어지는지,
-# 손가락이 일하는지, 손목이 도는지. 그러니 비전 문항이 물어야 할 것은 그
-# 동작을 받는 **물체가 어떤 것인지** 다. 손이 어떻게 놓였는지를 물은 판은
-# 열두 번 전부 죽었고, 점수가 난 문항은 예외 없이 물체에 관한 것이었다
-# (t=0 +2.00, t=5 +1.76, t=8 +2.87).
+# **기본 가점 문항 하나로 시작해서 하나씩 더한다.** 다섯을 한꺼번에 세워놓고
+# 안 되는 것을 고치는 방식으로 열두 바퀴를 돌았고, 그때마다 무엇이 무엇을
+# 망쳤는지 알 수 없었다 -- 넷을 한 프롬프트에서 답하므로 하나를 고치면 나머지
+# 답도 바뀐다. 빈손으로 지나가는 구간은 잃을 것이 없다는 것이 확실하고
+# (robocasa 의 E 와 같은 자리) 모든 태스크에 들어 있으므로, 거기서 시작한다.
 #
-# 그런데 물체 성질만 물으면 상쇄된다. **무른 것은 뒤집을 때 안전하고 가져올
-# 때 위험하다.** 부호가 행동에 따라 뒤집히므로 "무른 물체인가" 는 위험 풀과
-# 안정 풀을 같이 덮어 +1 -1 = 0 이 된다. 그래서 문항은 행동과 그 행동에서
-# 문제가 되는 물체 성질이 **한 덩어리**여야 한다. 그것이 단위 행동이다.
-#
-# 물체는 이름으로 부르지 않는다. "박스", "비닐 봉투" 는 이 작업장의 주석이
-# 되어 다른 데서 못 쓴다. 그 행동에 대해 그 물체가 어떠한지로 쓴다 --
-# 손을 놓아도 그대로 있는 것, 쥘 때마다 형태가 달라지는 것.
-_CHECKS = (
- ("A", "Is the robot TURNING OVER something that would stay put if you let go of it --\n"
-       "   solid, keeping its own shape -- holding it only between two hands?"),
- ("B", "Is the robot CARRYING something that has no shape of its own -- that sits\n"
-       "   differently in the hand every time it is taken hold of?"),
- ("C", "Is the robot TURNING OVER something that folds and flops -- that goes over when\n"
-       "   it is pressed, with nothing to keep hold of?"),
- ("D", "Is the robot MOVING something that keeps its own shape -- carrying it or pushing\n"
-       "   it along -- from one place to another?"),
- ("E", "Are the hands MOVING THROUGH FREE SPACE, holding nothing and near nothing?"),
-)
+# POOL 은 후보 전부이고 ACTIVE 가 지금 물을 것이다. ALLEX_CHECKS 로 바꾼다.
+POOL = {
+ "E": "Are the hands MOVING THROUGH FREE SPACE, holding nothing and near nothing?",
+ "A": "Is the robot TURNING OVER something that would stay put if you let go of it --\n"
+      "   solid, keeping its own shape -- holding it only between two hands?",
+ "B": "Is the robot CARRYING something that has no shape of its own -- that sits\n"
+      "   differently in the hand every time it is taken hold of?",
+ "C": "Is the robot TURNING OVER something that folds and flops -- that goes over when\n"
+      "   it is pressed, with nothing to keep hold of?",
+ "D": "Is the robot MOVING something that keeps its own shape -- carrying it or pushing\n"
+      "   it along -- from one place to another?",
+}
+ACTIVE = tuple(os.environ.get("ALLEX_CHECKS", "E").split(","))
+_CHECKS = tuple((q, POOL[q]) for q in ACTIVE)
 
 # 문항마다 다른 눈금이 아니라 하나를 공유한다. 이 눈금이 재는 것은 그 문항이
 # 이 순간을 얼마나 설명하느냐이지 그 상태의 강도가 아니다.
@@ -386,7 +380,9 @@ _LADDER = (
     "1 = there is nothing in this picture the check could be about",
 )
 
-_AXES = "".join(f"{q}) {t}\n" for q, t in _CHECKS)
+# 물어보는 순서대로 A) B) C) ... 로 다시 붙인다. 모델은 자리로 답한다.
+LETTERS = tuple(chr(ord("A") + i) for i in range(len(_CHECKS)))
+_AXES = "".join(f"{L}) {t}\n" for L, (_, t) in zip(LETTERS, _CHECKS))
 
 ASK = ("The measurements above are stated as fact -- do not re-estimate or repeat them. "
        "Answer each check from what the cameras show about the MOMENT in front of you, "
@@ -454,7 +450,8 @@ def confidence(picks):
     감점 쪽과 가점 쪽을 각각 무게로 모아 빼고 [0,1] 로 옮긴다. 아무 문항도
     안 걸리면 0.5 -- 알 수 있는 것이 없으니 폭의 가운데다.
     """
-    g = {q: (float(p) - 1.0) / 4.0 for q, p in zip("ABCDE", picks) if p is not None}
+    # picks 는 물어본 순서대로 온다. 그 자리를 원래 문항 이름으로 되돌린다.
+    g = {q: (float(p) - 1.0) / 4.0 for q, p in zip(ACTIVE, picks) if p is not None}
     g = {q: w for q, w in g.items() if w > 0}
 
     def side(sign):
