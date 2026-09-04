@@ -57,6 +57,21 @@ import os
 # and the base is 2.5, the ratio given for the phases where nothing is being
 # handled at all. Nothing answered therefore lands there, which is what it
 # should mean: no check recognised the moment.
+# Three checks, not five. The task is small -- one station, three kinds of
+# object, one surface -- and the first cut asked five questions of scenes that
+# differ in two or three ways.
+#
+# The three name what is being DONE, and between them they partition it: the
+# object is being moved, or it is being turned, or neither is happening. A is
+# not an action but what the action is being done to, which is the one thing
+# here the numbers cannot say.
+#
+#     lowers   A 2.0  what is handled goes out of shape under the hand
+#              B 1.5  the object is turned so a different side faces up
+#     raises   C 3.0  the object is moved somewhere, the same side still up
+#
+# and the base is 2.5, the ratio given for the phases where nothing is being
+# handled. Nothing answered lands there, which is what it should mean.
 CEILING = {"A": 2.0, "B": 1.5, "C": 3.0}
 COVER = {"A": 1, "B": 1, "C": 2}
 NGRADE = 5
@@ -110,14 +125,21 @@ GUIDANCE = (
 #     had already been told, the model answered the middle grade on 99% of
 #     chunks. `wrist_rot`, `rot_asym`, `one_handed`, `hand_change` are stated
 #     too; nothing here may ask for them again.
-#   NAMED SCENES THAT DO NOT OCCUR HERE. The old B topped out at "it hangs from
-#     the hand and its lower half droops". Nothing hangs at this station:
-#     mailers lie flat on the plate and are pressed and flipped there. The model
-#     could not reach grade 5 and stopped at 3, so the one check that worked was
-#     still using half its range.
 #   ASKED SOMETHING ALWAYS TRUE. The old C asked whether there was open surface
 #     ahead with no slot at the far end. On a sorting plate there always is:
 #     95.4% answered 5.
+#   DESCRIBED A SCENE INSTEAD OF NAMING A BEHAVIOUR. Its replacement was worse
+#     in a quieter way -- "bearing on it from one side, with the object's weight
+#     still on the plate" pins down where the hand is, which face it touches and
+#     what the object rests on. robocasa's checks name an action and then give
+#     instances of it ("pressing, pushing or turning something FIXED IN PLACE --
+#     a button, a dial, a drawer front"), and that is what carries: the action
+#     is the question, the instances only show what it looks like here.
+#   NAMED SCENES THAT DO NOT OCCUR HERE. The old B topped out at "it hangs from
+#     the hand and its lower half droops". Nothing hangs at this station: things
+#     lie on the plate and are pressed and turned there. The model could not
+#     reach grade 5 and stopped at 3, so the one check that worked was still
+#     using half its range.
 #   USED THE MIDDLE AS A HEDGE. "closing onto it", "half wrapped" are
 #     defensible in any frame. Grades 2 and 4 were never used once across 763
 #     chunks, so the ladders were really three-valued and mostly the middle one.
@@ -126,27 +148,27 @@ GUIDANCE = (
 # the subject IS in the picture and the hands are on something else -- which is
 # a thing the eye can check, unlike "somewhat".
 _CHECKS = (
- ("A", "Is the thing under the hand a LIMP PLASTIC MAILER -- one that creases and folds --\n"
-       "   rather than a box that holds its shape?",
-  ("a flat plastic mailer, and the hand pressing it puts creases across it",
-   "a plastic mailer with something bulky inside, so it keeps some shape",
-   "a box whose face dents where the fingers rest -- thin card, soft foam edge",
-   "a mailer is on the plate but the hands are on something else",
-   "a firm box with its edges square under the hand")),
- ("B", "Is the object being TURNED so that a different face comes up, rather than staying\n"
-       "   the way it lies?",
-  ("it is up on an edge and a new face is coming round to the top",
-   "hands have it on both sides and it has begun to tilt off the plate",
-   "one hand is under an edge, lifting that edge off the plate",
-   "something that would need turning is there and the hands are elsewhere",
-   "whatever is under the hands keeps the same face upward")),
- ("C", "Is the hand PUSHING OR DRAGGING the object along the plate -- bearing on it from one\n"
-       "   side, with the object's weight still on the plate?",
-  ("the hand is against its side and it is sliding across the plate",
-   "the hand is against its side and it has just begun to move",
-   "the hand has come to rest against its side and it has not moved",
-   "something to push is on the plate and the hand is on its way elsewhere",
-   "no hand is bearing on anything, or what is held is off the plate")),
+ ("A", "Does what is being handled GO OUT OF SHAPE under the hand -- a bag, a sack, cloth,\n"
+       "   anything that creases or sags -- rather than keeping its form?",
+  ("the hand marks it as it works, and the shape stays changed",
+   "it gives under the hand but springs back to roughly its form",
+   "it mostly keeps its form and only the touched face dents in",
+   "such a thing is in the picture and the hands are on something else",
+   "what the hands have keeps its shape and its edges")),
+ ("B", "Is the object being TURNED so that a different side faces up -- flipped, tipped,\n"
+       "   rolled -- rather than left the way it lies?",
+  ("it is up off its resting side and a new one is coming to the top",
+   "it has begun to tip and one side is lifting clear",
+   "the hands are set to turn it and it has not gone over yet",
+   "something that would be turned is there and the hands are elsewhere",
+   "the same side stays up throughout")),
+ ("C", "Is the object being TAKEN SOMEWHERE ELSE -- carried, slid, pushed across -- with the\n"
+       "   same side still facing up?",
+  ("it is on its way, travelling with the hands",
+   "the hands have it and it has just begun to go",
+   "the hands are on it and it has not moved yet",
+   "something to be moved is there and the hands are elsewhere",
+   "nothing is going anywhere")),
 )
 
 _AXES = "".join(

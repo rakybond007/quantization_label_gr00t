@@ -37,8 +37,8 @@ f_sm = ImageFont.truetype(f"{FT}/DejaVuSansMono.ttf", 13)
 RCOL = {1.0: (226, 92, 84), 1.5: (231, 130, 84), 2.0: (232, 176, 84),
         2.5: (150, 205, 120), 3.0: (86, 196, 124)}
 # name, and the ratio the check carries -- shown so the arithmetic is legible.
-QN = [("A limp plastic mailer", 2.0), ("B a new face coming up", 1.5),
-      ("C pushed along the plate", 3.0)]
+QN = [("A goes out of shape", 2.0), ("B turned, new side up", 1.5),
+      ("C taken somewhere else", 3.0)]
 
 rec = collections.defaultdict(dict)
 for l in open(REC):
