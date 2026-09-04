@@ -7,8 +7,12 @@ RUN_PY="/sjw_alinlab/home/hojin2/miniconda3/envs/quant_gate_eval/bin/python"
 cd "$HOME/quantization_agent_workspace/vlm_gate" || exit 1
 SAMPLE="${SAMPLE:-$PWD/output/allex_sample/D.json}"
 PORT="${PORT:-8261}"
-export ALLEX_OUT="${ALLEX_OUT:-$PWD/output/allex_v3loop}"
+# 한 바퀴에 하나씩 나온다. 앞 바퀴가 끝나기 전에 다음 바퀴를 걸었더니
+# 이 rm -rf 가 앞 바퀴의 라벨을 지웠고, 앞 바퀴의 검증이 30청크만 보고
+# 끝났다. 잡 번호를 경로에 넣으면 겹칠 수가 없다.
+export ALLEX_OUT="${ALLEX_OUT:-$PWD/output/allex_loop_${SLURM_JOB_ID:-manual}}"
 rm -rf "$ALLEX_OUT"; mkdir -p "$ALLEX_OUT"
+echo "출력: $ALLEX_OUT"
 
 OMP_NUM_THREADS=6 MKL_NUM_THREADS=6 "$JUDGE_PY" -u scripts/vlm_gate_cosmos.py \
     --serve --port "$PORT" > /tmp/judge_allex_loop.log 2>&1 &
