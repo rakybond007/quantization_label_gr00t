@@ -16,6 +16,7 @@ frames of one episode at most.
 """
 import json
 import os
+import re
 import sys
 
 import numpy as np
@@ -32,7 +33,17 @@ DS = ("/sjw_alinlab2/home/myungkyu/.cache/huggingface/lerobot/kimtaey/"
       "robocasa_mg_gr00t_300")
 BASE = os.path.expanduser("~/quantization_agent_workspace/vlm_gate")
 OUT = os.environ.get("PHASE9_OUT", f"{BASE}/output/_gate_distill/phase9_full")
-PORT, SHARD, NSHARD = sys.argv[1], int(sys.argv[2]), int(sys.argv[3])
+PORT = sys.argv[1]
+# Two ways to be told what to do. A worklist file (phase9_worklist.py) names the
+# episodes and the frames already labelled, so the shard count is no longer tied
+# to the file names on disk and a half-finished run survives changing it.
+WORKLIST = os.environ.get("PHASE9_WORKLIST", "")
+REVERSE = os.environ.get("PHASE9_REVERSE", "") == "1"
+# The forward worker's log, so a reverse pass can see where it has got to and
+# stop when the two meet instead of redoing the whole front half.
+FRONT_LOG = os.environ.get("PHASE9_FRONT_LOG", "")
+SHARD = int(sys.argv[2]) if len(sys.argv) > 2 else 0
+NSHARD = int(sys.argv[3]) if len(sys.argv) > 3 else 1
 BLOCK = 64                      # frames decoded per read
 BATCH = int(os.environ.get('PHASE9_BATCH', 8))   # frames per forward
 
@@ -49,8 +60,45 @@ for line in open(f"{DS}/meta/episodes.jsonl"):
     instr[d["episode_index"]] = c[0] if c else ""
 
 os.makedirs(OUT, exist_ok=True)
-FP = f"{OUT}/labels_s{NSHARD}_{SHARD}.jsonl"
-done = set()
+if WORKLIST:
+    wl = json.load(open(WORKLIST))
+    eps = list(wl["episodes"])
+    done = {(int(ep), f) for ep, fs in wl["done"].items() for f in fs}
+    # A second pair of workers can walk the SAME worklist backwards while the
+    # first pair is still going forwards, without re-dealing the worklist --
+    # re-dealing would hand out episodes the running job is mid-way through.
+    # They meet in the middle; only the meeting episode is done twice, and
+    # rows are keyed (ep, f) so the merge drops it. What the forward worker
+    # has already written is read in below, so the reverse pass starts past it.
+    if REVERSE:
+        eps = eps[::-1]
+        FP = f"{OUT}/labels_r{SHARD}.jsonl"
+        fw = f"{OUT}/labels_w{SHARD}.jsonl"
+        if os.path.exists(fw):
+            for line in open(fw):
+                try:
+                    r = json.loads(line)
+                except Exception:
+                    continue
+                done.add((r["ep"], r["f"]))
+    else:
+        FP = f"{OUT}/labels_w{SHARD}.jsonl"
+    print(f"worker {SHARD}{' (역순)' if REVERSE else ''}: {len(eps)} episodes, "
+          f"{wl['n_left']:,} frames left, {len(done):,} already done", flush=True)
+else:
+    FP = f"{OUT}/labels_s{NSHARD}_{SHARD}.jsonl"
+    done = set()
+    if os.path.exists(FP):
+        for line in open(FP):
+            try:
+                r = json.loads(line)
+            except Exception:
+                continue
+            done.add((r["ep"], r["f"]))
+    eps = [e for e in range(7200) if e % NSHARD == SHARD]
+    print(f"shard {SHARD}/{NSHARD}: {len(eps)} episodes, resuming past {len(done)} frames",
+          flush=True)
+# A restart of THIS worker still needs to skip what it wrote itself.
 if os.path.exists(FP):
     for line in open(FP):
         try:
@@ -60,13 +108,13 @@ if os.path.exists(FP):
         done.add((r["ep"], r["f"]))
 
 gate = VLMGate(f"http://127.0.0.1:{PORT}", timeout=300)
-eps = [e for e in range(7200) if e % NSHARD == SHARD]
-print(f"shard {SHARD}/{NSHARD}: {len(eps)} episodes, resuming past {len(done)} frames", flush=True)
 
 json.dump({"batch": BATCH, "shard": SHARD, "nshard": NSHARD, "decode_block": BLOCK,
+           "worklist": WORKLIST or None, "reverse": REVERSE,
            "note": "batch width changes borderline answers; rerun with the same "
                    "batch to reproduce this file"},
-          open(f"{OUT}/meta_s{NSHARD}_{SHARD}.json", "w"))
+          open(f"{OUT}/meta_{'r' if REVERSE else 'w'}{SHARD}.json" if WORKLIST else
+               f"{OUT}/meta_s{NSHARD}_{SHARD}.json", "w"))
 fh = open(FP, "a")
 nlab = nfull = nempty = 0
 for ei, ep in enumerate(eps):
@@ -123,7 +171,27 @@ for ei, ep in enumerate(eps):
                 nlab += 1
         fh.flush()
     if ei % 20 == 0:
-        print(f"  shard{SHARD}: ep {ei}/{len(eps)}  {nlab} frames  full {nfull}", flush=True)
+        tag = "역순 " if REVERSE else ""
+        print(f"  shard{SHARD}: {tag}ep {ei}/{len(eps)}  {nlab} frames  full {nfull}",
+              flush=True)
+        # Stop where the forward worker has already been. Its log's last
+        # progress line names the index it is on, in the un-reversed list; this
+        # pass is at len(eps)-1-ei of that same list. Without this the reverse
+        # pass would carry on into ground the forward pass has covered and
+        # relabel all of it.
+        if REVERSE and FRONT_LOG and os.path.exists(FRONT_LOG):
+            front = -1
+            try:
+                for line in open(FRONT_LOG):
+                    m = re.search(r"ep (\d+)/", line)
+                    if m:
+                        front = int(m.group(1))
+            except Exception:
+                pass
+            if front >= 0 and (len(eps) - 1 - ei) <= front:
+                print(f"  shard{SHARD}: 앞선 워커와 만남 (앞 {front}, 뒤 "
+                      f"{len(eps) - 1 - ei}) -- 중단", flush=True)
+                break
 
 fh.close()
 print(f"shard{SHARD} done: {nlab} frames, {nfull} complete -> {FP}")
