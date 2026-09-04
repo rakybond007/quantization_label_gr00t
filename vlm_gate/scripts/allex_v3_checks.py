@@ -22,16 +22,13 @@ labelled with a ceiling 0.5 too HIGH, and in the direction that loses episodes.
 The bag is forgiving to LAND (it deforms instead of toppling) and unforgiving to
 CARRY (it swings and slips), and v2 collapsed those into one number.
 
-WHAT IS STILL MISSING. The grid is only {2, 2.5}, so every ceiling below is one
-of two values and the spread of this whole file is 0.5. Three points would fix
-it, and until they exist the ratios here should be read as an ordering:
-  - Pass and Bring Box at 3x and 4x -- their true ceiling is above the grid,
-    and v2's prior for Pass was 3.0 with nothing to back it.
-  - Rotate Box at 1.5x -- it is already at 22/30 at 2x, and without the
-    uncompressed rate we cannot say 2.0 is safe rather than merely the least
-    bad measured point.
-  - Rotate PolyBag at anything. It was never replayed, so it has no ceiling
-    here and no check claims it.
+WHERE THE NUMBERS COME FROM. There is no eval loop here -- this is a real
+robot, and the ratios are the operator's, not something to be re-measured on
+demand. The replay counts above are what was observed; 3.0 for passing and for
+carrying a box is given as a weak allowance, and Rotate Box is to land between
+1.5 and 2.0. The candidate set stops at 3.0: there is no 4x for this robot.
+
+Rotate PolyBag was never replayed, so no check here claims it.
 """
 import os
 
@@ -48,9 +45,22 @@ import os
 # The model is NOT told which way each pushes, for the same reason as robocasa:
 # told the direction, it answers toward the ratio it thinks is wanted instead of
 # describing what it sees.
-CEILING = {"A": 2.0, "B": 2.0, "C": 2.5, "D": 2.5, "E": 2.5}
+CEILING = {"A": 1.5, "B": 2.0, "C": 3.0, "D": 2.5, "E": 3.0}
 COVER = {"A": 1, "B": 1, "C": 1, "D": None, "E": 1}   # D is pinned, not ranked
 NGRADE = 5
+
+# There is no 4x here. The candidate ratios for this robot are these five, and a
+# label that is not one of them cannot be replayed.
+CANDIDATES = (1.0, 1.5, 2.0, 2.5, 3.0)
+
+# What "3.0 as a weak allowance" means arithmetically. A plain weighted mean
+# gives a check its full ceiling however faintly it fired: check C answered 3
+# and nothing else answered lands on 3.0 exactly as C answered 5 would, because
+# normalising divides the weight straight back out. So the mean sets the
+# DIRECTION and the strength of the evidence sets how far along it we go, from a
+# base of 2.0 -- the ratio this robot is simply run at. Faint evidence stays near
+# 2.0 in either direction; only an unambiguous scene reaches 3.0 or 1.5.
+BASE = float(os.environ.get("ALLEX_BASE_K", 2.0))
 
 # Candidates that were dropped, and why -- the ranking is the method's step 3.
 #
@@ -143,4 +153,16 @@ def ceiling_from_checks(picks, levels=CEILING):
     tot = sum(g.values())
     if tot <= 0:
         return float(os.environ.get("ALLEX_IDLE_CEILING", levels["D"]))
-    return float(sum(v * levels[q] for q, v in g.items()) / tot)
+    aim = sum(v * levels[q] for q, v in g.items()) / tot     # which way, and how far
+    strength = min(1.0, max(g.values()))                     # how sure the scene is
+    return float(BASE + strength * (aim - BASE))
+
+
+def snap(k, candidates=CANDIDATES):
+    """Nearest ratio this robot can actually be replayed at.
+
+    A tie goes DOWN. 1.75 sits exactly between two candidates and either would
+    round it; the lower one compresses less, and being one step under a phase's
+    real tolerance costs nothing while being one step over loses the episode.
+    """
+    return min(candidates, key=lambda c: (abs(c - k), c))
