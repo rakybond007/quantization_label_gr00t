@@ -245,11 +245,15 @@ CANDIDATES = (1.0, 1.5, 2.0, 2.5, 3.0)
 # HEFT 는 독립 감점이 아니다. TURN 을 키우는 항이다 -- 독립으로 두면 큰 상자를
 # 쥐고 옮길 때 FIRM(가점)과 상쇄되어 Bring Box 가 0점이 된다. 뒤집기는 그 자체로
 # 절반의 위험이고, 두 손이 있어야 할 만큼 큰 것을 뒤집는 것이 온전한 위험이다.
-SIGN = {"TURN": -1, "SHOVE": +1, "FIRM": +1, "FREE": +1}   # HEFT 는 여기 없다
+# TURN 을 지우면서 HEFT 를 독립 감점으로 올렸다. TURN 은 237청크 중 99.6% 가
+# 3등급인 상수였고, risk = TURN x (0.5 + 0.5 x HEFT) 에서 g=0.5 로 굳어 모든
+# 청크에 risk 바닥 0.25 를 깔았다. 상한에 못 닿게 만든 것은 아니다 -- snap 이
+# 구제한다 -- 하지만 conf 폭을 [0.25, 0.875] 로 잘라 분산을 직접 깎았다.
+SIGN = {"TURN": -1, "HEFT": -1, "SHOVE": +1, "FIRM": +1, "FREE": +1}
 # 무게는 활성 목록이 정해지면 각 변의 합이 1 이 되게 정규화한다. 하나씩
 # 더해 가는 중이라 지금은 문항마다 같은 무게로 두고, 문항이 확정되면 덮는
 # 태스크 수로 다시 잡는다.
-WEIGHT = {"TURN": 1.0, "SHOVE": 1.0, "FIRM": 1.0, "FREE": 1.0}
+WEIGHT = {"TURN": 1.0, "HEFT": 1.0, "SHOVE": 1.0, "FIRM": 1.0, "FREE": 1.0}
 HEFT_SHARE = 0.5     # 뒤집기 단독이 지는 위험의 몫; 나머지는 HEFT 가 채운다
 
 
@@ -505,10 +509,18 @@ def confidence(picks):
     g = {q: (float(p) - 1.0) / (NGRADE - 1) for q, p in zip(ACTIVE, picks)
          if p is not None}
     g = {q: w for q, w in g.items() if w > 0}
-    risk = g.get("TURN", 0.0) * (HEFT_SHARE + (1 - HEFT_SHARE) * g.get("HEFT", 0.0))
-    up = {q: w for q, w in g.items() if SIGN.get(q) == 1}
-    safe = (sum(WEIGHT[q] * w for q, w in up.items()) / sum(WEIGHT[q] for q in up)
-            if up else 0.0)
+    def side(sign):
+        w = {q: v for q, v in g.items() if SIGN.get(q) == sign}
+        if not w:
+            return 0.0
+        return sum(WEIGHT[q] * v for q, v in w.items()) / sum(WEIGHT[q] for q in w)
+
+    if "TURN" in ACTIVE:
+        # 짝으로 쓸 때만. HEFT 가 TURN 을 키운다.
+        risk = g.get("TURN", 0.0) * (HEFT_SHARE + (1 - HEFT_SHARE) * g.get("HEFT", 0.0))
+    else:
+        risk = side(-1)
+    safe = side(+1)
     return float(min(1.0, max(0.0, (1.0 + safe - risk) / 2.0)))
 
 

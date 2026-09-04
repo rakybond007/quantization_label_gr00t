@@ -133,6 +133,32 @@ if GT and os.path.exists(GT):
     else:
         print(f"[7] 정답지  겹치는 청크 {len(pair)}개뿐 -- 판정 불가")
 
+# HEFT 승격 검증 --------------------------------------------------------------
+# HEFT 를 독립 감점으로 올리면 Bring Box(안정 풀)를 잘못 덮을 수 있다. 물체가
+# 같은 move+box 와 turn+box 를 견주면 그것이 물체 크기를 읽는지 행동을 읽는지
+# 갈린다 -- 같은 상자인데 답이 다르면 읽는 것은 크기가 아니다.
+if "HEFT" in Q and SIGN.get("HEFT") == -1:
+    mb = [r["HEFT"] for r in by.get("move+box", []) if r.get("HEFT")]
+    tb = [r["HEFT"] for r in by.get("turn+box", []) if r.get("HEFT")]
+    if mb and tb:
+        p1 = (np.mean(mb) - 1) / max(1e-9, np.mean(tb) - 1)
+        p2 = float(np.mean(mb))
+        box = [r for c in ("move+box", "turn+box") for r in by.get(c, []) if r.get("HEFT")]
+        x = np.array([r["HEFT"] for r in box], float)
+        y = np.array([1.0 if r.get("one_handed") else 0.0 for r in box])
+        if 0 < y.sum() < len(y):
+            o = x.argsort().argsort() + 1
+            r1 = o[y == 0].sum(); n0 = (y == 0).sum(); n1 = (y == 1).sum()
+            auc = (r1 - n0 * (n0 + 1) / 2) / (n0 * n1)
+            auc = max(auc, 1 - auc)
+        else:
+            auc = float("nan")
+        print(f"[H] HEFT 승격 검증  P1 오염률 {p1:.3f} (<=0.35 {'OK' if p1<=0.35 else '미달'})  "
+              f"P2 move+box 평균 {p2:.2f} (<=2.0 {'OK' if p2<=2.0 else '미달'})  "
+              f"P3 one_handed AUC {auc:.3f} (>=0.75 {'OK' if auc>=0.75 else '미달'})")
+        gates["H1 오염"] = (p1, 0.35, p1 <= 0.35)
+        gates["H2 절대"] = (p2, 2.0, p2 <= 2.0)
+
 print("\n=== 판정 ===")
 for k, (v, lim, ok) in gates.items():
     print(f"  {k:<10} {v:8.3f}  기준 {lim:6.2f}   {'통과' if ok else '미달'}")
