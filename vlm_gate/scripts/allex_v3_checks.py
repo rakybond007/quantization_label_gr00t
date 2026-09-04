@@ -142,6 +142,32 @@ GUIDANCE = (
 # is held or touched sit inside every subtask, the damaged ones included, so a
 # phase common to all of them can never separate the pools. With no object in
 # hand there is no hold to lose, so it takes the safe ceiling by construction.
+# t=4 -> t=5, 문항 A 재서술(셋째). A 는 세 판 연속 3등급에 붙박였고, 세 판 다
+# 3등급을 "일부만/반쯤" 상태로 썼다 -- 같은 실수를 세 번 했다. 어느 프레임에서도
+# 방어되는 등급을 만들면 모델은 거기로 간다.
+#
+# 그리고 t=4 는 문항끼리 간섭한다는 것을 보여줬다. A 만 고쳤는데 C 가 +2.45 에서
+# +0.68 로 깨졌다. 넷을 한 프롬프트에서 같이 답하므로, A 가 봉투를 "통통한"
+# 것으로 부르자 모델이 더는 그것을 C 의 "납작한 주름진 것" 으로 보지 않았다.
+# **한 문항의 서술은 다른 문항의 답을 바꾼다.** 그래서 R3(한 바퀴에 한 축)은
+# 한 문항만 고쳐도 넷을 다 다시 재라는 뜻이기도 하다.
+#
+# 이번에는 봉투의 모양이 아니라 손 모양으로 간다. 두 봉투 층이 실제로 갈리는
+# 자리다: 뒤집는 쪽은 손가락이 봉투를 감아쥐고, 옮기는 쪽은 손가락이 펴진 채
+# 옆면에 닿아 있다. D 가 상자에서 하는 구분(한 손이냐 두 손 사이냐)과 같은
+# 종류이고, D 는 그것으로 +2.02 를 냈다.
+#
+# t=3 -> t=4, 문항 A 재서술. 검증 3 에서 A 만 남았다(-0.02). 두 봉투 층의
+# 프레임을 실제로 뜯어보니 A 가 이름 붙인 국면 -- 봉투를 손가락으로 집어
+# 판에서 들어 올린다 -- 이 여기 없다. 봉투는 들리지 않는다. 판 위에서 밀리고
+# 판 위에서 잡힌다. 그러니 A 는 없는 장면을 물었고, 세 등급을 다 쓰면서도
+# 어느 층에서나 같은 답이 나왔다.
+#
+# 두 봉투 층이 실제로 갈리는 자리는 하나뿐이다: **봉투가 손에 눌려
+# 우그러졌는가.** 뒤집는 쪽은 손가락이 파고들어 모양이 무너져 있고, 옮기는
+# 쪽은 통통한 모양을 그대로 지킨 채 손이 옆면에 붙어 있다. 정지 화면이 담는
+# 차이다.
+#
 # t=2 -> t=3, 등급표 축 하나. 검증 3 에서 A(-0.08)와 D(+0.46)가 떨어졌고
 # 원인이 같다: **1등급이 경쟁 배치를 담고 있지 않았다.** A 의 1등급은 "손
 # 가까이 주름진 것이 없다" 였는데 turn+bag 장면에는 주름진 것이 손 밑에 있다.
@@ -173,13 +199,12 @@ GUIDANCE = (
 #     Grade 2 is now the shape that worked in robocasa -- the subject IS on the
 #     plate and the hands are on something else.
 _CHECKS = (
- ("A", "Is something WRINKLED AND LIMP -- a mailer, a sack -- PICKED UP by the fingers,\n"
-       "   lifted off the plate rather than left lying on it?",
-  ("fingers have it gathered up and it sags below them, clear of the plate",
-   "fingers have a fold of it and that part is up off the plate",
-   "fingers are pinching an edge of it, all of it still down",
-   "something wrinkled is on the plate and the hands are on something else",
-   "it lies flat on the plate with a hand resting on top of it")),
+ ("A", "Is a hand bearing on a BAG with its FINGERS OPEN -- not closed around it?",
+  ("the fingers are straight and the flat of the hand is against its side",
+   "the back or heel of the hand is on it and the fingers point away from it",
+   "the fingertips alone touch it and the rest of the hand is off it",
+   "a bag is on the plate and the hands are on something else",
+   "the fingers are closed round it and part of it is inside the grip")),
  ("B", "Is a SQUARE-EDGED BOX caught BETWEEN TWO HANDS, one on each of two opposite faces?",
   ("it is up on an edge between the two hands, a face that was down now showing",
    "it is between the two hands with one side lifted clear of the plate",
