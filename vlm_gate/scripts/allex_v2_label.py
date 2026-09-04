@@ -137,7 +137,7 @@ for ep, N in episodes:
                 if not c2 or len(c2) != 4:
                     raise ValueError(f"stage2 parse: {r2.get('error','')}")
                 K_max = ceiling_from_stage2(task, *c2)
-            K_pre = final_ratio(p, K_max)
+            K_pre = final_ratio(p, K_max, task)   # 하한이 태스크마다 다르다
             rec = {"ep": ep, "f": f, "task": task, "p": float(p), "K_max": float(K_max),
                    "K_pre": float(K_pre),
                    **{f"s1_{k}": float(v) for k, v in zip("ABCD", c1)},

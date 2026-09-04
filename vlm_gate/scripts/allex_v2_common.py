@@ -164,13 +164,31 @@ def facts_text(x):
 # 2.5, and Bring splits the same way -- but the annotation says only "Bring
 # Object", so which of the two applies is read off stage 2's own check D, "is
 # the thing being handled a soft plastic bag rather than a firm box".
+# 2026-09-05: 서브태스크별로 30회씩 리플레이한 결과와 운용자의 값으로 갈았다.
+#
+#     Rotate Box      2배 22/30, 2.5배 16/30   -> 1.5   (가장 약하다)
+#     Bring PolyBag   2배 28/30, 2.5배 23/30   -> 2.0
+#     Bring Box       2.5배 27/30              -> 3.0
+#     Pass Object     2.5배까지 거의 다 성공     -> 3.0
+#     Rotate PolyBag  운용자: 빨리 뒤집어도 됨   -> 2.5
+#
+# 봉투에 대한 방향이 뒤집혔다. 앞 판은 무른 물체를 너그러운 쪽으로 읽어
+# BRING_SOFT 가 Bring 의 상한을 2.0 에서 2.5 로 **올렸는데**, 측정은 봉투를
+# 옮기는 구간이 가장 먼저 깨진다고 말한다. 봉투는 놓기에 너그럽고 옮기기에
+# 까다롭다 -- 앞 판이 그 둘을 한 숫자에 뭉갰다. 이제 내린다.
 _CEILING_SPEC = {
     "Pass Object": 3.0,
-    "Bring Object": 2.0,          # a box; a bag lifts it to BRING_SOFT
-    "Rotate Box": 2.0,
+    "Bring Object": 3.0,          # a box; a bag brings it DOWN to BRING_SOFT
+    "Rotate Box": 1.5,
     "Rotate PolyBag": 2.5,
 }
-BRING_SOFT = float(os.environ.get("ALLEX_BRING_SOFT", 2.5))
+BRING_SOFT = float(os.environ.get("ALLEX_BRING_SOFT", 2.0))
+
+# 하한도 태스크가 준다. 운용자: Rotate Box 말고는 다 2.0.
+_FLOOR_SPEC = {"Rotate Box": 1.0}
+DEFAULT_FLOOR = float(os.environ.get("ALLEX_DEFAULT_FLOOR", 2.0))
+TASK_FLOOR = dict(_FLOOR_SPEC)
+TASK_FLOOR.update(json.loads(os.environ.get("ALLEX_FLOORS", "{}")))
 TASK_CEILING = dict(_CEILING_SPEC)
 TASK_CEILING.update(json.loads(os.environ.get("ALLEX_CEILINGS", "{}")))
 DEFAULT_CEILING = float(os.environ.get("ALLEX_DEFAULT_CEILING", 2.0))
@@ -250,11 +268,15 @@ def ceiling_from_stage2(task, pA, pB, pC, pD):
     # raise had no effect at all.
     # Bring Object is specified for a box; when the model says the thing is a soft
     # bag (check D), the same phase gets the bag's allowance instead.
+    # 봉투면 내린다. 앞 판은 max 로 올렸는데 방향이 반대였다.
     if task == "Bring Object":
-        K = max(K, wD * BRING_SOFT + (1 - wD) * K)
-    for w, c in ((wD, TASK_CEILING["Rotate PolyBag"]),
-                 (wC, TASK_CEILING["Rotate Box"]),
-                 (wB, TASK_CEILING["Bring Object"])):
+        K = wD * BRING_SOFT + (1 - wD) * K
+    # 덜 제한적인 것부터. 상한 값이 바뀌었으므로 순서를 값에서 정한다 --
+    # 적어 박아두면 Bring 을 올렸을 때 그랬듯 조용히 틀린다.
+    for w, c in sorted(((wD, TASK_CEILING["Rotate PolyBag"]),
+                        (wC, TASK_CEILING["Rotate Box"]),
+                        (wB, TASK_CEILING["Bring Object"])),
+                       key=lambda t: -t[1]):
         K -= w * max(0.0, K - c)
     # A lifts at half strength: the model may argue the segment is more coarse
     # than its task prior suggests, but it does not get to overrule it outright.
@@ -263,10 +285,19 @@ def ceiling_from_stage2(task, pA, pB, pC, pD):
     return float(min(3.0, max(1.0, K)))
 
 
-def final_ratio(p, K_max):
-    """K = snap(1 + p*(K_max - 1)) onto the allowed ratios."""
+def final_ratio(p, K_max, task=None):
+    """K = snap(floor + p*(K_max - floor)) onto the allowed ratios.
+
+    하한이 1.0 고정이었다. 이제 태스크가 준다 -- Rotate Box 만 1.0 이고
+    나머지는 2.0 이다. 확신이 낮다고 이 로봇이 그냥 도는 배속 밑으로 내려갈
+    이유가 없고, 상한이 2.0 인 태스크는 하한과 같아지므로 한 칸 내린다.
+    """
     from allex_v2_ratio import snap_ratio
-    return snap_ratio(1.0 + float(p) * (float(K_max) - 1.0))
+    lo = TASK_FLOOR.get(task, DEFAULT_FLOOR)
+    hi = float(K_max)
+    if lo >= hi:
+        lo = max(1.0, hi - 0.5)
+    return snap_ratio(lo + float(p) * (hi - lo))
 
 
 ROTATION_SUBTASKS = ("Rotate Box", "Rotate PolyBag")

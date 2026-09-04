@@ -40,7 +40,10 @@ from __future__ import annotations
 
 import math
 
-ALLOWED_RATIOS = (1.0, 2.0, 2.5, 3.0)
+# 1.5 가 들어왔다. Rotate Box 의 상한이 1.5 로 내려오면서 필요해졌다 --
+# 없으면 그 태스크의 모든 청크가 1.0 이나 2.0 으로 반올림되어 상한을 넘거나
+# 아예 압축을 못 한다.
+ALLOWED_RATIOS = (1.0, 1.5, 2.0, 2.5, 3.0)
 
 
 def snap_ratio(k, allowed=ALLOWED_RATIOS):
