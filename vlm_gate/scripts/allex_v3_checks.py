@@ -404,8 +404,15 @@ POOL = {
           "   enough that both hands have to be on it to manage it?",
  "SHOVE": "Is the robot SENDING the thing across the surface -- shoving or sliding it\n"
           "   away -- rather than lifting it?",
- "FIRM":  "Is the robot CARRYING something that HOLDS ITS OWN SHAPE, gripped so that it\n"
-          "   does not shift about in the hand?",
+ # 뒷절 "gripped so that it does not shift about in the hand" 을 뺐다. 그 절이
+ # 물체 문항을 파지 문항으로 바꿔놓았고, 가장 단단해 보이는 파지는 두 손 클램프
+ # -- 즉 위험 태스크다. 그래서 FIRM 이 move+box 1.44 / turn+box ~2.5 로 갈려
+ # 부호가 -0.64 로 뒤집혔다. 물체 강성을 읽는다면 두 상자 층이 같아야 한다.
+ # 게다가 파지 정도는 이미 "256px 두 장에서 안 보인다" 로 폐기된 축이고, 그것이
+ # 뒷절로 몰래 들어와 있었다. 역대 최고 점수(+2.87)를 낸 형태로 되돌린다.
+ "FIRM":  "Is the thing under the hands KEEPING ITS SHAPE -- straight edges and flat\n"
+          "   faces, no dent, fold or sag where they press on it -- rather than giving\n"
+          "   way wherever it is touched?",
  "FREE":  "Are the hands EMPTY and moving through clear space -- nothing held, nothing\n"
           "   being touched?",
 }

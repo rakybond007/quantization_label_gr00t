@@ -163,5 +163,6 @@ print("\n=== 판정 ===")
 for k, (v, lim, ok) in gates.items():
     print(f"  {k:<10} {v:8.3f}  기준 {lim:6.2f}   {'통과' if ok else '미달'}")
 print(f"  전체: {'통과' if all(o for _, _, o in gates.values()) else '미달'}")
-json.dump({k: {"값": v, "기준": lim, "통과": ok} for k, (v, lim, ok) in gates.items()},
+json.dump({k: {"값": float(v), "기준": float(lim), "통과": bool(ok)}
+           for k, (v, lim, ok) in gates.items()},
           open(f"{OUT}/verify.json", "w"), ensure_ascii=False, indent=1)
