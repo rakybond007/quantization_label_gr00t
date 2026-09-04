@@ -115,7 +115,12 @@ COVER = {"A": 1, "B": 2, "C": 2}      # step 5, recorded; the ratio carries
 # 열세 바퀴 내내 모델이 실제로 쓴 등급은 셋이었다 -- 2 와 4 는 거의 안 쓰였고
 # 쓰인 판에서도 1·3·5 의 변형이었다. 카메라 두 대가 거의 같은 각도의 넓은
 # 화면이라 "한 동작 남았다" 와 "지금 일어난다" 가 눈으로 안 갈린다.
-NGRADE = int(os.environ.get("ALLEX_NGRADE", 3))
+# 3 단으로 내렸다가 되돌린다. 근거로 삼았던 "2 와 4 가 안 쓰였다" 는 그 판들의
+# 등급표가 문항마다 따로였고 중간 칸이 "반쯤" 이었기 때문이지 눈금 탓이 아니었다.
+# 3 단으로 쓴 판의 2등급은 "곧 일어날 참" 과 "대상은 있는데 팔은 딴 일" 의
+# 합집합이라 어느 프레임에서도 방어됐다 -- robocasa 는 그 둘을 4 와 2 로
+# 갈라놓았고 2 등급이 8.5% 실제로 쓰였다.
+NGRADE = int(os.environ.get("ALLEX_NGRADE", 5))
 
 # There is no 4x here. The candidate ratios for this robot are these five, and
 # a label that is not one of them cannot be replayed.
