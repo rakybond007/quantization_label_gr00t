@@ -236,13 +236,15 @@ NGRADE = 5
 # E 는 순위에서 빼고 못 박았다 -- robocasa 의 E 와 같은 이유로, 모든 태스크의
 # 접근·복귀 구간에 들어 있어 풀을 가를 수 없다. 대신 아무것도 붙들지 않은
 # 순간에는 잃을 것이 없다는 것이 확실하므로 가점 쪽의 큰 몫을 고정으로 준다.
-SIGN = {"LOOSE": -1, "TURN": -1, "HEFT": -1,
-        "SHOVE": +1, "FLOP": +1, "FIRM": +1, "OPEN": +1, "FREE": +1}
+# HEFT 는 독립 감점이 아니다. TURN 을 키우는 항이다 -- 독립으로 두면 큰 상자를
+# 쥐고 옮길 때 FIRM(가점)과 상쇄되어 Bring Box 가 0점이 된다. 뒤집기는 그 자체로
+# 절반의 위험이고, 두 손이 있어야 할 만큼 큰 것을 뒤집는 것이 온전한 위험이다.
+SIGN = {"TURN": -1, "SHOVE": +1, "FIRM": +1, "FREE": +1}   # HEFT 는 여기 없다
 # 무게는 활성 목록이 정해지면 각 변의 합이 1 이 되게 정규화한다. 하나씩
 # 더해 가는 중이라 지금은 문항마다 같은 무게로 두고, 문항이 확정되면 덮는
 # 태스크 수로 다시 잡는다.
-WEIGHT = {"LOOSE": 1.0, "TURN": 1.0, "HEFT": 1.0,
-          "SHOVE": 1.0, "FLOP": 1.0, "FIRM": 1.0, "OPEN": 1.0, "FREE": 1.0}
+WEIGHT = {"TURN": 1.0, "SHOVE": 1.0, "FIRM": 1.0, "FREE": 1.0}
+HEFT_SHARE = 0.5     # 뒤집기 단독이 지는 위험의 몫; 나머지는 HEFT 가 채운다
 
 
 # Candidates that were dropped, and why -- the ranking is the method's step 3.
@@ -377,31 +379,25 @@ GUIDANCE = (
 # 개수가 절차에서 나온다 -- 감점 1 + 가점 3 + 못 박음 1. robocasa 의 2+3 을
 # 따라갈 이유가 없다. Rotate Box 의 위험은 문항이 아니라 계산 사실(`held`,
 # `wrist_rot`)과 상한 1.5 가 담는다.
+# 확정된 다섯. 후보 여덟에서 겹치는 셋을 뺐다.
+#   FLOP  "봉투 살을 움켜쥐고 넘긴다" 는 TURN 의 부분집합이라 같은 사건을
+#         반대 부호로 두 번 센다. 폴리백 뒤집기는 TURN 걸림 + HEFT 안 걸림
+#         으로 이미 구별된다.
+#   LOOSE "형태를 못 잡는가" 는 FIRM 의 부정이라 한 축을 두 번 세는 것이다.
+#         Bring PolyBag 의 위험은 상한 2.0 이 이미 담는다.
+#   OPEN  이 판은 대체로 비어 있어 "빈 판으로 가는가" 는 항상 참이 될 자리다
+#         (robocasa 의 C 가 95% 5등급을 받은 그 자리). SHOVE 와도 겹친다.
 POOL = {
- "FREE":  "Are the hands MOVING THROUGH FREE SPACE, holding nothing and near nothing?",
- "LOOSE": "Is the robot CARRYING something that will not hold a shape -- so that what\n"
-          "   the hand has of it keeps changing as it goes?",
- # 혼자서는 0 이지만 둘이 함께면 가르는 쌍. 3단계는 후보를 하나씩 줄 세우므로
- # 이런 쌍을 못 본다 -- TURN 은 Rotate 둘을 덮어 +1 -1 = 0, HEFT 는 Rotate Box
- # 와 Bring Box 를 덮어 +1 -1 = 0 이라 각각은 탈락이다. 그런데 **둘 다 걸리는
- # 것은 Rotate Box 뿐**이고 그것이 손상이 가장 큰 태스크다.
- "TURN":  "Is the robot TURNING the thing over -- working it round so a different side\n"
-          "   of it comes up?",
+ "TURN":  "Is the robot working the thing round so a DIFFERENT SIDE OF IT comes up --\n"
+          "   flipping it, tipping it, rolling it over?",
  "HEFT":  "Is the thing being handled TOO MUCH FOR ONE HAND -- big, heavy or stiff\n"
-          "   enough that both hands are needed on it?",
+          "   enough that both hands have to be on it to manage it?",
  "SHOVE": "Is the robot SENDING the thing across the surface -- shoving or sliding it\n"
-          "   away rather than lifting it?",
- "FLOP":  "Is the robot flipping something over by TAKING A FISTFUL OF ITS SLACK --\n"
-          "   a handful of loose material, where another handful would do as well?",
- "FIRM":  "Is the robot CARRYING something that holds its own shape, gripped so that it\n"
-          "   does not move in the hand?",
- # 자리 조건. robocasa 가 실제로 묻는 것이 이쪽이다. 다만 그 작업장의 조건을
- # 그대로 옮기면 안 된다 -- "놓을 자리가 다른 소포들 사이에 끼어 좁은가" 는
- # 여기서 일어나지 않는다. 흐름이 가져오기 -> 뒤집기 -> 옆으로 보내기이고
- # 가져온 것은 마지막에 늘 보내지므로, 놓을 자리가 붐빌 일이 없다. 태스크를
- # 하나씩만 보면 그럴싸하고 흐름을 보면 없는 상황이다.
- "OPEN":  "Is the thing headed for BARE OPEN PLATE, where landing a few centimetres\n"
-          "   off would change nothing?",
+          "   away -- rather than lifting it?",
+ "FIRM":  "Is the robot CARRYING something that HOLDS ITS OWN SHAPE, gripped so that it\n"
+          "   does not shift about in the hand?",
+ "FREE":  "Are the hands EMPTY and moving through clear space -- nothing held, nothing\n"
+          "   being touched?",
 }
 ACTIVE = tuple(os.environ.get("ALLEX_CHECKS", "FREE").split(","))
 _CHECKS = tuple((q, POOL[q]) for q in ACTIVE)
@@ -410,9 +406,9 @@ _CHECKS = tuple((q, POOL[q]) for q in ACTIVE)
 # 이 순간을 얼마나 설명하느냐이지 그 상태의 강도가 아니다.
 _LADDER3 = (
     "3 = it is happening right now -- the picture shows what the check describes",
-    "2 = the thing the check is about is there, and the hands are heading for it\n"
-    "    or busy with something else",
-    "1 = there is nothing in this picture the check could be about",
+    "2 = it is about to happen, or the thing it is about is there and the arms are\n"
+    "    on something else",
+    "1 = the check does not describe this moment",
 )
 _LADDER5 = (
     "5 = it is happening right now -- the picture shows what the check describes",
@@ -491,24 +487,23 @@ def facts_v3(x):
 def confidence(picks):
     """다섯 답에서 나오는 확신. 0 이면 하한, 1 이면 상한.
 
-    감점 쪽과 가점 쪽을 각각 무게로 모아 빼고 [0,1] 로 옮긴다. 아무 문항도
-    안 걸리면 0.5 -- 알 수 있는 것이 없으니 폭의 가운데다.
+    HEFT 는 독립 항이 아니라 TURN 의 배수다. 독립으로 두면 큰 상자를 쥐고
+    옮길 때 HEFT(감점)와 FIRM(가점)이 같이 걸려 0 이 되고, 안정 풀 태스크가
+    점수를 못 받는다. 뒤집기는 그 자체로 절반의 위험이고, 두 손이 있어야 할
+    만큼 큰 것을 뒤집는 것이 온전한 위험이다.
+
+    가점 쪽은 걸린 것들의 가중평균이다. 합으로 하면 한 문항만 걸렸을 때 그
+    문항의 무게가 그대로 천장이 되어, 명백히 안전한 순간조차 상한에 닿지
+    못한다.
     """
-    # picks 는 물어본 순서대로 온다. 그 자리를 원래 문항 이름으로 되돌린다.
-    g = {q: (float(p) - 1.0) / (NGRADE - 1) for q, p in zip(ACTIVE, picks) if p is not None}
+    g = {q: (float(p) - 1.0) / (NGRADE - 1) for q, p in zip(ACTIVE, picks)
+         if p is not None}
     g = {q: w for q, w in g.items() if w > 0}
-
-    def side(sign):
-        # 걸린 것들의 가중평균. 합으로 하면 한 문항만 걸렸을 때 그 문항의 무게가
-        # 그대로 천장이 되어, 명백히 안전한 순간(빈손 이동)조차 상한에 닿지
-        # 못한다. 무게는 문항들 사이의 비중이지 확신의 크기가 아니다.
-        w = {q: v for q, v in g.items() if SIGN[q] == sign}
-        if not w:
-            return 0.0
-        tot = sum(WEIGHT[q] for q in w)
-        return sum(WEIGHT[q] * v for q, v in w.items()) / tot
-
-    return float(min(1.0, max(0.0, (1.0 + side(+1) - side(-1)) / 2.0)))
+    risk = g.get("TURN", 0.0) * (HEFT_SHARE + (1 - HEFT_SHARE) * g.get("HEFT", 0.0))
+    up = {q: w for q, w in g.items() if SIGN.get(q) == 1}
+    safe = (sum(WEIGHT[q] * w for q, w in up.items()) / sum(WEIGHT[q] for q in up)
+            if up else 0.0)
+    return float(min(1.0, max(0.0, (1.0 + safe - risk) / 2.0)))
 
 
 def ratio_for(picks, cell=None):

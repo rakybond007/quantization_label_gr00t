@@ -28,12 +28,11 @@ OUT = os.path.expanduser(os.environ.get(
     "ALLEX_OUT", "~/quantization_agent_workspace/vlm_gate/output/allex_v3loop"))
 rs = [json.loads(l) for l in open(f"{OUT}/records.jsonl")]
 Q = ACTIVE
-NAME = {"FREE": "빈손 통과", "LOOSE": "형태 안 잡히는 것 운반",
-        "SHOVE": "밀어 보냄", "FLOP": "눌러 넘김", "FIRM": "단단한 것 운반",
-        "TIGHT": "놓을 자리가 끼임", "OPEN": "트인 판으로", "PERCH": "얹혀·기울어"}
+NAME = {"TURN": "뒤집는 중", "HEFT": "두 손이 필요한 것",
+        "SHOVE": "밀어 보냄", "FIRM": "단단한 것 운반", "FREE": "빈손 통과"}
 # 각 문항이 어느 층에서 높아야 하는가. E 는 못 박은 문항이라 순위에서 뺀다.
-OWN = {"T": ["turn+box", "turn+bag"], "H": ["turn+box", "move+box"],
-       "P": ["move+box", "move+bag"], "S": ["move+box", "move+bag"]}
+OWN = {"TURN": ["turn+box", "turn+bag"], "HEFT": ["turn+box", "move+box"],
+       "SHOVE": ["move+box", "move+bag"], "FIRM": ["move+box"]}
 gates = {}
 
 by = collections.defaultdict(list)
@@ -54,7 +53,7 @@ for q in Q:
 
 print(f"[3] 층 간 대비   자기 층 - 나머지,  합격선 {CONTRAST_MIN}")
 for q in Q:
-    if q not in OWN:
+    if q not in OWN:      # FREE 는 못 박은 문항, 순위에서 뺀다
         own = [r[q] for v in by.values() for r in v if r.get(q) is not None]
         print(f"      {q} {NAME[q]:<12} 못 박은 문항, 순위에서 뺌 (평균 {np.mean(own):.2f})")
         continue
