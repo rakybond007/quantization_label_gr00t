@@ -45,8 +45,20 @@ import os
 # The model is NOT told which way each pushes, for the same reason as robocasa:
 # told the direction, it answers toward the ratio it thinks is wanted instead of
 # describing what it sees.
-CEILING = {"A": 1.5, "B": 2.0, "C": 3.0, "D": 2.5, "E": 3.0}
-COVER = {"A": 1, "B": 1, "C": 1, "D": None, "E": 1}   # D is pinned, not ranked
+# Three checks, not five. The task is small -- one station, three kinds of
+# object, one surface -- and the first cut asked five questions of scenes that
+# only differ in two or three ways. Four of the five then answered the same
+# digit on 99% of chunks.
+#
+#     lowers   A 2.0  the thing under the hand is a limp poly mailer
+#              B 1.5  the object is being turned so a different face comes up
+#     raises   C 3.0  the hand is pushing it along the plate, not lifting it
+#
+# and the base is 2.5, the ratio given for the phases where nothing is being
+# handled at all. Nothing answered therefore lands there, which is what it
+# should mean: no check recognised the moment.
+CEILING = {"A": 2.0, "B": 1.5, "C": 3.0}
+COVER = {"A": 1, "B": 1, "C": 2}
 NGRADE = 5
 
 # There is no 4x here. The candidate ratios for this robot are these five, and a
@@ -60,7 +72,7 @@ CANDIDATES = (1.0, 1.5, 2.0, 2.5, 3.0)
 # DIRECTION and the strength of the evidence sets how far along it we go, from a
 # base of 2.0 -- the ratio this robot is simply run at. Faint evidence stays near
 # 2.0 in either direction; only an unambiguous scene reaches 3.0 or 1.5.
-BASE = float(os.environ.get("ALLEX_BASE_K", 2.0))
+BASE = float(os.environ.get("ALLEX_BASE_K", 2.5))
 
 # Candidates that were dropped, and why -- the ranking is the method's step 3.
 #
@@ -90,62 +102,51 @@ GUIDANCE = (
 # is held or touched sit inside every subtask, the damaged ones included, so a
 # phase common to all of them can never separate the pools. With no object in
 # hand there is no hold to lose, so it takes the safe ceiling by construction.
-# The first draft of these ladders broke four of the method's rules, and each
-# break is a specific way the label goes wrong -- they are written down so the
-# next draft does not walk back into them.
+# WHAT THE FIRST DRAFT GOT WRONG, so the next one does not walk back into it.
 #
-#   GRADED THE PROGRESS, NOT THE THING ASKED. A asked whether the hold is two
-#     palms, then graded 5 vs 4 on whether the box had started TURNING. The
-#     ladder measured a different quantity from the question. Now every level is
-#     one quantity: how much of the object's weight the press is carrying.
-#   PUT MOTION IN THE LADDER. "swinging", "being carried", "the push is
-#     beginning" are all read off the action, and the facts already state arm
-#     speed, travel and whether the motion is running down. Asking for them
-#     again gets a worse answer to a question already settled in numbers.
-#   LET A LEVEL FIRE WITH THE HAND OFF THE OBJECT. "it is soft-looking but the
-#     hand is not on it yet", "the object sits where such a push would start" --
-#     a bag lying in the background then dragged a firm-box chunk's ratio down,
-#     and open counter beside a careful placement dragged one up. Every level
-#     above 1 now requires the hand to be on the thing.
-#   ASKED FOR THE CONCLUSION. C said "where it would still be fine a few
-#     centimetres off". That IS the ceiling; asking the model for it invites the
-#     answer it thinks is wanted. C now asks what is at the far end -- open
-#     surface, or a slot to fit into -- which is visible.
+#   ASKED WHAT THE FACTS ALREADY SAY. The old A asked whether the object was
+#     pinched between two palms. descriptors() computes exactly that -- `held`
+#     is gap < 0.42 m with both arms moving -- and states it. Asked something it
+#     had already been told, the model answered the middle grade on 99% of
+#     chunks. `wrist_rot`, `rot_asym`, `one_handed`, `hand_change` are stated
+#     too; nothing here may ask for them again.
+#   NAMED SCENES THAT DO NOT OCCUR HERE. The old B topped out at "it hangs from
+#     the hand and its lower half droops". Nothing hangs at this station:
+#     mailers lie flat on the plate and are pressed and flipped there. The model
+#     could not reach grade 5 and stopped at 3, so the one check that worked was
+#     still using half its range.
+#   ASKED SOMETHING ALWAYS TRUE. The old C asked whether there was open surface
+#     ahead with no slot at the far end. On a sorting plate there always is:
+#     95.4% answered 5.
+#   USED THE MIDDLE AS A HEDGE. "closing onto it", "half wrapped" are
+#     defensible in any frame. Grades 2 and 4 were never used once across 763
+#     chunks, so the ladders were really three-valued and mostly the middle one.
+#
+# Hence: grade 2 on every ladder is now the shape that worked in robocasa --
+# the subject IS in the picture and the hands are on something else -- which is
+# a thing the eye can check, unlike "somewhat".
 _CHECKS = (
- ("A", "Is the object's weight resting on TWO PALMS PRESSED INWARD on it, rather than on\n"
-       "   fingers or on a surface?",
-  ("it is off the surface, held between the two palms and nothing else",
-   "the palms have it and one edge is just lifting off the surface",
-   "the palms are on either side and closing onto it, it still rests on the surface",
-   "one palm is flat on it, the other is on the far side and not yet flat",
-   "nothing is pressed between two palms")),
- ("B", "Does the thing IN THE HAND give way under its own weight -- sagging, folding, its\n"
-       "   grasped spot pinched in?",
-  ("it hangs from the hand and its lower half droops well below the grip",
-   "it hangs from the hand and its outline bends away from straight",
-   "the hand has closed on it and the grasped spot is visibly dented in",
-   "the hand is on it and its surface gives where the fingers press",
-   "what the hand has keeps its own outline")),
- ("C", "Is the object being taken ACROSS OPEN SURFACE, with no slot, shelf or container\n"
-       "   waiting at the far end?",
-  ("it is out over open surface with clear space all the way to the far side",
-   "it has left its starting place and the space ahead of it is open",
-   "it is held and the body has turned to face the open side",
-   "it is held and open surface lies to one side of it",
-   "there is no open run for it, or nothing is held")),
- ("D", "Are BOTH hands empty -- holding nothing and touching nothing?",
-  ("both are empty and stand in open space with nothing within reach",
-   "both are empty and the nearest object is behind them",
-   "both are empty and an object is near but no hand is on it",
-   "both are empty and one rests on a surface",
-   "a hand holds or touches something")),
- ("E", "How far do the FINGERS WRAP AROUND the object -- is it closed inside the hand, or\n"
-       "   lying on it?",
-  ("the fingers meet around it and it is enclosed in the hand",
-   "the fingers wrap most of the way round and part of it stands out",
-   "the fingers are round one side of it and the palm carries the rest",
-   "it lies on the palm and the fingers only lean on it",
-   "nothing is inside a hand")),
+ ("A", "Is the thing under the hand a LIMP PLASTIC MAILER -- one that creases and folds --\n"
+       "   rather than a box that holds its shape?",
+  ("a flat plastic mailer, and the hand pressing it puts creases across it",
+   "a plastic mailer with something bulky inside, so it keeps some shape",
+   "a box whose face dents where the fingers rest -- thin card, soft foam edge",
+   "a mailer is on the plate but the hands are on something else",
+   "a firm box with its edges square under the hand")),
+ ("B", "Is the object being TURNED so that a different face comes up, rather than staying\n"
+       "   the way it lies?",
+  ("it is up on an edge and a new face is coming round to the top",
+   "hands have it on both sides and it has begun to tilt off the plate",
+   "one hand is under an edge, lifting that edge off the plate",
+   "something that would need turning is there and the hands are elsewhere",
+   "whatever is under the hands keeps the same face upward")),
+ ("C", "Is the hand PUSHING OR DRAGGING the object along the plate -- bearing on it from one\n"
+       "   side, with the object's weight still on the plate?",
+  ("the hand is against its side and it is sliding across the plate",
+   "the hand is against its side and it has just begun to move",
+   "the hand has come to rest against its side and it has not moved",
+   "something to push is on the plate and the hand is on its way elsewhere",
+   "no hand is bearing on anything, or what is held is off the plate")),
 )
 
 _AXES = "".join(
@@ -162,28 +163,27 @@ ASK = ("The measurements above are stated as fact -- do not re-estimate or repea
 def ceiling_from_checks(picks, levels=CEILING):
     """The ratio this moment tolerates, in units of K.
 
-    A plain weighted mean cannot express a ceiling. A bag closed inside a hand
-    answers both B (it gives way) and E (the fingers are round it); averaging
-    2.0 with 3.0 gave 2.33 and the bag came out ABOVE the 2.0 it was measured
-    at, because E's ceiling was read off a box. A ceiling is not an average of
-    opinions -- the most restrictive evidence has the last word.
+    A plain weighted mean cannot express a ceiling. A mailer being pushed along
+    the plate answers both A (it is limp) and C (it is being pushed); averaging
+    2.0 with 3.0 puts the mailer ABOVE the 2.0 it was measured at, because C's
+    ceiling was read off a box. A ceiling is not an average of opinions -- the
+    most restrictive evidence has the last word.
 
     So the two sides are not symmetric:
 
-      the permissive checks (C, D, E) set how far ABOVE the base ratio this
-      moment could go, and only as far as the strongest of them is sure. Faint
-      evidence stays near the base -- that is "3.0 as a weak allowance".
+      the permissive check (C) sets how far ABOVE the base ratio this moment
+      could go, and only as far as it is sure. Faint evidence stays near the
+      base -- that is "3.0 as a weak allowance".
 
       the restrictive checks (A, B) then clamp what is left, least restrictive
       first, each in proportion to how sure it is. Nothing they do can be undone
       by a permissive check that fired earlier.
 
-    With nothing answered at all, no check recognised the moment, so it takes
-    the base ratio rather than any check's -- D is what says the hands are
-    empty, and if D did not fire we do not get to assume it.
+    With nothing answered at all, no check recognised the moment. That is the
+    base -- 2.5, the ratio for a station where nothing is being handled.
     """
-    g = {q: (float(p) - 1.0) / 4.0 for q, p in zip("ABCDE", picks) if p is not None}
-    up = {q: w for q, w in g.items() if q in ("C", "D", "E") and w > 0}
+    g = {q: (float(p) - 1.0) / 4.0 for q, p in zip("ABC", picks) if p is not None}
+    up = {q: w for q, w in g.items() if q == "C" and w > 0}
     if up:
         aim = sum(w * levels[q] for q, w in up.items()) / sum(up.values())
         k = BASE + max(up.values()) * (aim - BASE)

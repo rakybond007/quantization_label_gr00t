@@ -19,7 +19,7 @@ DS = os.environ.get(
     "ALLEX_DS",
     "/rlwrld2/home/david/action_quantization/v1/subtask_labeled_data_update_eef_256x256_hojin")
 OUTDIR = os.path.expanduser(os.environ.get(
-    "ALLEX_OUT", "~/quantization_agent_workspace/vlm_gate/output/allex_v3"))
+    "ALLEX_OUT", "~/quantization_agent_workspace/vlm_gate/output/allex_v3checks"))
 REC = f"{OUTDIR}/records.jsonl"
 OUT = sys.argv[1] if len(sys.argv) > 1 else os.path.expanduser(
     "~/quantization_agent_workspace/assets/videos/allex_v3_ratio.mp4")
@@ -37,9 +37,8 @@ f_sm = ImageFont.truetype(f"{FT}/DejaVuSansMono.ttf", 13)
 RCOL = {1.0: (226, 92, 84), 1.5: (231, 130, 84), 2.0: (232, 176, 84),
         2.5: (150, 205, 120), 3.0: (86, 196, 124)}
 # name, and the ratio the check carries -- shown so the arithmetic is legible.
-QN = [("A two palms pressing", 1.5), ("B gives way in hand", 2.0),
-      ("C across open surface", 3.0), ("D both hands empty", 2.5),
-      ("E fingers wrapped", 3.0)]
+QN = [("A limp plastic mailer", 2.0), ("B a new face coming up", 1.5),
+      ("C pushed along the plate", 3.0)]
 
 rec = collections.defaultdict(dict)
 for l in open(REC):
@@ -109,7 +108,7 @@ def panel(r, title, ks, pos, ep, f):
             f"travel {r['translation']*100:.0f}cm fingers {r['hand_change']:.3f}"]
     for i, t in enumerate(rows):
         d.text((COL1, ROW0 + i * 18), t, font=f_sm, fill=(200, 200, 206))
-    for i, (q, (nm, carry)) in enumerate(zip("ABCDE", QN)):
+    for i, (q, (nm, carry)) in enumerate(zip("ABC", QN)):
         g = r.get(q)
         w = 0.0 if g is None else (float(g) - 1.0) / 4.0
         # grey until a check actually says something; then coloured by the

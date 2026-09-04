@@ -8,6 +8,12 @@ confidence, no tau ladder, no rank normalisation.
 Nothing is written to the parquet. This writes records.jsonl only, for the
 renderer to read.
 
+The output goes to output/allex_v3checks, NOT output/allex_v3: "v3" was already
+taken by the second allex capture, whose labels live there under a different
+schema and a different episode numbering. Writing here first resumed off that
+file -- 586 chunks of episodes 0-3 were skipped as "already done" when their
+(ep, f) meant something else entirely.
+
     python allex_v3_label.py <port> [episodes,comma,separated]
 """
 import json
@@ -28,7 +34,7 @@ DS = os.environ.get(
     "ALLEX_DS",
     "/rlwrld2/home/david/action_quantization/v1/subtask_labeled_data_update_eef_256x256_hojin")
 OUTDIR = os.path.expanduser(os.environ.get(
-    "ALLEX_OUT", "~/quantization_agent_workspace/vlm_gate/output/allex_v3"))
+    "ALLEX_OUT", "~/quantization_agent_workspace/vlm_gate/output/allex_v3checks"))
 os.makedirs(OUTDIR, exist_ok=True)
 CHUNK = 16
 BATCH = int(os.environ.get("ALLEX_BATCH", 8))
@@ -86,7 +92,7 @@ for ep in EPS:
             payload.append(([L[f], R[f]], f"{task}\n{stage2_facts(task, x)}"))
             meta.append((f, task, x))
         try:
-            rs = gate.judge_batch(payload, GUIDANCE, question=ASK, n_ask=5, n_grade=NGRADE)
+            rs = gate.judge_batch(payload, GUIDANCE, question=ASK, n_ask=3, n_grade=NGRADE)
         except Exception as e:
             print(f"  ep{ep} f{grp[0]}+: {type(e).__name__}: {e}", flush=True)
             continue
@@ -100,10 +106,10 @@ for ep in EPS:
                     raise SystemExit(f"판정기가 답을 안 함: {r.get('error', 'empty')}")
                 continue
             nempty = 0
-            picks = r.get("picks") or [None] * 5
+            picks = r.get("picks") or [None] * 3
             K = ceiling_from_checks(picks)
             rec = {"ep": ep, "f": f, "task": task,
-                   **{q: picks[i] for i, q in enumerate("ABCDE")},
+                   **{q: picks[i] for i, q in enumerate("ABC")},
                    "K": round(K, 3), "K_snap": snap(K),
                    "text": r.get("text", "").replace("\n", " | "),
                    **{k: (float(v) if isinstance(v, (int, float, np.floating)) else v)
