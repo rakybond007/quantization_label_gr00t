@@ -28,11 +28,12 @@ OUT = os.path.expanduser(os.environ.get(
     "ALLEX_OUT", "~/quantization_agent_workspace/vlm_gate/output/allex_v3loop"))
 rs = [json.loads(l) for l in open(f"{OUT}/records.jsonl")]
 Q = ACTIVE
-NAME = {"A": "두 손 균형으로 붙듦", "B": "무른 것 쥠 유지", "C": "쥐지 않고 다룸",
-        "D": "감싸 쥠", "E": "빈손 통과"}
+NAME = {"FREE": "빈손 통과", "LOOSE": "형태 안 잡히는 것 운반",
+        "SHOVE": "밀어 보냄", "FLOP": "눌러 넘김", "FIRM": "단단한 것 운반",
+        "TIGHT": "놓을 자리가 끼임", "OPEN": "트인 판으로", "PERCH": "얹혀·기울어"}
 # 각 문항이 어느 층에서 높아야 하는가. E 는 못 박은 문항이라 순위에서 뺀다.
-OWN = {"A": ["turn+box"], "B": ["move+bag"],
-       "C": ["turn+bag", "move+box"], "D": ["move+box"]}
+OWN = {"T": ["turn+box", "turn+bag"], "H": ["turn+box", "move+box"],
+       "P": ["move+box", "move+bag"], "S": ["move+box", "move+bag"]}
 gates = {}
 
 by = collections.defaultdict(list)

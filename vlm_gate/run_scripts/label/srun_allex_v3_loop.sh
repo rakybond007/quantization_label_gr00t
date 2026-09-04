@@ -27,7 +27,9 @@ echo "--- 답변 조합 ---"
 "$RUN_PY" - <<'PY'
 import json, collections, os
 rs=[json.loads(l) for l in open(os.environ["ALLEX_OUT"]+"/records.jsonl")]
-c=collections.Counter((r["A"],r["B"],r["C"],r["D"]) for r in rs)
+import sys; sys.path.insert(0, "scripts")
+from allex_v3_checks import ACTIVE
+c=collections.Counter(tuple(r.get(q) for q in ACTIVE) for r in rs)
 for k,v in c.most_common(10):
     print("  %s  %4d  %5.1f%%" % (" ".join(map(str,k)), v, 100*v/len(rs)))
 print("  총 %d가지" % len(c))

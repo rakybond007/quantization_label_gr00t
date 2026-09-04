@@ -111,7 +111,11 @@ from allex_v2_common import MERGE_LIMIT_V2  # noqa: E402
 CEILING = {"A": 1.5, "B": 2.5, "C": 3.0}
 BAG_FLIP, BAG_MOVE = 2.5, 2.0
 COVER = {"A": 1, "B": 2, "C": 2}      # step 5, recorded; the ratio carries
-NGRADE = 5
+# 등급 수는 robocasa 의 5 를 따라갈 이유가 없다. 이 데이터에서 정한다.
+# 열세 바퀴 내내 모델이 실제로 쓴 등급은 셋이었다 -- 2 와 4 는 거의 안 쓰였고
+# 쓰인 판에서도 1·3·5 의 변형이었다. 카메라 두 대가 거의 같은 각도의 넓은
+# 화면이라 "한 동작 남았다" 와 "지금 일어난다" 가 눈으로 안 갈린다.
+NGRADE = int(os.environ.get("ALLEX_NGRADE", 3))
 
 # There is no 4x here. The candidate ratios for this robot are these five, and
 # a label that is not one of them cannot be replayed.
@@ -232,9 +236,13 @@ NGRADE = 5
 # E 는 순위에서 빼고 못 박았다 -- robocasa 의 E 와 같은 이유로, 모든 태스크의
 # 접근·복귀 구간에 들어 있어 풀을 가를 수 없다. 대신 아무것도 붙들지 않은
 # 순간에는 잃을 것이 없다는 것이 확실하므로 가점 쪽의 큰 몫을 고정으로 준다.
-SIGN = {"A": -1, "B": -1, "C": +1, "D": +1, "E": +1}
-WEIGHT = {"A": 0.5, "B": 0.5,            # 감점: Rotate Box / Bring PolyBag
-          "C": 0.2, "D": 0.4, "E": 0.4}  # 가점: Rotate PolyBag / Pass+Bring Box / 못 박음
+SIGN = {"LOOSE": -1, "TIGHT": -1, "PERCH": -1,
+        "SHOVE": +1, "FLOP": +1, "FIRM": +1, "OPEN": +1, "FREE": +1}
+# 무게는 활성 목록이 정해지면 각 변의 합이 1 이 되게 정규화한다. 하나씩
+# 더해 가는 중이라 지금은 문항마다 같은 무게로 두고, 문항이 확정되면 덮는
+# 태스크 수로 다시 잡는다.
+WEIGHT = {"LOOSE": 1.0, "TIGHT": 1.0, "PERCH": 1.0,
+          "SHOVE": 1.0, "FLOP": 1.0, "FIRM": 1.0, "OPEN": 1.0, "FREE": 1.0}
 
 
 # Candidates that were dropped, and why -- the ranking is the method's step 3.
@@ -354,31 +362,61 @@ GUIDANCE = (
 # (robocasa 의 E 와 같은 자리) 모든 태스크에 들어 있으므로, 거기서 시작한다.
 #
 # POOL 은 후보 전부이고 ACTIVE 가 지금 물을 것이다. ALLEX_CHECKS 로 바꾼다.
+# 절차에서 나온 것이다. 각 태스크를 단위 행동으로 쪼개고, 덮는 태스크 수에서
+# 반대 풀을 잘못 덮는 수를 뺐다. 위험 풀은 Rotate Box 와 Bring PolyBag.
+#
+#     빈손으로 지나간다        모든 태스크    풀을 못 가름 -> 못 박음 (가점)
+#     두 손이 양쪽에서 함께     Rotate Box    +1 -0 = 1   그러나 held 로 계산됨
+#     형태가 안 잡히는 것을 옮김 Bring PolyBag +1 -0 = 1   채택 (감점)
+#     옆으로 밀어 보낸다        Pass          +1 -0 = 1   채택 (가점)
+#     눌러 넘긴다              Rotate PolyBag +1 -0 = 1  채택 (가점)
+#     단단한 것을 쥐고 옮긴다    Bring Box     +1 -0 = 1  채택 (가점)
+#     물체를 세워 넘긴다        Rotate 둘     +1 -1 = 0   탈락
+#     정확한 자리에 놓는다      Bring 둘      +1 -1 = 0   탈락
+#
+# 개수가 절차에서 나온다 -- 감점 1 + 가점 3 + 못 박음 1. robocasa 의 2+3 을
+# 따라갈 이유가 없다. Rotate Box 의 위험은 문항이 아니라 계산 사실(`held`,
+# `wrist_rot`)과 상한 1.5 가 담는다.
 POOL = {
- "E": "Are the hands MOVING THROUGH FREE SPACE, holding nothing and near nothing?",
- "A": "Is the robot TURNING OVER something that would stay put if you let go of it --\n"
-      "   solid, keeping its own shape -- holding it only between two hands?",
- "B": "Is the robot CARRYING something that has no shape of its own -- that sits\n"
-      "   differently in the hand every time it is taken hold of?",
- "C": "Is the robot TURNING OVER something that folds and flops -- that goes over when\n"
-      "   it is pressed, with nothing to keep hold of?",
- "D": "Is the robot MOVING something that keeps its own shape -- carrying it or pushing\n"
-      "   it along -- from one place to another?",
+ "FREE":  "Are the hands MOVING THROUGH FREE SPACE, holding nothing and near nothing?",
+ "LOOSE": "Is the robot CARRYING something that will not hold a shape -- so that what\n"
+          "   the hand has of it keeps changing as it goes?",
+ "SHOVE": "Is the robot SENDING the thing across the surface -- shoving or sliding it\n"
+          "   away rather than lifting it?",
+ "FLOP":  "Is the robot TIPPING something over BY PRESSING ON IT -- with nothing gripped,\n"
+          "   so it simply folds over where it lies?",
+ "FIRM":  "Is the robot CARRYING something that holds its own shape, gripped so that it\n"
+          "   does not move in the hand?",
+ # 자리와 물체의 조건. robocasa 가 실제로 묻는 것이 이쪽이다 -- 물체가 들어갈
+ # 자리가 두 면 이상 막혀 좁은가, 몇 cm 어긋나도 되는 트인 상판인가. 이 작업장
+ # 에서는 소포가 쌓인 사이냐 빈 판이냐, 평평히 놓였느냐 다른 것 위에 얹혔느냐다.
+ "TIGHT": "Is the place the thing is going to PENNED IN by other parcels around it,\n"
+          "   with little clear room to set it down?",
+ "OPEN":  "Is the thing headed for BARE OPEN PLATE, where landing a few centimetres\n"
+          "   off would change nothing?",
+ "PERCH": "Is the thing sitting ON TOP OF or LEANING AGAINST something else, rather\n"
+          "   than flat on the surface under it?",
 }
-ACTIVE = tuple(os.environ.get("ALLEX_CHECKS", "E").split(","))
+ACTIVE = tuple(os.environ.get("ALLEX_CHECKS", "FREE").split(","))
 _CHECKS = tuple((q, POOL[q]) for q in ACTIVE)
 
 # 문항마다 다른 눈금이 아니라 하나를 공유한다. 이 눈금이 재는 것은 그 문항이
 # 이 순간을 얼마나 설명하느냐이지 그 상태의 강도가 아니다.
-_LADDER = (
-    "5 = it is happening right now -- the picture shows the hold, the contact or\n"
-    "    the motion the check describes",
-    "4 = not yet, but the hands are right up against it, one motion away",
-    "3 = the hands are heading for it and still some way off",
-    "2 = the thing the check is about is there in the picture, but the arms are\n"
-    "    busy with something else",
+_LADDER3 = (
+    "3 = it is happening right now -- the picture shows what the check describes",
+    "2 = the thing the check is about is there, and the hands are heading for it\n"
+    "    or busy with something else",
     "1 = there is nothing in this picture the check could be about",
 )
+_LADDER5 = (
+    "5 = it is happening right now -- the picture shows what the check describes",
+    "4 = not yet, but the hands are right up against it, one motion away",
+    "3 = the hands are heading for it and still some way off",
+    "2 = the thing the check is about is there, but the arms are busy with\n"
+    "    something else",
+    "1 = there is nothing in this picture the check could be about",
+)
+_LADDER = _LADDER3 if NGRADE == 3 else _LADDER5
 
 # 물어보는 순서대로 A) B) C) ... 로 다시 붙인다. 모델은 자리로 답한다.
 LETTERS = tuple(chr(ord("A") + i) for i in range(len(_CHECKS)))
@@ -388,7 +426,7 @@ ASK = ("The measurements above are stated as fact -- do not re-estimate or repea
        "Answer each check from what the cameras show about the MOMENT in front of you, "
        "read together with those measurements.\n"
        "Answer each check on its own line as \"A) 3\", in order, nothing else -- one "
-       "digit from 1 to 5 per check, rating how far that check describes this moment:\n"
+       f"digit from 1 to {NGRADE} per check, rating how far that check describes this moment:\n"
        + "\n".join("  " + l for l in _LADDER)
        + "\nA grade refers only to the check on that line.\n" + _AXES + "Answer:")
 
@@ -451,7 +489,7 @@ def confidence(picks):
     안 걸리면 0.5 -- 알 수 있는 것이 없으니 폭의 가운데다.
     """
     # picks 는 물어본 순서대로 온다. 그 자리를 원래 문항 이름으로 되돌린다.
-    g = {q: (float(p) - 1.0) / 4.0 for q, p in zip(ACTIVE, picks) if p is not None}
+    g = {q: (float(p) - 1.0) / (NGRADE - 1) for q, p in zip(ACTIVE, picks) if p is not None}
     g = {q: w for q, w in g.items() if w > 0}
 
     def side(sign):
