@@ -233,8 +233,8 @@ NGRADE = 5
 # 접근·복귀 구간에 들어 있어 풀을 가를 수 없다. 대신 아무것도 붙들지 않은
 # 순간에는 잃을 것이 없다는 것이 확실하므로 가점 쪽의 큰 몫을 고정으로 준다.
 SIGN = {"A": -1, "B": -1, "C": +1, "D": +1, "E": +1}
-WEIGHT = {"A": 0.5, "B": 0.5,          # 감점: 각 1태스크
-          "C": 0.4, "D": 0.2, "E": 0.4}  # 가점: 2태스크 / 1태스크 / 못 박음
+WEIGHT = {"A": 0.5, "B": 0.5,            # 감점: Rotate Box / Bring PolyBag
+          "C": 0.2, "D": 0.4, "E": 0.4}  # 가점: Rotate PolyBag / Pass+Bring Box / 못 박음
 
 
 # Candidates that were dropped, and why -- the ranking is the method's step 3.
@@ -344,22 +344,33 @@ GUIDANCE = (
 # 안정 그룹(Pass, Bring Box, Rotate PolyBag)이 공유하는 것은 **접촉이 흐트러져도
 # 결과가 남는다**는 것이다. 밀어 보낸 것은 손을 떼도 가고, 감싸 쥔 단단한 것은
 # 팔이 흔들려도 손 안에서 안 움직이며, 무른 것을 뒤집는 데는 잃을 파지가 없다.
-# robocasa phase9 와 같은 형식이다. 등급표는 문항마다 따로가 아니라 하나를
-# 공유하고, 그 하나가 "이 문항이 이 순간을 얼마나 설명하는가" 의 진행도다.
-# 진행 단계는 이 공용 눈금이 담으므로 문항은 단위 행동만 말하면 된다 --
-# 문항마다 다섯 칸을 새로 지어내던 판들이 계속 무너진 이유가 그것이다.
+# robocasa phase9 와 같은 형식이다. 등급표는 하나를 공유하고, 그 하나가
+# "이 문항이 이 순간을 얼마나 설명하는가" 의 진행도다.
 #
-# 물체는 특정하지 않는다. "박스", "비닐 봉투" 라고 쓰면 이 작업장의 주석이
-# 되고 다른 데서 못 쓴다. 대신 그 물체가 왜 그 행동에서 문제인지를 쓴다 --
-# 모양을 지키지 못하는 것, 밑에 받치는 것이 없는 것.
+# 무엇을 묻는가가 열두 바퀴를 헤맨 자리다. **액션 사실 블록이 이미 무슨
+# 동작인지를 말해준다** -- 팔이 몇이 움직이는지, 손바닥이 붙는지 벌어지는지,
+# 손가락이 일하는지, 손목이 도는지. 그러니 비전 문항이 물어야 할 것은 그
+# 동작을 받는 **물체가 어떤 것인지** 다. 손이 어떻게 놓였는지를 물은 판은
+# 열두 번 전부 죽었고, 점수가 난 문항은 예외 없이 물체에 관한 것이었다
+# (t=0 +2.00, t=5 +1.76, t=8 +2.87).
+#
+# 그런데 물체 성질만 물으면 상쇄된다. **무른 것은 뒤집을 때 안전하고 가져올
+# 때 위험하다.** 부호가 행동에 따라 뒤집히므로 "무른 물체인가" 는 위험 풀과
+# 안정 풀을 같이 덮어 +1 -1 = 0 이 된다. 그래서 문항은 행동과 그 행동에서
+# 문제가 되는 물체 성질이 **한 덩어리**여야 한다. 그것이 단위 행동이다.
+#
+# 물체는 이름으로 부르지 않는다. "박스", "비닐 봉투" 는 이 작업장의 주석이
+# 되어 다른 데서 못 쓴다. 그 행동에 대해 그 물체가 어떠한지로 쓴다 --
+# 손을 놓아도 그대로 있는 것, 쥘 때마다 형태가 달라지는 것.
 _CHECKS = (
- ("A", "Is the robot TURNING something over -- bringing a different side of it up --\n"
-       "   held between two hands with nothing underneath holding it up?"),
- ("B", "Is the robot having to TAKE HOLD AGAIN -- the grip shifting, sliding or being\n"
-       "   reset on something that will not keep its shape?"),
- ("C", "Is the robot PUSHING OR SWEEPING something along the surface with an open hand,\n"
-       "   rather than carrying it?"),
- ("D", "Is the robot CARRYING something that keeps its shape, closed inside one hand?"),
+ ("A", "Is the robot TURNING OVER something that would stay put if you let go of it --\n"
+       "   solid, keeping its own shape -- holding it only between two hands?"),
+ ("B", "Is the robot CARRYING something that has no shape of its own -- that sits\n"
+       "   differently in the hand every time it is taken hold of?"),
+ ("C", "Is the robot TURNING OVER something that folds and flops -- that goes over when\n"
+       "   it is pressed, with nothing to keep hold of?"),
+ ("D", "Is the robot MOVING something that keeps its own shape -- carrying it or pushing\n"
+       "   it along -- from one place to another?"),
  ("E", "Are the hands MOVING THROUGH FREE SPACE, holding nothing and near nothing?"),
 )
 
