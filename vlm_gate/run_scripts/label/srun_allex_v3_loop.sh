@@ -5,7 +5,12 @@ set -u
 JUDGE_PY="$HOME/quantization_agent_workspace/cosmos_judge_venv/bin/python"
 RUN_PY="/sjw_alinlab/home/hojin2/miniconda3/envs/quant_gate_eval/bin/python"
 cd "$HOME/quantization_agent_workspace/vlm_gate" || exit 1
-SAMPLE="${SAMPLE:-$PWD/output/allex_sample/D.json}"
+# 개발집합은 replay10 전량 287청크다. 배달한 v2 라벨이 그 위에 있어서 정답지로
+# 쓸 수 있고, 이게 실제 배달 대상이기도 하다. 보류집합은 한 번도 안 쓴 v1 층화
+# 400청크다 -- 다른 촬영본이라 전이까지 본다.
+export ALLEX_DS="${ALLEX_DS:-/rlwrld2/home/david/action_quantization/replay_evaluation10/replay_evaluation_ee_subtask}"
+export ALLEX_GT="${ALLEX_GT:-$PWD/output/allex_v2_receil/records.jsonl}"
+SAMPLE="${SAMPLE:-$PWD/output/allex_sample/replay10_D.json}"
 PORT="${PORT:-8261}"
 # 한 바퀴에 하나씩 나온다. 앞 바퀴가 끝나기 전에 다음 바퀴를 걸었더니
 # 이 rm -rf 가 앞 바퀴의 라벨을 지웠고, 앞 바퀴의 검증이 30청크만 보고

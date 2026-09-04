@@ -17,12 +17,18 @@ import sys
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from allex_v3_checks import ACTIVE, SIGN, TASK_RANGE, snap  # noqa: E402
+from allex_v3_checks import ACTIVE, NGRADE, SIGN, TASK_RANGE, snap  # noqa: E402
 
 PARSE_MIN = 99.0        # 1
-CONTRAST_MIN = 1.3      # 3
+# 합격선은 구조에서 나온다. K = 하한 + 확신 x (상한-하한) 이고 확신에 /2 가
+# 들어가므로, 문항 하나가 등급 d 만큼 갈리면 K 는 d/(2*(등급수-1)) x 띠폭 만큼
+# 움직인다. 가장 넓은 띠가 1.0 이므로 한 칸(0.5)을 움직이려면 d = 등급수-1,
+# 즉 눈금 전체다. 라벨을 바꿀 수 있는 최소치는 그 절반이다.
+# 1.3 은 5단 등급표와 옛 구조(상한 폭 1.5, /2 없음)에서 나온 값이라 폐기.
+CONTRAST_MIN = (NGRADE - 1) / 2.0      # 3
 CORR_MAX = 0.7          # 4
 SPREAD_MIN = 0.15       # 6  태스크 안 확신의 표준편차
+GT_MIN = 0.50           # 7  정답지와의 순위 상관
 
 OUT = os.path.expanduser(os.environ.get(
     "ALLEX_OUT", "~/quantization_agent_workspace/vlm_gate/output/allex_v3loop"))
@@ -105,6 +111,27 @@ for cell in sorted(by):
           f"K {np.mean(ks):.2f} [{lo:g},{hi:g}]   " +
           "  ".join(f"{k:g}x {100*n/len(ks):.0f}%" for k, n in sorted(sn.items())))
 gates["6 분산"] = (worst, SPREAD_MIN, worst >= SPREAD_MIN)
+
+# 7 ------------------------------------------------------------ 정답지 수렴
+# 방금 배달한 v2 라벨을 기준선으로 둔다. 절대값은 다를 수 있으므로 순위로 본다 --
+# 새 문항은 v2 를 베끼는 것이 아니라 같은 순서를 찾아야 한다.
+GT = os.environ.get("ALLEX_GT", "")
+if GT and os.path.exists(GT):
+    g = {}
+    for line in open(GT):
+        r = json.loads(line)
+        g[(r["ep"], r["f"])] = float(r.get("K", r.get("K_pre", 1.0)))
+    pair = [(g[(r["ep"], r["f"])], r["K"]) for r in rs if (r["ep"], r["f"]) in g]
+    if len(pair) >= 30:
+        a_ = np.array([x for x, _ in pair]); b_ = np.array([y for _, y in pair])
+        ra = a_.argsort().argsort().astype(float); rb = b_.argsort().argsort().astype(float)
+        rho = (float(np.corrcoef(ra, rb)[0, 1]) if ra.std() > 0 and rb.std() > 0 else 0.0)
+        hit = float(np.mean([abs(x - y) < 1e-9 for x, y in pair]))
+        gates["7 정답지"] = (rho, GT_MIN, rho >= GT_MIN)
+        print(f"[7] 정답지 순위일치  n={len(pair)}  rho {rho:+.3f}  "
+              f"같은 값 {100*hit:.0f}%  {'통과' if rho >= GT_MIN else '미달'}")
+    else:
+        print(f"[7] 정답지  겹치는 청크 {len(pair)}개뿐 -- 판정 불가")
 
 print("\n=== 판정 ===")
 for k, (v, lim, ok) in gates.items():
