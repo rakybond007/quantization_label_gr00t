@@ -90,41 +90,62 @@ GUIDANCE = (
 # is held or touched sit inside every subtask, the damaged ones included, so a
 # phase common to all of them can never separate the pools. With no object in
 # hand there is no hold to lose, so it takes the safe ceiling by construction.
+# The first draft of these ladders broke four of the method's rules, and each
+# break is a specific way the label goes wrong -- they are written down so the
+# next draft does not walk back into them.
+#
+#   GRADED THE PROGRESS, NOT THE THING ASKED. A asked whether the hold is two
+#     palms, then graded 5 vs 4 on whether the box had started TURNING. The
+#     ladder measured a different quantity from the question. Now every level is
+#     one quantity: how much of the object's weight the press is carrying.
+#   PUT MOTION IN THE LADDER. "swinging", "being carried", "the push is
+#     beginning" are all read off the action, and the facts already state arm
+#     speed, travel and whether the motion is running down. Asking for them
+#     again gets a worse answer to a question already settled in numbers.
+#   LET A LEVEL FIRE WITH THE HAND OFF THE OBJECT. "it is soft-looking but the
+#     hand is not on it yet", "the object sits where such a push would start" --
+#     a bag lying in the background then dragged a firm-box chunk's ratio down,
+#     and open counter beside a careful placement dragged one up. Every level
+#     above 1 now requires the hand to be on the thing.
+#   ASKED FOR THE CONCLUSION. C said "where it would still be fine a few
+#     centimetres off". That IS the ceiling; asking the model for it invites the
+#     answer it thinks is wanted. C now asks what is at the far end -- open
+#     surface, or a slot to fit into -- which is visible.
 _CHECKS = (
- ("A", "Is a firm object held ONLY between two palms pressing inward on it, so that the\n"
-       "   hold is the difference between the two hands?",
-  ("both hands are pressed on it and it is turning between them now",
-   "both hands are pressed on it and have not started to turn it",
-   "both hands are on it but are still closing onto it",
-   "both hands are approaching it from either side, not yet touching",
-   "the object is not held between two palms")),
- ("B", "Is the thing being carried something that HANGS AND CHANGES SHAPE -- a plastic bag,\n"
-       "   a sack, cloth -- rather than holding its own form?",
-  ("it is held up and visibly sagging and swinging",
-   "it is held up and hanging, not swinging at the moment",
-   "it is limp but still resting on a surface, being taken up",
-   "it is soft-looking but the hand is not on it yet",
-   "what is being handled keeps its own shape")),
- ("C", "Is the robot sliding or passing an object ACROSS to the other side, where it would\n"
-       "   still be fine a few centimetres off?",
-  ("the object is travelling sideways across the workspace now",
-   "the hand has it and the sideways push is beginning",
-   "the hand is on it, the direction it will go is sideways",
-   "the object sits where such a push would start, hand not on it",
-   "nothing is being sent across")),
- ("D", "Are BOTH hands clear of every object -- nothing held, nothing touched?",
-  ("both hands are in open space, well away from anything",
-   "both hands are empty and moving away from what was just handled",
-   "both hands are empty and moving toward something, still short of it",
-   "one hand is empty, the other is on or near an object",
-   "an object is held or touched")),
- ("E", "Is the object CLOSED INSIDE a hand -- fingers wrapped around it -- so that shaking\n"
-       "   the arm would not move it within the grasp?",
-  ("the fingers are wrapped around it and it is being carried",
-   "the fingers are wrapped around it and it is not moving yet",
-   "the fingers are closing around it",
-   "the hand is open at it, about to close",
-   "nothing is enclosed in a hand")),
+ ("A", "Is the object's weight resting on TWO PALMS PRESSED INWARD on it, rather than on\n"
+       "   fingers or on a surface?",
+  ("it is off the surface, held between the two palms and nothing else",
+   "the palms have it and one edge is just lifting off the surface",
+   "the palms are on either side and closing onto it, it still rests on the surface",
+   "one palm is flat on it, the other is on the far side and not yet flat",
+   "nothing is pressed between two palms")),
+ ("B", "Does the thing IN THE HAND give way under its own weight -- sagging, folding, its\n"
+       "   grasped spot pinched in?",
+  ("it hangs from the hand and its lower half droops well below the grip",
+   "it hangs from the hand and its outline bends away from straight",
+   "the hand has closed on it and the grasped spot is visibly dented in",
+   "the hand is on it and its surface gives where the fingers press",
+   "what the hand has keeps its own outline")),
+ ("C", "Is the object being taken ACROSS OPEN SURFACE, with no slot, shelf or container\n"
+       "   waiting at the far end?",
+  ("it is out over open surface with clear space all the way to the far side",
+   "it has left its starting place and the space ahead of it is open",
+   "it is held and the body has turned to face the open side",
+   "it is held and open surface lies to one side of it",
+   "there is no open run for it, or nothing is held")),
+ ("D", "Are BOTH hands empty -- holding nothing and touching nothing?",
+  ("both are empty and stand in open space with nothing within reach",
+   "both are empty and the nearest object is behind them",
+   "both are empty and an object is near but no hand is on it",
+   "both are empty and one rests on a surface",
+   "a hand holds or touches something")),
+ ("E", "How far do the FINGERS WRAP AROUND the object -- is it closed inside the hand, or\n"
+       "   lying on it?",
+  ("the fingers meet around it and it is enclosed in the hand",
+   "the fingers wrap most of the way round and part of it stands out",
+   "the fingers are round one side of it and the palm carries the rest",
+   "it lies on the palm and the fingers only lean on it",
+   "nothing is inside a hand")),
 )
 
 _AXES = "".join(
@@ -139,23 +160,38 @@ ASK = ("The measurements above are stated as fact -- do not re-estimate or repea
 
 
 def ceiling_from_checks(picks, levels=CEILING):
-    """Grade-weighted mean of the ceilings the answered checks carry.
+    """The ratio this moment tolerates, in units of K.
 
-    Returns a ratio in units of K, not a score. A moment that is two things at
-    once lands between their ceilings, which is why the checks are graded rather
-    than picked.
+    A plain weighted mean cannot express a ceiling. A bag closed inside a hand
+    answers both B (it gives way) and E (the fingers are round it); averaging
+    2.0 with 3.0 gave 2.33 and the bag came out ABOVE the 2.0 it was measured
+    at, because E's ceiling was read off a box. A ceiling is not an average of
+    opinions -- the most restrictive evidence has the last word.
 
-    Nothing answered means no check recognised the moment. That is the hands-
-    empty case, so it takes D's ceiling rather than a middling default: there is
-    no hold to lose in it either.
+    So the two sides are not symmetric:
+
+      the permissive checks (C, D, E) set how far ABOVE the base ratio this
+      moment could go, and only as far as the strongest of them is sure. Faint
+      evidence stays near the base -- that is "3.0 as a weak allowance".
+
+      the restrictive checks (A, B) then clamp what is left, least restrictive
+      first, each in proportion to how sure it is. Nothing they do can be undone
+      by a permissive check that fired earlier.
+
+    With nothing answered at all, no check recognised the moment, so it takes
+    the base ratio rather than any check's -- D is what says the hands are
+    empty, and if D did not fire we do not get to assume it.
     """
     g = {q: (float(p) - 1.0) / 4.0 for q, p in zip("ABCDE", picks) if p is not None}
-    tot = sum(g.values())
-    if tot <= 0:
-        return float(os.environ.get("ALLEX_IDLE_CEILING", levels["D"]))
-    aim = sum(v * levels[q] for q, v in g.items()) / tot     # which way, and how far
-    strength = min(1.0, max(g.values()))                     # how sure the scene is
-    return float(BASE + strength * (aim - BASE))
+    up = {q: w for q, w in g.items() if q in ("C", "D", "E") and w > 0}
+    if up:
+        aim = sum(w * levels[q] for q, w in up.items()) / sum(up.values())
+        k = BASE + max(up.values()) * (aim - BASE)
+    else:
+        k = BASE
+    for q in sorted(("A", "B"), key=lambda q: -levels[q]):   # least restrictive first
+        k -= g.get(q, 0.0) * max(0.0, k - levels[q])
+    return float(k)
 
 
 def snap(k, candidates=CANDIDATES):
