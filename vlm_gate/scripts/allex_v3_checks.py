@@ -236,13 +236,13 @@ NGRADE = 5
 # E 는 순위에서 빼고 못 박았다 -- robocasa 의 E 와 같은 이유로, 모든 태스크의
 # 접근·복귀 구간에 들어 있어 풀을 가를 수 없다. 대신 아무것도 붙들지 않은
 # 순간에는 잃을 것이 없다는 것이 확실하므로 가점 쪽의 큰 몫을 고정으로 준다.
-SIGN = {"LOOSE": -1, "TIGHT": -1, "PERCH": -1,
+SIGN = {"LOOSE": -1,
         "SHOVE": +1, "FLOP": +1, "FIRM": +1, "OPEN": +1, "FREE": +1}
 # 무게는 활성 목록이 정해지면 각 변의 합이 1 이 되게 정규화한다. 하나씩
 # 더해 가는 중이라 지금은 문항마다 같은 무게로 두고, 문항이 확정되면 덮는
 # 태스크 수로 다시 잡는다.
-WEIGHT = {"LOOSE": 1.0, "TIGHT": 1.0, "PERCH": 1.0,
-          "SHOVE": 1.0, "FLOP": 1.0, "FIRM": 1.0, "OPEN": 1.0, "FREE": 1.0}
+WEIGHT = {"LOOSE": 1.0, "SHOVE": 1.0, "FLOP": 1.0, "FIRM": 1.0,
+          "OPEN": 1.0, "FREE": 1.0}
 
 
 # Candidates that were dropped, and why -- the ranking is the method's step 3.
@@ -383,19 +383,17 @@ POOL = {
           "   the hand has of it keeps changing as it goes?",
  "SHOVE": "Is the robot SENDING the thing across the surface -- shoving or sliding it\n"
           "   away rather than lifting it?",
- "FLOP":  "Is the robot TIPPING something over BY PRESSING ON IT -- with nothing gripped,\n"
-          "   so it simply folds over where it lies?",
+ "FLOP":  "Is the robot flipping something over by TAKING A FISTFUL OF ITS SLACK --\n"
+          "   a handful of loose material, where another handful would do as well?",
  "FIRM":  "Is the robot CARRYING something that holds its own shape, gripped so that it\n"
           "   does not move in the hand?",
- # 자리와 물체의 조건. robocasa 가 실제로 묻는 것이 이쪽이다 -- 물체가 들어갈
- # 자리가 두 면 이상 막혀 좁은가, 몇 cm 어긋나도 되는 트인 상판인가. 이 작업장
- # 에서는 소포가 쌓인 사이냐 빈 판이냐, 평평히 놓였느냐 다른 것 위에 얹혔느냐다.
- "TIGHT": "Is the place the thing is going to PENNED IN by other parcels around it,\n"
-          "   with little clear room to set it down?",
+ # 자리 조건. robocasa 가 실제로 묻는 것이 이쪽이다. 다만 그 작업장의 조건을
+ # 그대로 옮기면 안 된다 -- "놓을 자리가 다른 소포들 사이에 끼어 좁은가" 는
+ # 여기서 일어나지 않는다. 흐름이 가져오기 -> 뒤집기 -> 옆으로 보내기이고
+ # 가져온 것은 마지막에 늘 보내지므로, 놓을 자리가 붐빌 일이 없다. 태스크를
+ # 하나씩만 보면 그럴싸하고 흐름을 보면 없는 상황이다.
  "OPEN":  "Is the thing headed for BARE OPEN PLATE, where landing a few centimetres\n"
           "   off would change nothing?",
- "PERCH": "Is the thing sitting ON TOP OF or LEANING AGAINST something else, rather\n"
-          "   than flat on the surface under it?",
 }
 ACTIVE = tuple(os.environ.get("ALLEX_CHECKS", "FREE").split(","))
 _CHECKS = tuple((q, POOL[q]) for q in ACTIVE)
