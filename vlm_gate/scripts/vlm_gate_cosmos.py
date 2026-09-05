@@ -334,8 +334,10 @@ def run_server(model_id, port, host, max_new_tokens, dtype):
 
         _t_gen = time.time()
         with torch.inference_mode():
-            out = model.generate(**batch, max_new_tokens=int(max_new_tokens),
-                                 do_sample=False)
+            gen = model.generate(**batch, max_new_tokens=int(max_new_tokens),
+                                 do_sample=False, return_dict_in_generate=True,
+                                 output_scores=True)
+        out = gen.sequences
         # The training dataloader runs its transforms in workers, not in the
         # step. Here apply_chat_template -- which resizes and patchifies three
         # images per item -- runs serially in this loop before any of the GPU
@@ -346,11 +348,32 @@ def run_server(model_id, port, host, max_new_tokens, dtype):
                   f"gen={_now - _t_gen:.2f}s "
                   f"pre_share={(_t_gen - _t_pre) / max(_now - _t_pre, 1e-9):.0%}",
                   flush=True)
+        # 등급 자리의 분포도 같이 돌려준다. 모델은 여전히 텍스트로 답하고 -- 이건
+        # 강제된 슬롯의 로짓을 argmax 로 읽어 답을 대신 짓던 옛 방식이 아니다 --
+        # 그 답이 얼마나 확실했는지를 덧붙일 뿐이다. 다섯 등급이 한 칸에 뭉쳐
+        # 보여도 P(3)=0.9 와 P(2)=.3/P(3)=.35/P(4)=.3 은 전혀 다른 상태다.
+        gid = [g[0] for g in GRADE_IDS[:n_grade]] if n_grade > 0 else []
+        probs_all = None
+        if gid and getattr(gen, "scores", None):
+            import torch.nn.functional as _F
+            sc = torch.stack(gen.scores, dim=1)          # (B, T, V)
+            sel = sc[:, :, gid]                          # 등급 토큰만
+            step_p = _F.softmax(sel.float(), dim=-1)     # 등급들 사이의 분포
+            emitted = out[:, width:]
+            is_grade = torch.zeros_like(emitted, dtype=torch.bool)
+            for g in gid:
+                is_grade |= (emitted == g)
+            probs_all = []
+            for i in range(emitted.shape[0]):
+                pos = torch.nonzero(is_grade[i]).flatten().tolist()[:max(1, n_ask)]
+                probs_all.append([[round(float(v), 4) for v in step_p[i, t]] for t in pos])
         res = []
         for i in range(len(items)):
             text = tok.decode(out[i][width:], skip_special_tokens=True).strip()
-            res.append(_parse_text(text, n_ask, n_grade,
-                                   int(out.shape[1] - width)))
+            r = _parse_text(text, n_ask, n_grade, int(out.shape[1] - width))
+            if probs_all is not None:
+                r["grade_probs"] = probs_all[i]
+            res.append(r)
         return res
 
     def judge_text(pil_imgs, instruction, guidance="", question="",

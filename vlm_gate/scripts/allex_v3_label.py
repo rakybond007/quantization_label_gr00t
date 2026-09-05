@@ -28,6 +28,7 @@ from PIL import Image
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from allex_v2_common import TASKS, descriptors  # noqa: E402
 from allex_v3_checks import (ACTIVE, ASK, GUIDANCE, NGRADE, confidence,  # noqa: E402
+                             expected_grades,
                              facts_v3, ratio_for, snap)
 from vlm_gate import VLMGate  # noqa: E402
 
@@ -128,9 +129,10 @@ for ep in EPS:
                 continue
             nempty = 0
             picks = r.get("picks") or [None] * len(ACTIVE)
-            K = ratio_for(picks, CELL.get((ep, f)))
+            gp = r.get("grade_probs")
+            K = ratio_for(picks, CELL.get((ep, f)), gp)
             rec = {"ep": ep, "f": f, "task": task,
-                   "cell": CELL.get((ep, f)), "conf": round(confidence(picks), 3),
+                   "cell": CELL.get((ep, f)), "conf": round(confidence(picks, gp), 3), "eg": [round(v,2) for v in (expected_grades(gp) or [])],
                    **{q: picks[i] for i, q in enumerate(ACTIVE)},
                    "K": round(K, 3), "K_snap": snap(K),
                    "text": r.get("text", "").replace("\n", " | "),
@@ -141,4 +143,21 @@ for ep in EPS:
         out.flush()
     print(f"ep{ep}: {ntot} chunks", flush=True)
 out.close()
+
+# 확신을 칸의 띠에 편다. 정답지를 쓰지 않고 띠 폭과 그 칸의 자기 분포만 쓴다.
+import collections as _c
+from allex_v3_checks import TASK_RANGE, DEFAULT_RANGE, spread_conf
+rows = [json.loads(l) for l in open(OUT)]
+byc = _c.defaultdict(list)
+for i, r in enumerate(rows):
+    byc[r.get("cell")].append(i)
+for cell, idx in byc.items():
+    lo, hi = TASK_RANGE.get(cell, DEFAULT_RANGE)
+    z = spread_conf([rows[i]["conf"] for i in idx], lo, hi)
+    for i, zz in zip(idx, z):
+        rows[i]["conf_spread"] = round(float(zz), 3)
+        rows[i]["K_spread"] = round(float(lo + zz * (hi - lo)), 3)
+with open(OUT, "w") as fh:
+    for r in rows:
+        fh.write(json.dumps(r, ensure_ascii=False) + "\n")
 print(f"끝: {ntot} chunks -> {OUT}")

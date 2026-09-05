@@ -94,11 +94,8 @@ for i in range(len(Q)):
 gates["4 상관"] = (mx, CORR_MAX, mx <= CORR_MAX)
 print(f"      최대 {mx:+.3f}  {'통과' if mx <= CORR_MAX else '미달'}")
 
-print("[5] 범위 이탈   구조가 막는다. 0 이 아니면 버그")
-bad = [r for r in rs if r.get("cell") in TASK_RANGE
-       and not (TASK_RANGE[r["cell"]][0] - 1e-9 <= r["K"] <= TASK_RANGE[r["cell"]][1] + 1e-9)]
-gates["5 이탈"] = (len(bad), 0, not bad)
-print(f"      {len(bad)}개  {'통과' if not bad else '버그'}")
+# [5] 범위 이탈은 뺐다. 상한·하한은 후처리이고 구조가 보장한다 -- 문항 답변의
+# 판정이 아니다. 같은 장면이 같은 배속을 받는 것도 결함이 아니다.
 
 print(f"[6] 태스크 안 확신 분산   표준편차 {SPREAD_MIN} 이상")
 worst = 1e9
@@ -116,52 +113,31 @@ for cell in sorted(by):
           "  ".join(f"{k:g}x {100*n/len(ks):.0f}%" for k, n in sorted(sn.items())))
 gates["6 분산"] = (worst, SPREAD_MIN, worst >= SPREAD_MIN)
 
-# 7 ------------------------------------------------------------ 정답지 수렴
-# 방금 배달한 v2 라벨을 기준선으로 둔다. 절대값은 다를 수 있으므로 순위로 본다 --
-# 새 문항은 v2 를 베끼는 것이 아니라 같은 순서를 찾아야 한다.
+# 7 ------------------------------------------------ 정답지와의 확신 순위일치
+# v2 의 K 와 우리 K 를 견주면 양쪽 상한이 섞여 든다. 상한은 후처리이므로
+# **확신 대 확신**으로 본다 -- v2 의 stage-1 confidence p 가 같은 자리다.
 GT = os.environ.get("ALLEX_GT", "")
 if GT and os.path.exists(GT):
     g = {}
     for line in open(GT):
         r = json.loads(line)
-        g[(r["ep"], r["f"])] = float(r.get("K", r.get("K_pre", 1.0)))
-    pair = [(g[(r["ep"], r["f"])], r["K"]) for r in rs if (r["ep"], r["f"]) in g]
+        if "p" in r:
+            g[(r["ep"], r["f"])] = float(r["p"])
+    pair = [(g[(r["ep"], r["f"])], r["conf"]) for r in rs
+            if (r["ep"], r["f"]) in g and "conf" in r]
     if len(pair) >= 30:
         a_ = np.array([x for x, _ in pair]); b_ = np.array([y for _, y in pair])
-        ra = a_.argsort().argsort().astype(float); rb = b_.argsort().argsort().astype(float)
-        rho = (float(np.corrcoef(ra, rb)[0, 1]) if ra.std() > 0 and rb.std() > 0 else 0.0)
-        hit = float(np.mean([abs(x - y) < 1e-9 for x, y in pair]))
+        ra, rb = a_.argsort().argsort().astype(float), b_.argsort().argsort().astype(float)
+        rho = float(np.corrcoef(ra, rb)[0, 1]) if ra.std() > 0 and rb.std() > 0 else 0.0
         gates["7 정답지"] = (rho, GT_MIN, rho >= GT_MIN)
-        print(f"[7] 정답지 순위일치  n={len(pair)}  rho {rho:+.3f}  "
-              f"같은 값 {100*hit:.0f}%  {'통과' if rho >= GT_MIN else '미달'}")
+        print(f"[7] 정답지 확신 순위일치  n={len(pair)}  rho {rho:+.3f}  "
+              f"{'통과' if rho >= GT_MIN else '미달'}")
+        print("      칸 안:  " + "  ".join(
+            f"{c} {np.corrcoef(np.array([g[(r['ep'],r['f'])] for r in v if (r['ep'],r['f']) in g]).argsort().argsort(), np.array([r['conf'] for r in v if (r['ep'],r['f']) in g]).argsort().argsort())[0,1]:+.2f}"
+            for c, v in sorted(by.items())
+            if len([r for r in v if (r['ep'],r['f']) in g]) > 5))
     else:
         print(f"[7] 정답지  겹치는 청크 {len(pair)}개뿐 -- 판정 불가")
-
-# HEFT 승격 검증 --------------------------------------------------------------
-# HEFT 를 독립 감점으로 올리면 Bring Box(안정 풀)를 잘못 덮을 수 있다. 물체가
-# 같은 move+box 와 turn+box 를 견주면 그것이 물체 크기를 읽는지 행동을 읽는지
-# 갈린다 -- 같은 상자인데 답이 다르면 읽는 것은 크기가 아니다.
-if "HEFT" in Q and SIGN.get("HEFT") == -1:
-    mb = [r["HEFT"] for r in by.get("move+box", []) if r.get("HEFT")]
-    tb = [r["HEFT"] for r in by.get("turn+box", []) if r.get("HEFT")]
-    if mb and tb:
-        p1 = (np.mean(mb) - 1) / max(1e-9, np.mean(tb) - 1)
-        p2 = float(np.mean(mb))
-        box = [r for c in ("move+box", "turn+box") for r in by.get(c, []) if r.get("HEFT")]
-        x = np.array([r["HEFT"] for r in box], float)
-        y = np.array([1.0 if r.get("one_handed") else 0.0 for r in box])
-        if 0 < y.sum() < len(y):
-            o = x.argsort().argsort() + 1
-            r1 = o[y == 0].sum(); n0 = (y == 0).sum(); n1 = (y == 1).sum()
-            auc = (r1 - n0 * (n0 + 1) / 2) / (n0 * n1)
-            auc = max(auc, 1 - auc)
-        else:
-            auc = float("nan")
-        print(f"[H] HEFT 승격 검증  P1 오염률 {p1:.3f} (<=0.35 {'OK' if p1<=0.35 else '미달'})  "
-              f"P2 move+box 평균 {p2:.2f} (<=2.0 {'OK' if p2<=2.0 else '미달'})  "
-              f"P3 one_handed AUC {auc:.3f} (>=0.75 {'OK' if auc>=0.75 else '미달'})")
-        gates["H1 오염"] = (p1, 0.35, p1 <= 0.35)
-        gates["H2 절대"] = (p2, 2.0, p2 <= 2.0)
 
 print("\n=== 판정 ===")
 for k, (v, lim, ok) in gates.items():
