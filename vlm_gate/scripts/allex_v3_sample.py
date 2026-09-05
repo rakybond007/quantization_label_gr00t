@@ -4,7 +4,7 @@
 층별 검정력이 6배씩 차이나고(Rotate PolyBag 41 vs Rotate Box 308), 그런 표본
 위에서 나온 "약함" 은 문항이 약한 건지 표본이 작은 건지 알 수 없다.
 
-층은 손상표의 네 칸이다. 주석은 회전에만 물체를 적지만(Rotate Box /
+층은 손상표의 여섯 칸이다. 주석은 회전에만 물체를 적지만(Rotate Box /
 Rotate PolyBag) 에피소드 안의 순서가 나머지를 알려준다 -- 한 주기가
 가져오기 → (필요하면 뒤집기) → 넘기기 이고, 그 주기에 낀 회전이 그 주기의
 물체를 말한다.
@@ -43,13 +43,15 @@ for v in by_ep.values():
     v.sort(key=lambda x: x["start_frame"])
 
 # 주기의 회전이 그 주기의 물체를 정한다. 회전이 없으면 정하지 않는다.
-OBJ = {"Rotate Box": "box", "Rotate PolyBag": "bag"}
+# 층 이름은 TASK_RANGE 의 칸 이름과 글자 그대로 같아야 한다. 주석이 쓰는 말을
+# 그대로 쓴다 -- Bring / Pass / Rotate x Box / PolyBag.
+OBJ = {"Rotate Box": "Box", "Rotate PolyBag": "PolyBag"}
 cell = {}                       # id(seg) -> (행동, 물체)
 unknown = 0
 for v in by_ep.values():
     for x in v:
         if x["label"] in OBJ:
-            cell[x["id"]] = ("turn", OBJ[x["label"]])
+            cell[x["id"]] = ("Rotate", OBJ[x["label"]])
     i = 0
     while i < len(v):
         if v[i]["label"] != "Bring Object":
@@ -63,8 +65,8 @@ for v in by_ep.values():
             objs = {OBJ[m] for m in mid if m in OBJ}
             if len(objs) == 1:
                 o = objs.pop()
-                cell[v[i]["id"]] = ("move", o)
-                cell[v[j2]["id"]] = ("move", o)
+                cell[v[i]["id"]] = ("Bring", o)
+                cell[v[j2]["id"]] = ("Pass", o)
             else:
                 unknown += 2
             i = j2 + 1
@@ -79,7 +81,7 @@ for s_ in segs:
         continue
     a = (s_["start_frame"] // CHUNK) * CHUNK
     for f in range(a, s_["end_frame"] - CHUNK, CHUNK):
-        chunks.setdefault(f"{c[0]}+{c[1]}", []).append((s_["episode_index"], f))
+        chunks.setdefault(f"{c[0]} {c[1]}", []).append((s_["episode_index"], f))
 print(f"  물체를 못 정한 구간 {unknown}개는 제외")
 
 rng = random.Random(SEED)
