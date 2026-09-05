@@ -457,10 +457,12 @@ POOL = {
  # 있는가" 로 고쳤더니 더 나빠졌다 -- 움직임은 정지 화면에 없어서 모델이 중간
  # 등급으로 도피했고(3 이 92% -> 98%), 같은 프롬프트의 FLIP 까지 흐려졌다.
  # t=1 에 이미 적힌 조항이다: 스틸에서 답할 수 없는 것을 묻지 않는다.
- # 필요한 것은 **한 장에서 보이면서 국면에 따라 바뀌는 것**이다. 판에서 떠
- # 있는가는 둘 다 만족한다 -- 다가갈 때와 내려놓을 때는 닿아 있다.
- "CLAMP": "Is the thing HELD CLEAR OF EVERY SURFACE -- nothing under it but the\n"
-          "   hands, so that if the hold gives there is nothing to catch it?",
+ # "판에서 떠 있는가" 로도 고쳐 봤다. 한 장에서 보이고 국면에 따라 바뀌는데도
+ # 더 나빴다 -- Rotate Box 0.766, SHOVE 가 완전히 상수가 되어 상관 1.0.
+ # 세 판 중 옛 서술이 모든 지표에서 가장 좋아 되돌렸다. CLAMP 의 서술이
+ # 문제가 아니라는 뜻이므로, 다음은 그 칸이 정말 갈릴 것이 있는지를 본다.
+ "CLAMP": "Is the thing held BETWEEN TWO HANDS -- with the push of one hand against\n"
+          "   the other all that keeps it, so it drops the moment that goes?",
  "LOOSE": "Is what the hand has GATHERED UP IN IT rather than taken by a firm edge --\n"
           "   so that what it holds keeps changing as the thing is carried along?",
  # 이 문항은 봉투 전반에 걸린다 -- 자기 칸(Bring PolyBag) 2.77 인데 Pass PolyBag
@@ -477,9 +479,13 @@ POOL = {
  # 붙인 문항이 없었다. FREE 가 "안 쥔 채 지나간다" 라 그 프레임에서 1 로
  # 떨어졌고, 다섯 문항이 전부 3등급("향해 가는 중")으로 뭉쳤다. 잡기 전이면
  # 잃을 파지가 없으므로 그 국면은 FREE 가 덮어야 한다.
- "FREE":  "Has NOTHING BEEN TAKEN HOLD OF YET -- the hands empty or resting on\n"
-          "   something they have not closed on -- so there is no hold to lose in\n"
-          "   this moment?",
+ # 그 서술은 Bring 두 칸에서만 살고 Pass/Rotate 네 칸에서는 전부 1 이었다.
+ # 문항 잘못이 아니라 그 구간들이 이미 쥔 채로 시작하기 때문인데, 그래서 그
+ # 네 칸에는 안에서 갈릴 것을 묻는 문항이 하나도 없게 됐다. 넓힌다 --
+ # 압축이 깨뜨리는 것은 맞춰 넣는 순간이고 그냥 옮기는 순간은 아니다. 그
+ # 구분은 모든 칸 안에서 국면마다 바뀌고, 손목 회전과 팔 속도로 사실에도 있다.
+ "FREE":  "Is NOTHING BEING LINED UP right now -- the hands only carrying the thing\n"
+          "   along, with no fitting or setting down being made in this moment?",
 }
 ACTIVE = tuple(os.environ.get("ALLEX_CHECKS", "CLAMP,LOOSE,SHOVE,FLIP,FREE").split(","))
 _CHECKS = tuple((q, POOL[q]) for q in ACTIVE)
