@@ -108,8 +108,7 @@ from allex_v2_common import MERGE_LIMIT_V2  # noqa: E402
 # 인데 그 둘은 정지 화면에서 같은 장면이다 -- 다섯 번 물었고 다섯 번 다
 # 중간 등급에 붙박였다. 가르는 것은 손바닥 간격이고(AUC 0.827) 그건 이미
 # 계산돼 사실로 나간다. 그래서 코드가 고른다: 묻지 않고 준다는 원칙 그대로다.
-CEILING = {"A": 1.5, "B": 2.5, "C": 3.0}
-BAG_FLIP, BAG_MOVE = 2.5, 2.0
+# 문항이 배속을 지던 판의 잔재를 지웠다. 상한은 문항이 아니라 주석이 준다.
 COVER = {"A": 1, "B": 2, "C": 2}      # step 5, recorded; the ratio carries
 # 등급 수는 robocasa 의 5 를 따라갈 이유가 없다. 이 데이터에서 정한다.
 # 열세 바퀴 내내 모델이 실제로 쓴 등급은 셋이었다 -- 2 와 4 는 거의 안 쓰였고
@@ -227,26 +226,34 @@ GUIDANCE = (
 # 출발점이 되어 모든 태스크가 기준값 2.5 를 공유했다. 상한이 2.5 보다 낮은
 # 태스크는 증거가 약할 때 상한 위에 남았다(move+bag 위반 100%). 지금은 K 가
 # [하한, 상한] 안에서만 움직이므로 넘는 일이 구조적으로 없다.
-# 상한은 **서브태스크 라벨**이 준다. 주석에 있는 그대로다.
+# 상한과 하한은 **주석이 준다. 문항은 관여하지 않는다.**
 #
-#     Rotate Box      1.5 ~ 1.0
-#     Rotate PolyBag  2.5 ~ 2.0
-#     Pass Object     3.0 ~ 2.0
-#     Bring Object    박스 3.0 / 봉투 2.0,  하한 2.0
+# 주석은 회전에만 물체를 적지만, 에피소드 안의 주기(가져오기 → 필요하면 뒤집기 →
+# 넘기기)가 나머지를 알려준다. 그 유도는 allex_make_subtask_object.py 가 한 번
+# 해서 파일로 박아두었다 -- 매번 다시 유도하다 "주석에 물체가 없다" 고 다시
+# 말하지 않기 위해서다. 이름은 주석의 말 그대로 쓴다(Rotate/Bring/Pass,
+# Box/PolyBag). turn·move·box·bag 으로 바꿔 쓴 판이 있었는데 그건 내 임의였고,
+# 특히 Bring 과 Pass 를 하나로 묶어버렸다.
 #
-# Bring Object 만 주석이 물체를 안 알려준다("Object" 라고만 쓴다). **그 한 자리가
-# 비전이 하는 일이다.** 앞 판은 에피소드 안의 주기(가져오기 → 뒤집기 → 넘기기)에서
-# 물체를 추론해 (행동, 물체) 4칸을 짓고 그것으로 상한을 줬는데, 그러면 물체까지
-# 주석이 주게 되어 VLM 이 할 일이 없어진다. 실제로 무문항 기준선과 동률이 나왔다
-# (전역 rho +0.723 대 +0.718). 칸을 지어낸 것이 원인이었다.
+#     Rotate Box       1.5 ~ 2.0      2배 22/30, 2.5배 16/30. 운용자가 올려 잡음
+#     Rotate PolyBag   2.0 ~ 2.5      운용자 값
+#     Bring Box        2.0 ~ 3.0      2.5배 27/30
+#     Bring PolyBag    1.5 ~ 2.0      2배 28/30 → 2.5배 23/30
+#     Pass Box         2.0 ~ 3.0      상한은 2.5 로 보되 확신이 2.0~3.0 을 쓰고
+#     Pass PolyBag     2.0 ~ 3.0      평균이 2.5 근처에 오게 한다
+#
+# Pass 두 칸만 성격이 다르다. 2.5 는 넘지 말아야 할 벽이 아니라 **평균이 와야 할
+# 자리**이므로, 범위를 [2.0, 3.0] 으로 열고 확신의 중심이 0.5 에 오게 한다.
 TASK_RANGE = {
-    "Rotate Box":     (1.0, 1.5),
+    "Rotate Box":     (1.5, 2.0),
     "Rotate PolyBag": (2.0, 2.5),
-    "Pass Object":    (2.0, 3.0),
-    "Bring Object":   (2.0, 3.0),      # 박스 기준. 봉투면 아래 BRING_BAG 으로 내린다
+    "Bring Box":      (2.0, 3.0),
+    "Bring PolyBag":  (1.5, 2.0),
+    "Pass Box":       (2.0, 3.0),
+    "Pass PolyBag":   (2.0, 3.0),
 }
-BRING_BAG = (2.0, 2.0)                 # 하한과 같아지므로 한 칸 내려 (1.5, 2.0)
-BRING_BAG = (1.5, 2.0)
+# 평균이 와야 할 자리. 없으면 범위 중점이 곧 목표다.
+TARGET_MEAN = {"Pass Box": 2.5, "Pass PolyBag": 2.5}
 DEFAULT_RANGE = (2.0, 2.5)
 CANDIDATES = (1.0, 1.5, 2.0, 2.5, 3.0)
 # NGRADE 는 위에서 한 번만 정한다. 두 번 정의해 놓았다가 나중 것이 이겨서
@@ -550,19 +557,14 @@ def confidence(picks):
     return float(min(1.0, max(0.0, (1.0 + safe - risk) / 2.0)))
 
 
-def ratio_for(picks, task=None, obj_grade=None):
-    """서브태스크가 상한을 주고, 문항이 그 안에서 얼마나 쓸지를 정한다.
+def ratio_for(picks, cell=None):
+    """주석이 준 [하한, 상한] 안에서, 확신이 정한 자리.
 
-    Bring Object 만 주석이 물체를 안 알려준다. 그 한 자리에서 비전이 일한다 --
-    물체 문항(FIRM)의 등급이 높으면 제 형태를 지키는 것이므로 박스 쪽 상한을,
-    낮으면 봉투 쪽을 쓴다. 나머지 세 태스크는 주석이 물체까지 말해주므로
-    문항이 상한에 관여하지 않는다.
+    문항은 상한에 관여하지 않는다. 앞 판에서 물체 문항이 Bring 의 상한을
+    가르게 했다가 되돌렸다 -- 물체는 주기 구조로 주석에서 나오므로 비전이
+    다시 알아낼 이유가 없다.
     """
-    lo, hi = TASK_RANGE.get(task, DEFAULT_RANGE)
-    if task == "Bring Object" and obj_grade is not None:
-        w = (float(obj_grade) - 1.0) / (NGRADE - 1)       # 1 이면 봉투, 0 이면 박스 쪽
-        blo, bhi = BRING_BAG
-        lo, hi = blo + w * (lo - blo), bhi + w * (hi - bhi)
+    lo, hi = TASK_RANGE.get(cell, DEFAULT_RANGE)
     return float(lo + confidence(picks) * (hi - lo))
 
 

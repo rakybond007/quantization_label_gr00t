@@ -198,13 +198,13 @@ def facts_text(x):
 _CEILING_SPEC = {
     "Pass Object": 3.0,
     "Bring Object": 3.0,          # a box; a bag brings it DOWN to BRING_SOFT
-    "Rotate Box": 1.5,
+    "Rotate Box": 2.0,          # 2026-09-05 운용자: 1.5 -> 2.0
     "Rotate PolyBag": 2.5,
 }
 BRING_SOFT = float(os.environ.get("ALLEX_BRING_SOFT", 2.0))
 
 # 하한도 태스크가 준다. 운용자: Rotate Box 말고는 다 2.0.
-_FLOOR_SPEC = {"Rotate Box": 1.0}
+_FLOOR_SPEC = {"Rotate Box": 1.5}   # 운용자: 1.0 -> 1.5
 DEFAULT_FLOOR = float(os.environ.get("ALLEX_DEFAULT_FLOOR", 2.0))
 TASK_FLOOR = dict(_FLOOR_SPEC)
 TASK_FLOOR.update(json.loads(os.environ.get("ALLEX_FLOORS", "{}")))

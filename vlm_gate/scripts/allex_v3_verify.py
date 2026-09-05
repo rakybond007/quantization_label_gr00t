@@ -19,7 +19,7 @@ import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from allex_v3_checks import ACTIVE, NGRADE, SIGN, TASK_RANGE, snap  # noqa: E402
 
-STRATUM = "task"   # 층은 서브태스크다. (행동,물체) 칸은 내가 지어낸 것이라 폐기했다.
+STRATUM = "cell"   # 층은 주석이 주는 (행동, 물체) 네 칸이다.
 
 PARSE_MIN = 99.0        # 1
 # 합격선은 구조에서 나온다. K = 하한 + 확신 x (상한-하한) 이고 확신에 /2 가
@@ -41,8 +41,8 @@ NAME = {"TURN": "뒤집는 중", "HEFT": "두 손이 필요한 것",
 # 각 문항이 어느 층에서 높아야 하는가. E 는 못 박은 문항이라 순위에서 뺀다.
 # 각 문항이 높아야 할 서브태스크. 위험 풀은 Rotate Box 와 Bring PolyBag 인데
 # 후자는 주석에 없으므로 Bring Object 안에 섞여 있다.
-OWN = {"HEFT": ["Rotate Box"], "SHOVE": ["Pass Object"],
-       "FIRM": ["Bring Object", "Pass Object"]}
+OWN = {"HEFT": ["turn+box"], "SHOVE": ["move+box", "move+bag"],
+       "FIRM": ["move+box", "turn+box"]}
 gates = {}
 
 by = collections.defaultdict(list)

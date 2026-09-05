@@ -124,10 +124,7 @@ for ep in EPS:
                 continue
             nempty = 0
             picks = r.get("picks") or [None] * len(ACTIVE)
-            # 상한은 서브태스크가 준다. Bring Object 만 물체를 모르므로
-            # 물체 문항(FIRM)의 등급이 박스/봉투 쪽을 가른다.
-            fi = list(ACTIVE).index("FIRM") if "FIRM" in ACTIVE else None
-            K = ratio_for(picks, task, picks[fi] if fi is not None else None)
+            K = ratio_for(picks, CELL.get((ep, f)))
             rec = {"ep": ep, "f": f, "task": task,
                    "cell": CELL.get((ep, f)), "conf": round(confidence(picks), 3),
                    **{q: picks[i] for i, q in enumerate(ACTIVE)},
