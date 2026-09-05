@@ -452,11 +452,15 @@ GUIDANCE = (
 # 첫 줄은 일반적으로, 왜 압축에 약한지는 뒤에 붙는 절이 진다. 앞 줄에 과정의
 # 세부를 넣으면 이 작업장의 주석이 되어 다른 데서 못 쓴다.
 POOL = {
- # 상태로 물었더니 Rotate Box 77개 중 76개가 같은 등급을 냈다. 사다리는 진행을
- # 재는데 "끼워 들고 있는가" 는 그 칸 내내 참이라 국면이 안 갈렸다. 규칙대로
- # 단위 행동으로 고쳐 쓴다 -- 돌리는 그 순간을 부른다.
- "CLAMP": "Is the thing BEING TURNED while off every surface -- so that through the\n"
-          "   whole turn nothing but the hands pressing on it is underneath?",
+ # 두 판을 버렸다. "두 손 사이에 끼워 들고 있는가" 는 보이긴 하는데 그 칸 내내
+ # 참이라 국면이 안 갈렸다(Rotate Box 77 중 76 이 같은 등급). 그래서 "돌아가고
+ # 있는가" 로 고쳤더니 더 나빠졌다 -- 움직임은 정지 화면에 없어서 모델이 중간
+ # 등급으로 도피했고(3 이 92% -> 98%), 같은 프롬프트의 FLIP 까지 흐려졌다.
+ # t=1 에 이미 적힌 조항이다: 스틸에서 답할 수 없는 것을 묻지 않는다.
+ # 필요한 것은 **한 장에서 보이면서 국면에 따라 바뀌는 것**이다. 판에서 떠
+ # 있는가는 둘 다 만족한다 -- 다가갈 때와 내려놓을 때는 닿아 있다.
+ "CLAMP": "Is the thing HELD CLEAR OF EVERY SURFACE -- nothing under it but the\n"
+          "   hands, so that if the hold gives there is nothing to catch it?",
  "LOOSE": "Is what the hand has GATHERED UP IN IT rather than taken by a firm edge --\n"
           "   so that what it holds keeps changing as the thing is carried along?",
  # 이 문항은 봉투 전반에 걸린다 -- 자기 칸(Bring PolyBag) 2.77 인데 Pass PolyBag
