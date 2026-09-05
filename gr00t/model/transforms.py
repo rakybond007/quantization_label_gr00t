@@ -129,6 +129,26 @@ def build_paligemma_processor(paligemma_path: str) -> ProcessorMixin:
     paligemma_processor.tokenizer.padding_side = "left"
     return paligemma_processor
 
+
+def _optional_paligemma_processor():
+    """The default for a backbone almost nothing here uses.
+
+    GR00TTransform builds all three processors when it is constructed, but a
+    run uses exactly one — Eagle for N1.5, Qwen for N1.7. paligemma is the only
+    gated repo of the three, so a token without access to it kills every eval
+    and every training run over a model that never touches it.
+
+    Returning None instead lets those runs proceed. A run that genuinely needs
+    paligemma builds it explicitly (see PaliGemmaCollator below) and will fail
+    there, at the point of use, with the real reason.
+    """
+    try:
+        return build_paligemma_processor(DEFAULT_PALIGEMMA_PATH)
+    except Exception as e:      # gated repo, offline, no cache — all the same here
+        print(f"[transforms] paligemma processor unavailable, leaving it unset: "
+              f"{type(e).__name__}", flush=True)
+        return None
+
 def paligemma_collate(features: List[dict], paligemma_processor) -> dict:
     batch = {}
     keys = features[0].keys()
@@ -228,8 +248,8 @@ class GR00TTransform(InvertibleModalityTransform):
         default_factory=lambda: build_eagle_processor(DEFAULT_EAGLE_PATH))
     qwen_processor: ProcessorMixin = Field(
         default_factory=lambda: build_qwen_processor(DEFAULT_QWEN_PATH))
-    paligemma_processor: ProcessorMixin = Field(
-        default_factory=lambda: build_paligemma_processor(DEFAULT_PALIGEMMA_PATH))
+    paligemma_processor: Optional[ProcessorMixin] = Field(
+        default_factory=_optional_paligemma_processor)
     # XEmbDiT arguments
     default_instruction: str = Field(default="Perform the default behavior.")
     max_state_dim: int

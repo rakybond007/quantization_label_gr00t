@@ -22,6 +22,11 @@ PORT=$((10000 + POFF + SLURM_ARRAY_TASK_ID))
 N_EPISODES="${N_EPISODES:-50}"
 MAX_STEPS="${MAX_STEPS:-1500}"
 VARK_BOUND="${VARK_BOUND:-0}"
+# 보간 기반 가변 세그먼트 압축. INTERP_EPS>0 이면 고정 K 대신 이쪽.
+INTERP_EPS="${INTERP_EPS:-0}"
+INTERP_RATIO_MAX="${INTERP_RATIO_MAX:-2.5}"
+INTERP_KMAX="${INTERP_KMAX:-8}"
+INTERP_SPACE="${INTERP_SPACE:-path}"
 CLIP_SCALE="${CLIP_SCALE:-1}"
 DYN_SCALE="${DYN_SCALE:-1}"
 VARK_FLOOR2="${VARK_FLOOR2:-0}"
@@ -59,10 +64,16 @@ TASK_NAMES=(
   "OpenDrawer" "OpenDoubleDoor" "CoffeeSetupMug" "CoffeeServeMug"
   "CoffeePressButton" "CloseSingleDoor" "CloseDrawer" "CloseDoubleDoor"
 )
+# TASKS 로 태스크를 직접 지정할 수 있다 (공백 구분). 지정하면 배열 인덱스는 무시한다 —
+# 샤드는 24개를 3개씩 기계적으로 자르므로, "압축에 강한 것 셋" 같은 묶음을 못 만든다.
 SELECTED=()
+if [ -n "${TASKS:-}" ]; then
+  read -r -a SELECTED <<< "$TASKS"
+else
 [ $SLURM_ARRAY_TASK_ID -lt 8 ] && SELECTED+=("${TASK_NAMES[$SLURM_ARRAY_TASK_ID]}")
 [ $((SLURM_ARRAY_TASK_ID + 8)) -lt 24 ] && SELECTED+=("${TASK_NAMES[$((SLURM_ARRAY_TASK_ID + 8))]}")
 [ $((SLURM_ARRAY_TASK_ID + 16)) -lt 24 ] && SELECTED+=("${TASK_NAMES[$((SLURM_ARRAY_TASK_ID + 16))]}")
+fi
 
 MAIN_PIDS=()
 for TASK in "${SELECTED[@]}"; do
@@ -74,6 +85,7 @@ for TASK in "${SELECTED[@]}"; do
         --video_dir "$ODIR" --seed 42 --n_episodes $N_EPISODES \
         --max_episode_steps $MAX_STEPS --generative_textures \
         --compress-k $K --vark-bound $VARK_BOUND --vark-floor2 $VARK_FLOOR2 --clip-scale $CLIP_SCALE --dyn-scale $DYN_SCALE \
+        --interp-eps $INTERP_EPS --interp-ratio-max $INTERP_RATIO_MAX --interp-kmax $INTERP_KMAX --interp-space $INTERP_SPACE \
         >& "$ODIR/eval-$SLURM_ARRAY_TASK_ID.log" &
     MAIN_PIDS+=($!)
 done

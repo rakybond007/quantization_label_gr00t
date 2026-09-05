@@ -19,10 +19,13 @@ import json
 from collections import Counter, defaultdict
 from pathlib import Path
 
+import sys as _sys
 import numpy as np
+_sys.path.insert(0, str(Path(__file__).resolve().parent))
 from robosuite.controllers import load_composite_controller_config
 from tqdm import tqdm, trange
 
+from interp_compress import interp_compress_chunk
 from gr00t.eval.robocasa_simulation import SimulationInferenceClient
 from gr00t.eval.wrappers.multistep_wrapper import MultiStepWrapper
 from gr00t.eval.wrappers.record_video import RecordVideo
@@ -278,6 +281,15 @@ def main():
     p.add_argument("--gate-k3-threshold", type=float, default=0.0,
                    help="If >0, chunks with gate confidence >= this use K=3 merge "
                         "(confidence ladder: fine < tau < K2 < tau3 < K3).")
+    p.add_argument("--interp-eps", type=float, default=0.0,
+                   help=">0 이면 고정 K 대신 보간 기반 가변 세그먼트 압축.")
+    p.add_argument("--interp-ratio-max", type=float, default=2.5,
+                   help="청크 전체 압축비 상한 (분수 허용). 0 이면 상한 없음.")
+    p.add_argument("--interp-kmax", type=int, default=8,
+                   help="세그먼트 최대 길이. 고정 K 와 무관하다 — 여기에 K 를 넣으면\n                        보간이 K 를 못 넘어 고정 K 와 같아진다.")
+    p.add_argument("--interp-space", type=str, default="path",
+                   choices=["action", "path"],
+                   help="action=명령값 보간(속도 공간), path=누적 변위 보간(경로 공간).")
     p.add_argument("--judge-threshold", type=float, default=0.5,
                    help="Quantize when VLM confidence P(safe-to-compress) >= this value.")
     p.add_argument("--judge-guidance", type=str, default="",
@@ -563,7 +575,16 @@ def main():
                 else:
                     k_eff = K
                 blocks = None
-                if k_eff > 1 and args.vark_bound > 0:
+                if k_eff > 1 and args.interp_eps > 0:
+                    # 경계를 데이터가 정한다: 직선 근사가 eps 안에서 되는 동안
+                    # 세그먼트를 늘리고, 안 되는 지점에서 끊는다. 압축비 상한은
+                    # 세그먼트마다가 아니라 청크 전체에 건다 — 세그먼트 길이가
+                    # 정수라 어떤 per-segment 규칙도 2.5 를 평균낼 수 없다.
+                    sub_exec, blocks = interp_compress_chunk(
+                        sub, args.interp_eps, ratio_max=args.interp_ratio_max,
+                        kmax=args.interp_kmax, discrete_keys=DISCRETE_KEYS,
+                        space=args.interp_space, mode="delta", return_blocks=True)
+                elif k_eff > 1 and args.vark_bound > 0:
                     sub_exec, blocks = vark_compress_chunk(
                         sub, k_eff, args.vark_bound, floor2=args.vark_floor2 > 0,
                         return_blocks=True)
@@ -626,6 +647,11 @@ def main():
     with open(pred_path, "a") as f:
         f.write(f"is_success: {succ_rate:.4f}\n")
         f.write(f"compress_k: {K}\n")
+        if args.interp_eps > 0:
+            f.write(f"interp_eps: {args.interp_eps}\n")
+            f.write(f"interp_ratio_max: {args.interp_ratio_max}\n")
+            f.write(f"interp_kmax: {args.interp_kmax}\n")
+            f.write(f"interp_space: {args.interp_space}\n")
         if args.vark_bound > 0:
             f.write(f"vark_bound: {args.vark_bound}\n")
         if args.vark_floor2:
