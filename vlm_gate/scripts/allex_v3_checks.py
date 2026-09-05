@@ -452,8 +452,11 @@ GUIDANCE = (
 # 첫 줄은 일반적으로, 왜 압축에 약한지는 뒤에 붙는 절이 진다. 앞 줄에 과정의
 # 세부를 넣으면 이 작업장의 주석이 되어 다른 데서 못 쓴다.
 POOL = {
- "CLAMP": "Is the thing held BETWEEN TWO HANDS -- with the push of one hand against\n"
-          "   the other all that keeps it, so it drops the moment that goes?",
+ # 상태로 물었더니 Rotate Box 77개 중 76개가 같은 등급을 냈다. 사다리는 진행을
+ # 재는데 "끼워 들고 있는가" 는 그 칸 내내 참이라 국면이 안 갈렸다. 규칙대로
+ # 단위 행동으로 고쳐 쓴다 -- 돌리는 그 순간을 부른다.
+ "CLAMP": "Is the thing BEING TURNED while off every surface -- so that through the\n"
+          "   whole turn nothing but the hands pressing on it is underneath?",
  "LOOSE": "Is what the hand has GATHERED UP IN IT rather than taken by a firm edge --\n"
           "   so that what it holds keeps changing as the thing is carried along?",
  # 이 문항은 봉투 전반에 걸린다 -- 자기 칸(Bring PolyBag) 2.77 인데 Pass PolyBag
@@ -615,26 +618,36 @@ def confidence(picks, probs=None):
     return float(min(1.0, max(0.0, (1.0 + safe - risk) / 2.0)))
 
 
-def spread_conf(confs, lo, hi, cap=2.5):
-    """확신을 그 칸의 띠에 편다. 정답지를 쓰지 않는다.
+def band_place(confs, lo, hi):
+    """확신을 그 칸의 띠에 앉힌다. 정답지를 쓰지 않는다.
 
-    역치를 정답에 맞춰 고르면 정답이 없는 새 태스크에 못 옮긴다. 대신 띠 자신이
-    해상도를 정한다 -- 후보가 0.5 간격이므로 띠 [lo, hi] 안에는 (hi-lo)/0.5 + 1
-    칸이 있고, 확신이 그 칸들을 쓰려면 자기 폭이 띠에 맞아야 한다.
+    확신의 절대 크기는 등급표 눈금이 정하는 임의값이라 그대로 띠에 곱하면
+    안 된다 -- 눈금을 늘리기만 해도 배속이 바뀐다. 순서만 뜻이 있다.
 
-    그래서 확신을 **그 칸 안에서 자기 분포로** 표준화해 띠 가운데에 놓고 편다.
-    증폭에는 상한(cap)을 둔다 -- 신호가 없을 때 잡음을 키워 억지로 칸을 채우면
-    지표만 통과하고 라벨은 틀린다.
+    그래서 칸 안 **분위수**로 앉힌다. 띠 [lo, hi] 가 해상도를 정하고(후보가
+    0.5 간격), 그 안에서 확신이 낮은 청크가 lo, 높은 청크가 hi 를 받는다.
+    같은 답을 낸 청크는 같은 분위수를 받아 같은 값으로 묶인다 -- 답이 안
+    갈렸는데 값을 갈라 놓지는 않는다.
+
+    부수 효과로 띠 [2,3] 인 칸은 평균이 2.5 가 된다. Pass 두 칸에 요청받은
+    값과 같은데, 맞춘 게 아니라 균등 분위수라서 그렇게 된다.
     """
     import numpy as _np
     c = _np.asarray(confs, dtype=float)
-    if c.size == 0:
+    n = c.size
+    if n == 0:
         return c
-    sd = float(c.std())
-    n_steps = max(1, int(round((hi - lo) / 0.5)))
-    want = 1.0 / (2.0 * n_steps)        # 띠를 채우는 데 필요한 표준편차 (0~1 척도)
-    k = min(cap, want / sd) if sd > 1e-6 else 1.0
-    return _np.clip(0.5 + (c - c.mean()) * k, 0.0, 1.0)
+    if n == 1:
+        return _np.array([lo + 0.5 * (hi - lo)])
+    # 같은 값은 같은 순위를 받는다 (평균 순위)
+    order = c.argsort(kind="mergesort")
+    rank = _np.empty(n, dtype=float)
+    rank[order] = _np.arange(n, dtype=float)
+    for v in _np.unique(c):
+        m = c == v
+        rank[m] = rank[m].mean()
+    q = rank / (n - 1)
+    return lo + q * (hi - lo)
 
 
 def ratio_for(picks, cell=None, probs=None):

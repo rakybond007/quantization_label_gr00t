@@ -146,17 +146,17 @@ out.close()
 
 # 확신을 칸의 띠에 편다. 정답지를 쓰지 않고 띠 폭과 그 칸의 자기 분포만 쓴다.
 import collections as _c
-from allex_v3_checks import TASK_RANGE, DEFAULT_RANGE, spread_conf
+from allex_v3_checks import TASK_RANGE, DEFAULT_RANGE, band_place
 rows = [json.loads(l) for l in open(OUT)]
 byc = _c.defaultdict(list)
 for i, r in enumerate(rows):
     byc[r.get("cell")].append(i)
 for cell, idx in byc.items():
     lo, hi = TASK_RANGE.get(cell, DEFAULT_RANGE)
-    z = spread_conf([rows[i]["conf"] for i in idx], lo, hi)
-    for i, zz in zip(idx, z):
-        rows[i]["conf_spread"] = round(float(zz), 3)
-        rows[i]["K_spread"] = round(float(lo + zz * (hi - lo)), 3)
+    z = band_place([rows[i]["conf"] for i in idx], lo, hi)
+    for i, zz in zip(idx, z):        # band_place 는 이미 [lo, hi] 안의 값을 준다
+        rows[i]["K_spread"] = round(float(zz), 3)
+        rows[i]["conf_spread"] = round((float(zz) - lo) / (hi - lo), 3)
 with open(OUT, "w") as fh:
     for r in rows:
         fh.write(json.dumps(r, ensure_ascii=False) + "\n")
