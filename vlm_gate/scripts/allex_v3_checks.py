@@ -420,6 +420,11 @@ GUIDANCE = (
 #         Bring PolyBag 의 위험은 상한 2.0 이 이미 담는다.
 #   OPEN  이 판은 대체로 비어 있어 "빈 판으로 가는가" 는 항상 참이 될 자리다
 #         (robocasa 의 C 가 95% 5등급을 받은 그 자리). SHOVE 와도 겹친다.
+# 주절은 **눈에 보이는 배치**로, 행동은 뒷절로 내렸다. 첫 판은 주절이 움직임
+# (MOVING / SENDING / TURNING OVER)이라 셋이 전부 1등급으로 죽었고, 살아남은
+# 둘(두 손 사이에 붙듦, 빈손)만 주절이 배치였다. 축과 근거는 그대로 두고
+# 부르는 자리만 바꾼다.
+#
 # 여섯 칸(Rotate/Bring/Pass x Box/PolyBag)으로 절차를 다시 밟아 나온 다섯이다.
 # 축은 하나다 -- 위험 풀(Rotate Box, Bring PolyBag)은 **쥔 상태를 끝까지 유지해야**
 # 하고, 안정 풀(나머지 넷)은 **놓쳐도 결과가 남는다.**
@@ -444,12 +449,12 @@ GUIDANCE = (
 POOL = {
  "CLAMP": "Is the thing held BETWEEN TWO HANDS -- with the push of one hand against\n"
           "   the other all that keeps it, so it drops the moment that goes?",
- "LOOSE": "Is the robot MOVING something that will not hold a shape -- so that what\n"
-          "   the hand has of it keeps changing on the way?",
- "SHOVE": "Is the robot SENDING something away with a push -- so that it carries on\n"
-          "   where it was sent even if the hand comes off?",
- "FLIP":  "Is the robot TURNING OVER something easy to take hold of -- so that any\n"
-          "   other hold on it would have done as well?",
+ "LOOSE": "Is what the hand has GATHERED UP IN IT rather than taken by a firm edge --\n"
+          "   so that what it holds keeps changing as the thing is carried along?",
+ "SHOVE": "Is a hand SET AGAINST ONE SIDE of the thing rather than closed around it --\n"
+          "   so that the thing carries on where it was sent even if the hand comes off?",
+ "FLIP":  "Is the thing UP ON AN EDGE OR FOLDED OVER under a hand that took it\n"
+          "   anywhere -- so that any other hold on it would have done as well?",
  "FREE":  "Are the hands PASSING THROUGH holding nothing -- so there is no hold to\n"
           "   lose in this moment?",
 }
