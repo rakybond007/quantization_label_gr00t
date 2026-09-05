@@ -51,6 +51,43 @@ OUT = f"{OUTDIR}/labels_{TAG}.jsonl"
 
 gate = VLMGate(f"http://127.0.0.1:{PORT}", timeout=300)
 
+# 데이터셋이 1000 에피소드마다 chunk-000, chunk-001 로 나뉜다. 앞 판은 하나뿐이라
+# chunk-000 을 박아 뒀는데, merged_v5tempo 는 1280 개라 뒤 280 개를 못 찾는다.
+try:
+    CHUNKS_SIZE = int(json.load(open(f"{DS}/meta/info.json"))["chunks_size"])
+except Exception:
+    CHUNKS_SIZE = 1000
+
+
+def cdir(ep):
+    return f"chunk-{ep // CHUNKS_SIZE:03d}"
+
+
+# 서브태스크 이름을 어디서 읽나. 앞 판은 parquet 의 task_index 가 서브태스크를
+# 가리켰는데, merged_v5tempo 는 tasks.jsonl 에 항목이 하나뿐이고 task_index 가
+# 전부 0 이다. 서브태스크는 meta/subtasks.jsonl 의 구간에만 있다. 상한이 이
+# 이름에서 나오므로 구간에서 읽는다 -- 있으면 그쪽이 우선이다.
+SEGS = {}
+_sp = f"{DS}/meta/subtasks.jsonl"
+if os.path.exists(_sp) and len(TASKS) < 4:
+    for _l in open(_sp):
+        _r = json.loads(_l)
+        SEGS.setdefault(_r["episode_index"], []).append(
+            (_r["start_frame"], _r["end_frame"], _r["label"]))
+    for _v in SEGS.values():
+        _v.sort()
+    print(f"  서브태스크 구간 {sum(len(v) for v in SEGS.values())}개를 "
+          f"{len(SEGS)} 에피소드에서 읽음", flush=True)
+
+
+def seg_label(ep, f, n=CHUNK):
+    """청크 한가운데 프레임이 든 구간의 이름."""
+    mid = f + n // 2
+    for a, b, lab in SEGS.get(ep, ()):
+        if a <= mid < b:
+            return lab
+    return None
+
 episodes = []
 for l in open(f"{DS}/meta/episodes.jsonl"):
     d = json.loads(l); episodes.append((d["episode_index"], d["length"]))
@@ -85,7 +122,8 @@ if os.path.exists(OUT):
 def grab(ep, frames, side):
     """Decode the requested frame indices from one ego camera."""
     want = set(frames); got = {}
-    path = f"{DS}/videos/chunk-000/observation.images.camera_ego_{side}/episode_{ep:06d}.mp4"
+    path = (f"{DS}/videos/{cdir(ep)}/observation.images.camera_ego_{side}"
+            f"/episode_{ep:06d}.mp4")
     with av.open(path) as c:
         for i, fr in enumerate(c.decode(video=0)):
             if i in want:
@@ -98,7 +136,7 @@ def grab(ep, frames, side):
 out = open(OUT, "a")
 ntot = nerr = 0
 for ep, N in episodes:
-    d = pd.read_parquet(f"{DS}/data/chunk-000/episode_{ep:06d}.parquet")
+    d = pd.read_parquet(f"{DS}/data/{cdir(ep)}/episode_{ep:06d}.parquet")
     A = np.stack(d["action"].values)
     WR = np.stack(d["action.right_wrist_wrt_base"].values)
     WL = np.stack(d["action.left_wrist_wrt_base"].values)
@@ -113,7 +151,8 @@ for ep, N in episodes:
         try:
             x = descriptors(A, WR, WL, f, CHUNK)
             seg = ti[f:f + CHUNK]
-            task = TASKS[int(np.bincount(seg, minlength=len(TASKS)).argmax())]
+            task = (seg_label(ep, f) if SEGS else None) or \
+                TASKS[int(np.bincount(seg, minlength=len(TASKS)).argmax())]
             views = [L[f], R[f]]
             # ---- stage 1: general "is this moment safe to compress at all"
             r1 = gate.judge(views, f"{task}\n{facts_text(x)}", GUIDANCE,
