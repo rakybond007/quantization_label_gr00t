@@ -516,7 +516,14 @@ FING_STILL, FING_WORK = 0.010, 0.020
 ROT_LITTLE, ROT_LOT = 15.0, 25.0
 
 
-def facts_v3(x):
+def facts_v3(x, task=None):
+    """지시문을 앞에 붙인다. robocasa phase9 도 에피소드 지시문을 넣는다.
+
+    한동안 뺐었다 -- 모델이 주석에 기대면 상한을 되받아 쓰게 된다고 봤다.
+    그런데 상한이 이미 주석에서 나오므로 숨겨서 얻을 것이 없고, 반대로 없으면
+    답할 수 없는 문항이 생긴다. "붙들고 있을 필요가 없는 일인가" 는 화면만
+    보고 알 도리가 없어 여섯 칸 전부에서 1등급이었다.
+    """
     """계산값을 사실 문장으로. 임계 판정까지 끝내고 결론만 준다.
 
     robocasa 의 facts_text 와 같은 형식이다. 앞 판은 날숫자를 그대로 넘겼고
@@ -551,7 +558,8 @@ def facts_v3(x):
     p.append("the wrists barely turn" if r < ROT_LITTLE else
              "the wrists turn a fair amount" if r < ROT_LOT else
              "the wrists turn a great deal")
-    return ("MEASURED FROM THE PLANNED MOTION over the next ~1 second (these are computed "
+    head = 'The job for this stretch is "%s".\n' % task if task else ""
+    return (head + "MEASURED FROM THE PLANNED MOTION over the next ~1 second (these are computed "
             "facts, not estimates): " + "; ".join(p) + ". Skipping to every 2nd target "
             f"would demand {x['merge_demand_k2']:.3f} rad in one step, every 3rd "
             f"{x['merge_demand_k3']:.3f} rad (this robot never exceeded {MERGE_LIMIT_V2} "
