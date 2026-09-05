@@ -648,9 +648,6 @@ POOL = {
  # 3.41, Rotate PolyBag 3.53. "옮겨 가는 내내" 라는 구분이 화면에 없어서다.
  # Bring PolyBag 을 약하게 만드는 것은 **밑에서 받치는 것 없이 쥔 자리만으로
  # 붙들려 있다**는 것이고, 판에 놓인 채 다루는 다른 봉투 국면과 거기서 갈린다.
- "LOOSE": "Is the thing held ONLY BY THE SPOT THE HAND HAS -- nothing under it taking\n"
-          "   its weight -- so that its shape hangs on that one grip and shifts as the\n"
-          "   grip does?",
  "SHOVE": "Is this a job that needs NO HOLD KEPT on the thing -- one shove and it\n"
           "   carries on where it was sent, hand or no hand?",
  "FLIP":  "Is the thing one that can be TAKEN ANYWHERE ON IT -- so that where it was\n"
