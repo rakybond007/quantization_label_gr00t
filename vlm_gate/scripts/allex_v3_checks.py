@@ -227,12 +227,26 @@ GUIDANCE = (
 # 출발점이 되어 모든 태스크가 기준값 2.5 를 공유했다. 상한이 2.5 보다 낮은
 # 태스크는 증거가 약할 때 상한 위에 남았다(move+bag 위반 100%). 지금은 K 가
 # [하한, 상한] 안에서만 움직이므로 넘는 일이 구조적으로 없다.
+# 상한은 **서브태스크 라벨**이 준다. 주석에 있는 그대로다.
+#
+#     Rotate Box      1.5 ~ 1.0
+#     Rotate PolyBag  2.5 ~ 2.0
+#     Pass Object     3.0 ~ 2.0
+#     Bring Object    박스 3.0 / 봉투 2.0,  하한 2.0
+#
+# Bring Object 만 주석이 물체를 안 알려준다("Object" 라고만 쓴다). **그 한 자리가
+# 비전이 하는 일이다.** 앞 판은 에피소드 안의 주기(가져오기 → 뒤집기 → 넘기기)에서
+# 물체를 추론해 (행동, 물체) 4칸을 짓고 그것으로 상한을 줬는데, 그러면 물체까지
+# 주석이 주게 되어 VLM 이 할 일이 없어진다. 실제로 무문항 기준선과 동률이 나왔다
+# (전역 rho +0.723 대 +0.718). 칸을 지어낸 것이 원인이었다.
 TASK_RANGE = {
-    "move+box": (2.0, 3.0),
-    "move+bag": (1.5, 2.0),
-    "turn+bag": (2.0, 2.5),
-    "turn+box": (1.0, 1.5),
+    "Rotate Box":     (1.0, 1.5),
+    "Rotate PolyBag": (2.0, 2.5),
+    "Pass Object":    (2.0, 3.0),
+    "Bring Object":   (2.0, 3.0),      # 박스 기준. 봉투면 아래 BRING_BAG 으로 내린다
 }
+BRING_BAG = (2.0, 2.0)                 # 하한과 같아지므로 한 칸 내려 (1.5, 2.0)
+BRING_BAG = (1.5, 2.0)
 DEFAULT_RANGE = (2.0, 2.5)
 CANDIDATES = (1.0, 1.5, 2.0, 2.5, 3.0)
 # NGRADE 는 위에서 한 번만 정한다. 두 번 정의해 놓았다가 나중 것이 이겨서
@@ -536,15 +550,19 @@ def confidence(picks):
     return float(min(1.0, max(0.0, (1.0 + safe - risk) / 2.0)))
 
 
-def ratio_for(picks, cell=None):
-    """태스크가 준 [하한, 상한] 안에서, 확신이 정한 자리.
+def ratio_for(picks, task=None, obj_grade=None):
+    """서브태스크가 상한을 주고, 문항이 그 안에서 얼마나 쓸지를 정한다.
 
-    상한은 그 구간을 통째로 그 배속에 돌려 성공한 값이고, 성공률은 처음부터
-    끝까지 압축한 결과라 그 안의 어느 단위 행동이 위험했는지는 말해주지
-    않는다. 그래서 상한은 태스크가 주고, 그 안에서 얼마나 쓸지는 단위 행동을
-    묻는 다섯 문항이 정한다.
+    Bring Object 만 주석이 물체를 안 알려준다. 그 한 자리에서 비전이 일한다 --
+    물체 문항(FIRM)의 등급이 높으면 제 형태를 지키는 것이므로 박스 쪽 상한을,
+    낮으면 봉투 쪽을 쓴다. 나머지 세 태스크는 주석이 물체까지 말해주므로
+    문항이 상한에 관여하지 않는다.
     """
-    lo, hi = TASK_RANGE.get(cell, DEFAULT_RANGE)
+    lo, hi = TASK_RANGE.get(task, DEFAULT_RANGE)
+    if task == "Bring Object" and obj_grade is not None:
+        w = (float(obj_grade) - 1.0) / (NGRADE - 1)       # 1 이면 봉투, 0 이면 박스 쪽
+        blo, bhi = BRING_BAG
+        lo, hi = blo + w * (lo - blo), bhi + w * (hi - bhi)
     return float(lo + confidence(picks) * (hi - lo))
 
 

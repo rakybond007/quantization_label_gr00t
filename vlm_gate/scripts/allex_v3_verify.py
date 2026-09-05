@@ -19,6 +19,8 @@ import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from allex_v3_checks import ACTIVE, NGRADE, SIGN, TASK_RANGE, snap  # noqa: E402
 
+STRATUM = "task"   # 층은 서브태스크다. (행동,물체) 칸은 내가 지어낸 것이라 폐기했다.
+
 PARSE_MIN = 99.0        # 1
 # 합격선은 구조에서 나온다. K = 하한 + 확신 x (상한-하한) 이고 확신에 /2 가
 # 들어가므로, 문항 하나가 등급 d 만큼 갈리면 K 는 d/(2*(등급수-1)) x 띠폭 만큼
@@ -37,13 +39,15 @@ Q = ACTIVE
 NAME = {"TURN": "뒤집는 중", "HEFT": "두 손이 필요한 것",
         "SHOVE": "밀어 보냄", "FIRM": "단단한 것 운반", "FREE": "빈손 통과"}
 # 각 문항이 어느 층에서 높아야 하는가. E 는 못 박은 문항이라 순위에서 뺀다.
-OWN = {"TURN": ["turn+box", "turn+bag"], "HEFT": ["turn+box", "move+box"],
-       "SHOVE": ["move+box", "move+bag"], "FIRM": ["move+box"]}
+# 각 문항이 높아야 할 서브태스크. 위험 풀은 Rotate Box 와 Bring PolyBag 인데
+# 후자는 주석에 없으므로 Bring Object 안에 섞여 있다.
+OWN = {"HEFT": ["Rotate Box"], "SHOVE": ["Pass Object"],
+       "FIRM": ["Bring Object", "Pass Object"]}
 gates = {}
 
 by = collections.defaultdict(list)
 for r in rs:
-    by[r.get("cell")].append(r)
+    by[r.get(STRATUM)].append(r)
 print(f"청크 {len(rs)}개   층 " + "  ".join(f"{k} {len(v)}" for k, v in sorted(by.items())))
 
 full = sum(1 for r in rs if all(r.get(q) is not None for q in Q))
