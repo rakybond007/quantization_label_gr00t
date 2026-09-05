@@ -474,13 +474,15 @@ POOL = {
  "FLIP":  "Is the thing one that can be TAKEN ANYWHERE ON IT -- so that where it was\n"
           "   gripped does not decide the outcome, and any other hold would have done\n"
           "   as well?",
- "FREE":  "Are the hands JUST MOVING THE THING ALONG -- nothing being fitted or set\n"
-          "   down in this moment, or nothing in them at all?",
- # 기본 가점 문항. FREE 를 "맞춰 넣을 것이 없는 이동" 으로 넓히면서 물건을
- # 들고 있다는 전제가 들어갔고, 그러면서 아무것도 안 잡고 팔만 움직이는 구간이
- # 갈 데가 없어졌다. 영상에는 아무 동작 없는 장면도 있고 접촉 없이 팔만 가는
- # 구간도 있다. 잃을 쥠이 아예 없으므로 어느 태스크에서나 가점이고, 그래서
- # 못 박는 문항이 된다 -- 넓힌 FREE 가 대신할 수 없다.
+ # 요청받은 것은 "아무것도 안 잡고 그냥 이동 중인가" 였는데 내가 "물건을 옮기는
+ # 중" 까지 넣어 넓혔다. 봉투를 들고 옮기는 것이 바로 위험한 칸이라, 그 서술이면
+ # 가점 문항이 위험 쪽에서 높게 나온다(부호 검사 +0.25 로 반대). 되돌린다.
+ #
+ # 이 문항이 값을 하는 자리는 태스크 이름이 붙어 있어도 실제로는 아무것도
+ # 하고 있지 않은 장면이다. 정확한 동작을 하고 있는 장면에서 쓰라는 문항이
+ # 아니다.
+ "FREE":  "Are the hands ON NOTHING AT ALL -- moving through open space or standing\n"
+          "   still, with nothing in them and nothing being touched?",
  "IDLE":  "Are the hands ON NOTHING AT ALL -- moving through open space or standing\n"
           "   still, with nothing in them and nothing being touched?",
 }

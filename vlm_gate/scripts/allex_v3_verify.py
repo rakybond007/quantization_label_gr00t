@@ -44,7 +44,7 @@ OUT = os.path.expanduser(os.environ.get(
 rs = [json.loads(l) for l in open(f"{OUT}/records.jsonl")]
 Q = ACTIVE
 NAME = {"CLAMP": "두 손 사이에 붙듦", "LOOSE": "쥔 자리만으로 붙듦",
-        "SHOVE": "밀어 보냄", "FLIP": "쉽게 잡히는 것 뒤집음", "FREE": "그저 옮기는 중",
+        "SHOVE": "밀어 보냄", "FLIP": "쉽게 잡히는 것 뒤집음", "FREE": "아무것도 안 닿음",
         "IDLE": "아무것도 안 닿음"}
 # 각 문항이 어느 층에서 높아야 하는가. E 는 못 박은 문항이라 순위에서 뺀다.
 # 각 문항이 높아야 할 서브태스크. 위험 풀은 Rotate Box 와 Bring PolyBag 인데
@@ -69,28 +69,32 @@ for q in Q:
     print(f"      {q} {NAME[q]:<12} 최빈 {top:5.1f}%  쓴 등급 {sorted(c)}"
           f"{'   죽은 칸 있음' if len(c) < 4 else ''}")
 
-# [3] 층 간 대비는 판정에서 뺐다. 상한·하한이 주석의 칸에서 나오고 확신은
-# lo + conf*(hi-lo) 로 그 칸 안에서만 쓰이므로, 칸마다 더해지는 상수는 최종
-# 배속에 닿지 않는다. 이 지표는 바로 그 상수를 재고 있어서, 통과시키려고
-# 문항을 흔들면 칸 안 신호가 깨진다 -- LOOSE 를 좁혔을 때 실제로 그랬다.
-# 후보를 고를 때 칸을 가르는지 보는 것은 생성 단계 규칙으로 남긴다.
+# 부호가 맞는가. 방법 문서의 검증 3번이고, 내가 지어낸 것이 아니라 운용자가
+# 준 상한표에서 나온다 -- 어느 칸이 위험한지는 그 표가 정한다. 띠 가운데값으로
+# 줄 세워 아래 셋이 위험 풀, 위 셋이 안정 풀이다. 감점 문항은 위험 쪽에서,
+# 가점 문항은 안정 쪽에서 높아야 한다. **방향만** 본다 -- 얼마나 벌어져야
+# 하는지는 근거가 없으므로 숫자를 걸지 않는다.
 info = {}
-print(f"[3] 층 간 대비   자기 층 - 나머지  (참고, 판정 아님)")
+_mid = sorted(((lo + hi) / 2, c) for c, (lo, hi) in TASK_RANGE.items())
+RISKY = {c for _, c in _mid[:len(_mid) // 2]}
+SAFEP = {c for _, c in _mid[len(_mid) // 2:]}
+print(f"[3] 부호가 맞는가   위험 {'·'.join(sorted(RISKY))}  /  "
+      f"안정 {'·'.join(sorted(SAFEP))}")
+bad = 0
 for q in Q:
-    if q not in OWN:      # FREE 는 못 박은 문항, 순위에서 뺀다
-        own = [r[q] for v in by.values() for r in v if r.get(q) is not None]
-        print(f"      {q} {NAME[q]:<12} 못 박은 문항, 순위에서 뺌 (평균 {np.mean(own):.2f})")
+    a = [r[q] for c in RISKY for r in by.get(c, []) if r.get(q) is not None]
+    b = [r[q] for c in SAFEP for r in by.get(c, []) if r.get(q) is not None]
+    if not a or not b:
         continue
-    own = [r[q] for c in OWN[q] for r in by.get(c, []) if r.get(q) is not None]
-    oth = [r[q] for c, v in by.items() if c not in OWN[q] for r in v if r.get(q) is not None]
-    if not own or not oth:
-        info[f"3 {q}"] = float("nan")
-        print(f"      {q} 층이 비어 판정 불가")
-        continue
-    d = float(np.mean(own) - np.mean(oth))
+    d = float(np.mean(a) - np.mean(b))          # 위험 - 안정
+    want = "위험 쪽이 높아야" if SIGN[q] < 0 else "안정 쪽이 높아야"
+    ok = (d > 0) if SIGN[q] < 0 else (d < 0)
+    bad += (not ok)
     info[f"3 {q}"] = d
-    print(f"      {q} {NAME[q]:<12} {'+'.join(OWN[q]):<18} {np.mean(own):.2f}  나머지 "
-          f"{np.mean(oth):.2f}   차 {d:+.2f}")
+    print(f"      {q} {NAME[q]:<14} {'감점' if SIGN[q] < 0 else '가점'}  "
+          f"위험 {np.mean(a):.2f}  안정 {np.mean(b):.2f}  차 {d:+.2f}   "
+          f"{want}  {'맞음' if ok else '틀림'}")
+gates["3 부호"] = (float(bad), 0.0, bad == 0)
 
 print(f"[4] 문항 상관   합격선 {CORR_MAX} 이하")
 M = np.array([[r[q] for q in Q] for r in rs if all(r.get(q) is not None for q in Q)], float)
