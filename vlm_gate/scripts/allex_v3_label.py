@@ -119,8 +119,11 @@ if FULL:
             else:
                 _unknown += 1
                 _i = _j
+        # 칸을 못 정한 구간은 서브태스크 이름을 그대로 칸으로 쓴다. 그 이름의
+        # 띠는 TASK_RANGE 에 있고, Bring 은 박스·봉투 중 낮은 쪽으로 잡혀 있다.
         SEGS[_ep] = [(_x["start_frame"], _x["end_frame"],
-                      _cell_of_seg.get(_x["id"]), _x["label"]) for _x in _v]
+                      _cell_of_seg.get(_x["id"]) or _x["label"], _x["label"])
+                     for _x in _v]
     print(f"  구간 {sum(len(v) for v in SEGS.values())}개, 칸을 못 정한 구간 {_unknown}개",
           flush=True)
 
