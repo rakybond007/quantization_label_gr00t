@@ -16,6 +16,13 @@
 # Writes evolver layout OUTPUT_BASE/<suite>_<idx>/prediction.txt via gate-out-dir.
 set -u
 K="${K:-3}"
+# 보간 기반 가변 세그먼트 압축.
+INTERP_EPS="${INTERP_EPS:-0}"
+INTERP_RATIO_MAX="${INTERP_RATIO_MAX:-2.0}"
+INTERP_KMAX="${INTERP_KMAX:-8}"
+INTERP_SPACE="${INTERP_SPACE:-path}"
+CLIP_SCALE="${CLIP_SCALE:-1}"
+DYN_SCALE="${DYN_SCALE:-1}"
 BASE_DIR="$HOME/quantization_agent_workspace/vlm_gate"
 PRIV="$HOME/quantization_agent_workspace/Isaac-GR00T"
 CONDA="$HOME/miniconda3"
@@ -60,7 +67,7 @@ for SUITE in "${SUITES[@]}"; do
       "$CONDA/envs/libero/bin/python" "$PRIV/gr00t/eval/libero/eval_taskwise_gr00t_quantize.py" \
       --args.task-suite-name "$SUITE" --args.task_idx=$SLURM_ARRAY_TASK_ID \
       --args.port=$PORT --args.host=127.0.0.1 --args.num_trials_per_task=$N_EPISODES \
-      --args.compress_k=$K --args.video-out-path "$ODIR" \
+      --args.compress_k=$K --args.interp-eps=$INTERP_EPS --args.interp-ratio-max=$INTERP_RATIO_MAX --args.interp-kmax=$INTERP_KMAX --args.interp-space=$INTERP_SPACE --args.clip-scale=$CLIP_SCALE --args.dyn-scale=$DYN_SCALE --args.video-out-path "$ODIR" \
       --args.gate-out-dir "$OUTPUT_BASE" --args.vark-bound $VARK_BOUND --args.vark-floor2 $VARK_FLOOR2 --args.clip-scale $CLIP_SCALE --args.dyn-scale $DYN_SCALE \
       >& "$ODIR/eval-$SLURM_ARRAY_TASK_ID.log" &
     MAIN_PIDS+=($!)

@@ -67,6 +67,12 @@ class Args:
     # block sum stays within vark_bound on every continuous dim (and the block
     # stays <= compress_k steps); a gripper transition always breaks the block.
     # 0 disables (fixed-K behaviour). Recommended 0.95 (safety margin under 1.0).
+    # Anchor-and-interpolate compression. >0 replaces fixed-K: segment
+    # boundaries come from where a straight line stops describing the motion.
+    interp_eps: float = 0.0
+    interp_ratio_max: float = 2.0     # ceiling on the chunk's compression ratio
+    interp_kmax: int = 8              # longest a segment may grow
+    interp_space: str = "path"        # "path" integrates deltas first; "action" does not
     vark_bound: float = 0.0
     # floor-2 variant: always merge pairs (K2 floor), extend to 3..kmax only
     # within vark_bound -> steps <= fixed-K2 by construction.
@@ -472,7 +478,26 @@ def eval_libero(args: Args) -> None:
                         # Naive fixed-K block quantization (client-side). Continuous
                         # dims 0:6 are delta -> block-sum; dim 6 (gripper) latches ->
                         # block-last. Remainder steps (T mod K) are kept raw.
-                        if K_eff > 1 and args.vark_bound > 0:
+                        if K_eff > 1 and args.interp_eps > 0:
+                            # Anchor-and-interpolate: extend a segment while a
+                            # straight line between its ends reproduces the
+                            # interior within eps, cut where it stops. The cap is
+                            # a ceiling on the whole chunk, not a per-segment
+                            # rule — segment lengths are integers, so no
+                            # per-segment rule can average a fractional ratio.
+                            import sys as _s, os as _o
+                            _s.path.insert(0, _o.path.expanduser(
+                                "~/quantization_agent_workspace/vlm_gate/scripts"))
+                            from interp_compress import interp_compress_chunk
+                            _out, _sp = interp_compress_chunk(
+                                {"c": action_chunk[:, 0:6], "g": action_chunk[:, 6:7]},
+                                args.interp_eps, ratio_max=args.interp_ratio_max,
+                                kmax=args.interp_kmax, discrete_keys=("g",),
+                                space=args.interp_space, mode="delta",
+                                return_blocks=True)
+                            action_chunk = np.concatenate([_out["c"], _out["g"]], axis=1)
+                            _blk_spans = [e - b for b, e in _sp]
+                        elif K_eff > 1 and args.vark_bound > 0:
                             action_chunk = _vark_compress(action_chunk, K_eff, args.vark_bound, floor2=args.vark_floor2 > 0)
                         elif K_eff > 1:
                             K = K_eff
@@ -574,6 +599,17 @@ def eval_libero(args: Args) -> None:
         f.write(f"Total success rate: {float(total_successes) / float(total_episodes)}\n")
         f.write(f"Total episodes: {total_episodes}\n")
         f.write(f"Success-only mean steps: {succ_only_mean:.2f} (over {len(succ_steps)} ep)\n")
+        # Record what actually ran. A run whose settings are not in its own
+        # output cannot be told apart from one that silently used defaults.
+        f.write(f"eqs_compress_k: {args.compress_k}\n")
+        f.write(f"eqs_clip_scale: {args.clip_scale}\n")
+        f.write(f"eqs_dyn_scale: {args.dyn_scale}\n")
+        f.write(f"eqs_replan_steps: {args.replan_steps}\n")
+        if args.interp_eps > 0:
+            f.write(f"eqs_interp_eps: {args.interp_eps}\n")
+            f.write(f"eqs_interp_ratio_max: {args.interp_ratio_max}\n")
+            f.write(f"eqs_interp_kmax: {args.interp_kmax}\n")
+            f.write(f"eqs_interp_space: {args.interp_space}\n")
         f.write("Per-ep records (idx, success, action_steps):\n")
         for rec in ep_records:
             f.write(f"  {rec[0]}\t{rec[1]}\t{rec[2]}\n")
