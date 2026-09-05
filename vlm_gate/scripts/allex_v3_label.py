@@ -106,7 +106,7 @@ for ep in EPS:
             seg = ti[f:f + CHUNK]
             task = TASKS[int(np.bincount(seg, minlength=len(TASKS)).argmax())]
             # The subtask name is recorded but NOT sent: see facts_v3.
-            payload.append(([L[f], R[f]], facts_v3(x)))
+            payload.append(([L[f], R[f]], facts_v3(x, task)))
             meta.append((f, task, x))
         try:
             rs = gate.judge_batch(payload, GUIDANCE, question=ASK, n_ask=len(ACTIVE), n_grade=NGRADE)
