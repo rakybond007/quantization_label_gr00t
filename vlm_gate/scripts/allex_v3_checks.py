@@ -481,7 +481,11 @@ _LADDER3 = (
     "1 = the check does not describe this moment",
 )
 _LADDER5 = (
-    "5 = it is happening right now -- the picture shows what the check describes",
+    # robocasa 원문은 "the contact, the grip or the position" 을 명시한다. 그걸
+    # 빼고 "what the check describes" 로 줄였더니, 자세를 묻는 문항에 모델이
+    # 5 를 안 줬다 -- 붙들려 있는 것은 "일어나는" 게 아니라 "그러한" 것이다.
+    "5 = it is happening right now -- the picture shows the contact, the grip or\n"
+    "    the position the check describes",
     "4 = not yet, but the hands are right up against it, one motion away",
     "3 = the hands are heading for it and still some way off",
     "2 = the thing the check is about is there, but the arms are busy with\n"
