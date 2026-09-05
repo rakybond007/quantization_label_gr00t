@@ -463,8 +463,22 @@ POOL = {
  # 문제가 아니라는 뜻이므로, 다음은 그 칸이 정말 갈릴 것이 있는지를 본다.
  "CLAMP": "Is the thing held BETWEEN TWO HANDS -- with the push of one hand against\n"
           "   the other all that keeps it, so it drops the moment that goes?",
- "LOOSE": "Is what the hand has GATHERED UP IN IT rather than taken by a firm edge --\n"
-          "   so that what it holds keeps changing as the thing is carried along?",
+ # 두 서술을 버렸다. "그러모아 쥐고 있는가" 는 살았지만 A 와 +0.585 로 겹쳤고,
+ # "쥔 자리만으로 붙들려 있는가" 로 좁혔더니 95% 가 1등급으로 죽었다. 겹침을
+ # 푼 게 아니라 A 의 복사본을 만든 것이다 -- 둘 다 "이 쥠 말고 받치는 것이
+ # 없다" 를 말한다.
+ #
+ # 축을 되돌린다. A 는 **손 쪽**을 부른다(어떻게 붙들고 있는가). B 는 **물체
+ # 쪽**을 불러야 한다(무엇을 붙들고 있는가). 손도 받침도 입에 올리지 않는다.
+ # 제 무게에 늘어지는 것은 한 장에서 보이고, 이 칸 안에서 국면마다 바뀐다 --
+ # 판 위에서 다루는 동안이나 집기 전에는 늘어지지 않는다.
+ # "제 무게에 늘어져 있는가" 로도 물어봤다. 축은 맞게 갈랐는데(손도 받침도
+ # 입에 올리지 않는다) 97.9% 가 1등급이고 나머지 문항까지 끌고 갔다 --
+ # SHOVE 100% 상수, FLIP 83.1%, FREE 94.5%, [6] 0.833. 이 촬영본의 봉투는
+ # 판 위에 있거나 얕게 쥐어져 있어 처지는 장면이 거의 없다.
+ "LOOSE": "Is the thing held ONLY BY THE SPOT THE HAND HAS -- nothing under it taking\n"
+          "   its weight -- so that its shape hangs on that one grip and shifts as the\n"
+          "   grip does?",
  # 이 문항은 봉투 전반에 걸린다 -- 자기 칸(Bring PolyBag) 2.77 인데 Pass PolyBag
  # 3.41, Rotate PolyBag 3.53. 그래서 "밑에서 받치는 것 없이 쥔 자리만으로" 로
  # 좁혀봤는데, 노린 칸은 -0.12 -> -0.02 로 조금 나아진 대신 나머지 다섯 중 넷이

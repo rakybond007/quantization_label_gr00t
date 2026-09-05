@@ -42,7 +42,7 @@ OUT = os.path.expanduser(os.environ.get(
     "ALLEX_OUT", "~/quantization_agent_workspace/vlm_gate/output/allex_v3loop"))
 rs = [json.loads(l) for l in open(f"{OUT}/records.jsonl")]
 Q = ACTIVE
-NAME = {"CLAMP": "두 손 사이에 붙듦", "LOOSE": "그러모아 쥔 것 옮김",
+NAME = {"CLAMP": "두 손 사이에 붙듦", "LOOSE": "쥔 자리만으로 붙듦",
         "SHOVE": "밀어 보냄", "FLIP": "쉽게 잡히는 것 뒤집음", "FREE": "맞출 것 없는 이동"}
 # 각 문항이 어느 층에서 높아야 하는가. E 는 못 박은 문항이라 순위에서 뺀다.
 # 각 문항이 높아야 할 서브태스크. 위험 풀은 Rotate Box 와 Bring PolyBag 인데
