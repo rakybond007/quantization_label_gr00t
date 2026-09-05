@@ -106,7 +106,11 @@ for ep in EPS:
             seg = ti[f:f + CHUNK]
             task = TASKS[int(np.bincount(seg, minlength=len(TASKS)).argmax())]
             # The subtask name is recorded but NOT sent: see facts_v3.
-            payload.append(([L[f], R[f]], facts_v3(x, task)))
+            # 지시문은 넣어봤다가 뺐다. 넣으면 모델이 화면 대신 지시문을 보고 답해
+            # 칸 안에서 상수가 된다 -- Rotate Box 77청크가 전부 한 값이 됐고
+            # 정답지 rho 가 +0.525 에서 +0.491 로, 분산이 0.112 에서 0.049 로
+            # 내려갔다. SHOVE 가 1등급에 붙박인 것도 지시문으로는 안 풀렸다.
+            payload.append(([L[f], R[f]], facts_v3(x)))
             meta.append((f, task, x))
         try:
             rs = gate.judge_batch(payload, GUIDANCE, question=ASK, n_ask=len(ACTIVE), n_grade=NGRADE)
