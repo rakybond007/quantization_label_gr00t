@@ -270,11 +270,13 @@ CANDIDATES = (1.0, 1.5, 2.0, 2.5, 3.0)
 # 3등급인 상수였고, risk = TURN x (0.5 + 0.5 x HEFT) 에서 g=0.5 로 굳어 모든
 # 청크에 risk 바닥 0.25 를 깔았다. 상한에 못 닿게 만든 것은 아니다 -- snap 이
 # 구제한다 -- 하지만 conf 폭을 [0.25, 0.875] 로 잘라 분산을 직접 깎았다.
-SIGN = {"TURN": -1, "HEFT": -1, "SHOVE": +1, "FIRM": +1, "FREE": +1}
+SIGN = {"CLAMP": -1, "LOOSE": -1, "SHOVE": +1, "FLIP": +1, "FREE": +1}
 # 무게는 활성 목록이 정해지면 각 변의 합이 1 이 되게 정규화한다. 하나씩
 # 더해 가는 중이라 지금은 문항마다 같은 무게로 두고, 문항이 확정되면 덮는
 # 태스크 수로 다시 잡는다.
-WEIGHT = {"TURN": 1.0, "HEFT": 1.0, "SHOVE": 1.0, "FIRM": 1.0, "FREE": 1.0}
+# 덮는 태스크 수. 각 변의 합이 1 이 되게. FREE 는 못 박은 몫을 고정으로 받는다.
+WEIGHT = {"CLAMP": 0.5, "LOOSE": 0.5,
+          "SHOVE": 0.4, "FLIP": 0.2, "FREE": 0.4}
 HEFT_SHARE = 0.5     # 뒤집기 단독이 지는 위험의 몫; 나머지는 HEFT 가 채운다
 
 
@@ -418,31 +420,40 @@ GUIDANCE = (
 #         Bring PolyBag 의 위험은 상한 2.0 이 이미 담는다.
 #   OPEN  이 판은 대체로 비어 있어 "빈 판으로 가는가" 는 항상 참이 될 자리다
 #         (robocasa 의 C 가 95% 5등급을 받은 그 자리). SHOVE 와도 겹친다.
+# 여섯 칸(Rotate/Bring/Pass x Box/PolyBag)으로 절차를 다시 밟아 나온 다섯이다.
+# 축은 하나다 -- 위험 풀(Rotate Box, Bring PolyBag)은 **쥔 상태를 끝까지 유지해야**
+# 하고, 안정 풀(나머지 넷)은 **놓쳐도 결과가 남는다.**
+#
+#     물건을 두 손 사이에 붙들고 있다        +1 -0 = 1   감점  Rotate Box
+#     모양이 잡히지 않는 물건을 옮긴다        +1 -0 = 1   감점  Bring PolyBag
+#     물건을 밀어 보낸다                    +2 -0 = 2   가점  Pass Box + PolyBag
+#     쉽게 잡을 수 있는 물건을 뒤집는다       +1 -0 = 1   가점  Rotate PolyBag
+#     아무것도 쥐지 않고 지나간다             모든 태스크  못 박음
+#
+#     물체를 세워 넘긴다                    +1 -1 = 0   탈락  Rotate 둘을 덮는다
+#     몸쪽으로 끌어온다                     +1 -1 = 0   탈락  Bring 둘을 덮는다
+#     무른 것을 쥐고 있다                   +1 -2 = -1  탈락  PolyBag 셋 중 둘이 안정
+#     모양이 잡힌 물건을 옮긴다              —          탈락  LOOSE 의 부정, 한 축 두 번
+#     트인 곳으로 보낸다                    —          탈락  이 판에선 언제나 참
+#
+# Bring Box 에는 문항이 없다. 상한 [2.0, 3.0] 이 이미 안전을 담고 있고, 문항으로
+# 넣으면 "모양이 잡히지 않는" 의 부정이라 한 축을 두 번 세게 된다.
+#
+# 첫 줄은 일반적으로, 왜 압축에 약한지는 뒤에 붙는 절이 진다. 앞 줄에 과정의
+# 세부를 넣으면 이 작업장의 주석이 되어 다른 데서 못 쓴다.
 POOL = {
- "TURN":  "Is the robot working the thing round so a DIFFERENT SIDE OF IT comes up --\n"
-          "   flipping it, tipping it, rolling it over?",
- "HEFT":  "Is the thing being handled TOO MUCH FOR ONE HAND -- big, heavy or stiff\n"
-          "   enough that both hands have to be on it to manage it?",
- "SHOVE": "Is the robot SENDING the thing across the surface -- shoving or sliding it\n"
-          "   away -- rather than lifting it?",
- # 뒷절 "gripped so that it does not shift about in the hand" 을 뺐다. 그 절이
- # 물체 문항을 파지 문항으로 바꿔놓았고, 가장 단단해 보이는 파지는 두 손 클램프
- # -- 즉 위험 태스크다. 그래서 FIRM 이 move+box 1.44 / turn+box ~2.5 로 갈려
- # 부호가 -0.64 로 뒤집혔다. 물체 강성을 읽는다면 두 상자 층이 같아야 한다.
- # 게다가 파지 정도는 이미 "256px 두 장에서 안 보인다" 로 폐기된 축이고, 그것이
- # 뒷절로 몰래 들어와 있었다. 역대 최고 점수(+2.87)를 낸 형태로 되돌린다.
- "FIRM":  "Is the thing under the hands KEEPING ITS SHAPE -- straight edges and flat\n"
-          "   faces, no dent, fold or sag where they press on it -- rather than giving\n"
-          "   way wherever it is touched?",
- # 조건이 넷(비었다/움직인다/트인 공간/안 닿는다)이라 중간 등급이 어디서나
- # 방어됐고 94.9% 가 한 등급이었다. 그리고 arm_speed 와 -0.52 로 음의 상관이라
- # 잡으려던 주행 구간과 반대로 켜졌다 -- 사실 블록의 "the arms are moving fast" 를
- # 모델이 "바쁘다" 로 읽은 것으로 보인다. 움직임 조건을 빼면 두 원인을 같이 겨냥한다.
- "FREE":  "Are the hands OFF everything -- open and clear of the load, no finger resting\n"
-          "   on it, whatever was being handled left standing where it is -- so there is\n"
-          "   no hold to lose in this moment?",
+ "CLAMP": "Is the thing held BETWEEN TWO HANDS -- with the push of one hand against\n"
+          "   the other all that keeps it, so it drops the moment that goes?",
+ "LOOSE": "Is the robot MOVING something that will not hold a shape -- so that what\n"
+          "   the hand has of it keeps changing on the way?",
+ "SHOVE": "Is the robot SENDING something away with a push -- so that it carries on\n"
+          "   where it was sent even if the hand comes off?",
+ "FLIP":  "Is the robot TURNING OVER something easy to take hold of -- so that any\n"
+          "   other hold on it would have done as well?",
+ "FREE":  "Are the hands PASSING THROUGH holding nothing -- so there is no hold to\n"
+          "   lose in this moment?",
 }
-ACTIVE = tuple(os.environ.get("ALLEX_CHECKS", "FREE").split(","))
+ACTIVE = tuple(os.environ.get("ALLEX_CHECKS", "CLAMP,LOOSE,SHOVE,FLIP,FREE").split(","))
 _CHECKS = tuple((q, POOL[q]) for q in ACTIVE)
 
 # 문항마다 다른 눈금이 아니라 하나를 공유한다. 이 눈금이 재는 것은 그 문항이
