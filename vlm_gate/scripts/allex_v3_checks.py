@@ -420,6 +420,11 @@ GUIDANCE = (
 #         Bring PolyBag 의 위험은 상한 2.0 이 이미 담는다.
 #   OPEN  이 판은 대체로 비어 있어 "빈 판으로 가는가" 는 항상 참이 될 자리다
 #         (robocasa 의 C 가 95% 5등급을 받은 그 자리). SHOVE 와도 겹친다.
+# C 와 D 는 그 국면을 안전하게 만드는 **바로 그것** 대신 곁들여 보이는 자세를
+# 부르고 있었다 -- 손이 한쪽 면에 대고 있는 것은 밀어 보내기가 안전한 이유가
+# 아니고(이유는 붙들 필요가 없는 일이라서다), 모서리로 서 있는 것은 어디를
+# 잡아도 되는 이유가 아니다(이유는 물건이 그런 물건이라서다). 되돌렸다.
+#
 # 주절은 **눈에 보이는 배치**로, 행동은 뒷절로 내렸다. 첫 판은 주절이 움직임
 # (MOVING / SENDING / TURNING OVER)이라 셋이 전부 1등급으로 죽었고, 살아남은
 # 둘(두 손 사이에 붙듦, 빈손)만 주절이 배치였다. 축과 근거는 그대로 두고
@@ -451,10 +456,11 @@ POOL = {
           "   the other all that keeps it, so it drops the moment that goes?",
  "LOOSE": "Is what the hand has GATHERED UP IN IT rather than taken by a firm edge --\n"
           "   so that what it holds keeps changing as the thing is carried along?",
- "SHOVE": "Is a hand SET AGAINST ONE SIDE of the thing rather than closed around it --\n"
-          "   so that the thing carries on where it was sent even if the hand comes off?",
- "FLIP":  "Is the thing UP ON AN EDGE OR FOLDED OVER under a hand that took it\n"
-          "   anywhere -- so that any other hold on it would have done as well?",
+ "SHOVE": "Is this a job that needs NO HOLD KEPT on the thing -- one shove and it\n"
+          "   carries on where it was sent, hand or no hand?",
+ "FLIP":  "Is the thing one that can be TAKEN ANYWHERE ON IT -- so that where it was\n"
+          "   gripped does not decide the outcome, and any other hold would have done\n"
+          "   as well?",
  # 청크의 52% 가 "손이 물체에 갔지만 아직 잡지 않은" 순간이고, 그 국면을 이름
  # 붙인 문항이 없었다. FREE 가 "안 쥔 채 지나간다" 라 그 프레임에서 1 로
  # 떨어졌고, 다섯 문항이 전부 3등급("향해 가는 중")으로 뭉쳤다. 잡기 전이면
