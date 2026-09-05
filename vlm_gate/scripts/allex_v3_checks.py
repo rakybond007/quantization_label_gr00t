@@ -413,8 +413,13 @@ POOL = {
  "FIRM":  "Is the thing under the hands KEEPING ITS SHAPE -- straight edges and flat\n"
           "   faces, no dent, fold or sag where they press on it -- rather than giving\n"
           "   way wherever it is touched?",
- "FREE":  "Are the hands EMPTY and moving through clear space -- nothing held, nothing\n"
-          "   being touched?",
+ # 조건이 넷(비었다/움직인다/트인 공간/안 닿는다)이라 중간 등급이 어디서나
+ # 방어됐고 94.9% 가 한 등급이었다. 그리고 arm_speed 와 -0.52 로 음의 상관이라
+ # 잡으려던 주행 구간과 반대로 켜졌다 -- 사실 블록의 "the arms are moving fast" 를
+ # 모델이 "바쁘다" 로 읽은 것으로 보인다. 움직임 조건을 빼면 두 원인을 같이 겨냥한다.
+ "FREE":  "Are the hands OFF everything -- open and clear of the load, no finger resting\n"
+          "   on it, whatever was being handled left standing where it is -- so there is\n"
+          "   no hold to lose in this moment?",
 }
 ACTIVE = tuple(os.environ.get("ALLEX_CHECKS", "FREE").split(","))
 _CHECKS = tuple((q, POOL[q]) for q in ACTIVE)
