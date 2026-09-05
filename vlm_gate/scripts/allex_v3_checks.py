@@ -270,13 +270,17 @@ CANDIDATES = (1.0, 1.5, 2.0, 2.5, 3.0)
 # 3등급인 상수였고, risk = TURN x (0.5 + 0.5 x HEFT) 에서 g=0.5 로 굳어 모든
 # 청크에 risk 바닥 0.25 를 깔았다. 상한에 못 닿게 만든 것은 아니다 -- snap 이
 # 구제한다 -- 하지만 conf 폭을 [0.25, 0.875] 로 잘라 분산을 직접 깎았다.
-SIGN = {"CLAMP": -1, "LOOSE": -1, "SHOVE": +1, "FLIP": +1, "FREE": +1}
+# SHOVE(두 손이 따로 붙듦)를 가점으로 두었더니 자기 칸 대비 -0.75 였다 --
+# 이 데이터에서 두 손이 같이 붙드는 것은 건네는 순간이 아니라 상자를 돌리는
+# 순간이다. 상한표에서 Rotate Box 가 가장 낮으므로 부호는 감점이 맞다.
+SIGN = {"CLAMP": -1, "LOOSE": -1, "SHOVE": -1, "FLIP": +1, "FREE": +1,
+        "IDLE": +1}
 # 무게는 활성 목록이 정해지면 각 변의 합이 1 이 되게 정규화한다. 하나씩
 # 더해 가는 중이라 지금은 문항마다 같은 무게로 두고, 문항이 확정되면 덮는
 # 태스크 수로 다시 잡는다.
 # 덮는 태스크 수. 각 변의 합이 1 이 되게. FREE 는 못 박은 몫을 고정으로 받는다.
 WEIGHT = {"CLAMP": 0.5, "LOOSE": 0.5,
-          "SHOVE": 0.4, "FLIP": 0.2, "FREE": 0.4}
+          "SHOVE": 0.4, "FLIP": 0.2, "FREE": 0.4, "IDLE": 0.4}
 HEFT_SHARE = 0.5     # 뒤집기 단독이 지는 위험의 몫; 나머지는 HEFT 가 채운다
 
 
@@ -461,8 +465,15 @@ POOL = {
  # 더 나빴다 -- Rotate Box 0.766, SHOVE 가 완전히 상수가 되어 상관 1.0.
  # 세 판 중 옛 서술이 모든 지표에서 가장 좋아 되돌렸다. CLAMP 의 서술이
  # 문제가 아니라는 뜻이므로, 다음은 그 칸이 정말 갈릴 것이 있는지를 본다.
- "CLAMP": "Is the thing held BETWEEN TWO HANDS -- with the push of one hand against\n"
-          "   the other all that keeps it, so it drops the moment that goes?",
+ # 네 판 내내 96% 안팎이 한 등급이었다. 서술을 세 가지로 바꿔 봐도 그대로라
+ # 축 자체가 틀렸다고 본다 -- 어느 서술이든 그 칸 내내 참이라 안 갈린다.
+ #
+ # 후보 목록에서 "물체를 세워 넘긴다" 를 되살린다. 폐기 사유가 "Rotate 두 칸을
+ # 다 덮는다(+1 -1 = 0)" 였는데, 상한이 주석의 칸에서 나오게 구조를 바꾼 뒤로
+ # 문항이 칸을 가를 필요가 없어졌다. 필요한 것은 칸 안에서 갈리는 것이고,
+ # 기울어졌다 다시 눕는 것은 한 장에서 보이며 국면마다 바뀐다.
+ "CLAMP": "Is the thing UP ON AN EDGE OR A CORNER -- tipped off the face it was\n"
+          "   resting on, so that letting go now drops it one way or the other?",
  # 두 서술을 버렸다. "그러모아 쥐고 있는가" 는 살았지만 A 와 +0.585 로 겹쳤고,
  # "쥔 자리만으로 붙들려 있는가" 로 좁혔더니 95% 가 1등급으로 죽었다. 겹침을
  # 푼 게 아니라 A 의 복사본을 만든 것이다 -- 둘 다 "이 쥠 말고 받치는 것이
@@ -484,11 +495,22 @@ POOL = {
  # 좁혀봤는데, 노린 칸은 -0.12 -> -0.02 로 조금 나아진 대신 나머지 다섯 중 넷이
  # 나빠졌고 Pass PolyBag 은 +0.31 -> -0.31 로 뒤집혔다 (전역 +0.348 -> +0.310).
  # 되돌린다. 좁힌 서술이 이 판에서는 봉투를 가르는 대신 다른 칸들을 흩뜨렸다.
- "SHOVE": "Is this a job that needs NO HOLD KEPT on the thing -- one shove and it\n"
-          "   carries on where it was sent, hand or no hand?",
- "FLIP":  "Is the thing one that can be TAKEN ANYWHERE ON IT -- so that where it was\n"
-          "   gripped does not decide the outcome, and any other hold would have done\n"
-          "   as well?",
+ # "한 번 밀면 손 없이도 간다" 였다. 모든 판에서 97~100% 가 1등급이었다 --
+ # allex 에는 밀어 보내는 동작이 없어 참이 되는 장면 자체가 없다. 폐기가
+ # 아니라 후보로 남긴다(밀어 보내기가 있는 벤치마크에서는 살아날 문항이다).
+ #
+ # Pass 가 상한 3.0 으로 가장 너그러운 이유를 대신 부른다: 두 손이 각각
+ # 붙들고 있어 한쪽을 놓쳐도 한 번에 잃지 않는다. 건네기 전후로 바뀌므로
+ # 칸 안에서 갈리고, 한 장에서 보인다.
+ "SHOVE": "Is the thing HELD BY BOTH HANDS AT ONCE -- each with its own hold on it,\n"
+          "   so that one slipping would not lose it?",
+ # "아무 데나 잡아도 되는 물건인가" 였다. A 를 모서리 문항으로 바꾸자 +0.857
+ # 로 겹쳤다 -- 둘 다 "돌리는 장면이다" 라는 같은 단서로 읽히고, 하나는 감점
+ # 하나는 가점이라 확신에서 서로 상쇄된다. 봉투가 뒤집기에 너그러운 진짜
+ # 이유는 잡는 자리가 결과를 안 가른다는 간접 서술이 아니라 **눌리거나 접혀도
+ # 잃을 것이 없는 물건**이라서다. 돌리는 장면과 무관한 축으로 옮긴다.
+ "FLIP":  "Is the thing one that can be SQUASHED OR FOLDED with no harm done -- so\n"
+          "   that pushing it out of shape costs nothing?",
  # 청크의 52% 가 "손이 물체에 갔지만 아직 잡지 않은" 순간이고, 그 국면을 이름
  # 붙인 문항이 없었다. FREE 가 "안 쥔 채 지나간다" 라 그 프레임에서 1 로
  # 떨어졌고, 다섯 문항이 전부 3등급("향해 가는 중")으로 뭉쳤다. 잡기 전이면
@@ -498,10 +520,27 @@ POOL = {
  # 네 칸에는 안에서 갈릴 것을 묻는 문항이 하나도 없게 됐다. 넓힌다 --
  # 압축이 깨뜨리는 것은 맞춰 넣는 순간이고 그냥 옮기는 순간은 아니다. 그
  # 구분은 모든 칸 안에서 국면마다 바뀌고, 손목 회전과 팔 속도로 사실에도 있다.
- "FREE":  "Is NOTHING BEING LINED UP right now -- the hands only carrying the thing\n"
-          "   along, with no fitting or setting down being made in this moment?",
+ # 접촉 없는 국면을 여섯 번째 문항(IDLE)으로 따로 세워 봤는데, 다섯을 넘기면
+ # 문항끼리 눌러 최빈 조합이 77.6% 로 뭉쳤다. 죽어 있던 SHOVE 를 빼고 그
+ # 자리에 넣어도 나빠졌다(0.481 -> 0.662). 빼도 나빠지고 더해도 나빠진다 --
+ # 다섯이 이 모델이 한 프롬프트에서 갈라 쓸 수 있는 한계다. 그래서 개수를
+ # 늘리지 않고 이 문항이 두 모습을 다 지게 한다. 주 문항은 잃을 것이 없다는
+ # 것이고, 손이 비었든 그저 옮기는 중이든 그 점에서는 같다.
+ # 뒷절의 순서가 답을 바꿨다. 드문 쪽(손이 비었다)을 앞에 놓으니 모델이 문항
+ # 전체를 그것으로 읽고 95% 를 1등급으로 답했다. 흔한 쪽을 앞에 놓는다.
+ # 주 문항이 "잃을 것이 없는가" 라는 결과어라 중간 등급으로 도피했다(97.5% 가
+ # 3). 규칙대로 주 문항이 단위 행동을 부르게 한다 -- 결과는 뒷절이 진다.
+ "FREE":  "Are the hands JUST MOVING THE THING ALONG -- nothing being fitted or set\n"
+          "   down in this moment, or nothing in them at all?",
+ # 기본 가점 문항. FREE 를 "맞춰 넣을 것이 없는 이동" 으로 넓히면서 물건을
+ # 들고 있다는 전제가 들어갔고, 그러면서 아무것도 안 잡고 팔만 움직이는 구간이
+ # 갈 데가 없어졌다. 영상에는 아무 동작 없는 장면도 있고 접촉 없이 팔만 가는
+ # 구간도 있다. 잃을 쥠이 아예 없으므로 어느 태스크에서나 가점이고, 그래서
+ # 못 박는 문항이 된다 -- 넓힌 FREE 가 대신할 수 없다.
+ "IDLE":  "Are the hands ON NOTHING AT ALL -- moving through open space or standing\n"
+          "   still, with nothing in them and nothing being touched?",
 }
-ACTIVE = tuple(os.environ.get("ALLEX_CHECKS", "CLAMP,LOOSE,SHOVE,FLIP,FREE").split(","))
+ACTIVE = tuple(os.environ.get("ALLEX_CHECKS", "CLAMP,LOOSE,SHOVE,FLIP,FREE,IDLE").split(","))
 _CHECKS = tuple((q, POOL[q]) for q in ACTIVE)
 
 # 문항마다 다른 눈금이 아니라 하나를 공유한다. 이 눈금이 재는 것은 그 문항이
