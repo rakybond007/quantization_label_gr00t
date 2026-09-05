@@ -17,7 +17,8 @@ import sys
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from allex_v3_checks import (ACTIVE, NGRADE, SIGN, TASK_RANGE,  # noqa: E402
+from allex_v3_checks import (ACTIVE, DEFAULT_RANGE, NGRADE, SIGN,  # noqa: E402
+                             TASK_RANGE,
                              band_place, snap)
 
 STRATUM = "cell"   # 층은 주석이 주는 여섯 칸이다 (Rotate/Bring/Pass x Box/PolyBag).
@@ -42,8 +43,8 @@ OUT = os.path.expanduser(os.environ.get(
     "ALLEX_OUT", "~/quantization_agent_workspace/vlm_gate/output/allex_v3loop"))
 rs = [json.loads(l) for l in open(f"{OUT}/records.jsonl")]
 Q = ACTIVE
-NAME = {"CLAMP": "모서리로 세워짐", "LOOSE": "쥔 자리만으로 붙듦",
-        "SHOVE": "두 손이 따로 붙듦", "FLIP": "눌려도 상관없는 것", "FREE": "그저 옮기는 중",
+NAME = {"CLAMP": "두 손 사이에 붙듦", "LOOSE": "쥔 자리만으로 붙듦",
+        "SHOVE": "밀어 보냄", "FLIP": "쉽게 잡히는 것 뒤집음", "FREE": "그저 옮기는 중",
         "IDLE": "아무것도 안 닿음"}
 # 각 문항이 어느 층에서 높아야 하는가. E 는 못 박은 문항이라 순위에서 뺀다.
 # 각 문항이 높아야 할 서브태스크. 위험 풀은 Rotate Box 와 Bring PolyBag 인데
@@ -104,56 +105,72 @@ for i in range(len(Q)):
         mx = max(mx, abs(c))
         if abs(c) > 0.4:
             print(f"      {Q[i]}-{Q[j]}  {c:+.3f}  {'겹침' if abs(c) > CORR_MAX else ''}")
-gates["4 상관"] = (mx, CORR_MAX, mx <= CORR_MAX)
+# 문항 겹침도 판정에서 뺐다. 겹치는 것을 뺄 때마다 결과가 나빠졌다 -- 다섯을
+# 한 프롬프트에서 같이 답하므로 겹치는 문항이 서로를 붙들어 준다. 한 문항에
+# 한 축의 전권을 주는 것이 오히려 위험하다. 0.70 이라는 선도 내가 지어낸
+# 값이었고, 겹침이 해로운지 이로운지는 상관계수가 아니라 결과가 말한다.
+info["4 상관"] = mx
 print(f"      최대 {mx:+.3f}  {'통과' if mx <= CORR_MAX else '미달'}")
 
 # [5] 범위 이탈은 뺐다. 상한·하한은 후처리이고 구조가 보장한다 -- 문항 답변의
 # 판정이 아니다. 같은 장면이 같은 배속을 받는 것도 결함이 아니다.
 
-# [6] 은 확신의 표준편차를 재다가 바꿨다. 확신의 절대 크기는 등급표 눈금이
-# 정하는 임의값이고 사상이 분위수라 어차피 버려진다. 실제로 물어야 할 것은
-# **한 칸 안에서 답이 갈리는가** 다 -- 갈리면 띠에 펼 수 있고, 안 갈리면 어떤
-# 사상을 해도 그 칸은 값 하나로 나와 게이트가 하는 일이 없어진다.
-print(f"[6] 칸 안 답이 갈리는가   최빈 답 조합 {TIE_MAX:.0%} 이하")
-worst = 0.0
+# 칸 안에서 답이 갈리는지 보던 검사는 뺐다. 어떤 동작은 처음부터 끝까지 정말
+# 비슷할 수 있고, 그러면 모든 청크가 같은 답을 내는 것이 맞다. 답이 같다는
+# 사실만으로는 문항이 못 알아보는 것인지 장면이 실제로 같은 것인지 못 가른다.
+# 그 선(50%)도 측정이 아니라 내가 지어낸 값이었고, 0.019 차이를 맞추려고
+# 문항을 열 번 넘게 갈아 끼우게 만들었다.
+#
+# 칸별 배속 분포는 그대로 찍는다 -- 판정이 아니라 눈으로 보기 위해서다.
+print("칸별 배속 (판정 아님, 참고)")
 for cell in sorted(by):
     v = by[cell]
-    combo = collections.Counter(tuple(r.get(q) for q in Q) for r in v)
-    top = combo.most_common(1)[0][1] / len(v)
-    worst = max(worst, top)
     lo, hi = TASK_RANGE.get(cell, (None, None))
-    # 사상은 여기서 다시 계산한다. 기록이 언제 만들어졌든 지금의 사상으로 본다.
     ks = list(band_place([r["conf"] for r in v], lo, hi))
     sn = collections.Counter(snap(k) for k in ks)
-    print(f"      {cell:<14} 최빈 답 {100*top:5.1f}%  서로 다른 답 {len(combo):>2}가지   "
-          f"K {np.mean(ks):.2f} [{lo:g},{hi:g}]   " +
+    print(f"      {cell:<14} n={len(v):4d}  [{lo:g},{hi:g}]   " +
           "  ".join(f"{k:g}x {100*n/len(ks):.0f}%" for k, n in sorted(sn.items())))
-gates["6 칸 안 구분"] = (worst, TIE_MAX, worst <= TIE_MAX)
 
-# 7 ------------------------------------------------ 정답지와의 확신 순위일치
-# v2 의 K 와 우리 K 를 견주면 양쪽 상한이 섞여 든다. 상한은 후처리이므로
-# **확신 대 확신**으로 본다 -- v2 의 stage-1 confidence p 가 같은 자리다.
-GT = os.environ.get("ALLEX_GT", "")
-if GT and os.path.exists(GT):
+# v2 가 매긴 배속과 얼마나 같은가 ------------------------------------------
+# 이게 실질적인 확인이다. v2 는 사람이 보고 쓸 만하다고 판단한 라벨이고,
+# 상한/하한도 같은 표를 쓰므로 배속끼리 바로 견줄 수 있다. 지어낸 선이 없다 --
+# 몇 %가 같은지, 다른 것은 얼마나 벌어졌는지 그대로 찍는다.
+V2 = os.environ.get("ALLEX_V2", "")
+if V2 and os.path.exists(V2):
     g = {}
-    for line in open(GT):
+    for line in open(V2):
         r = json.loads(line)
-        if "p" in r:
-            g[(r["ep"], r["f"])] = float(r["p"])
-    pair = [(g[(r["ep"], r["f"])], r["conf"]) for r in rs
-            if (r["ep"], r["f"]) in g and "conf" in r]
-    if len(pair) >= 30:
-        a_ = np.array([x for x, _ in pair]); b_ = np.array([y for _, y in pair])
-        ra, rb = a_.argsort().argsort().astype(float), b_.argsort().argsort().astype(float)
-        rho = float(np.corrcoef(ra, rb)[0, 1]) if ra.std() > 0 and rb.std() > 0 else 0.0
-        info["7 v2일치"] = rho
-        print(f"[7] v2 와의 확신 순위일치  n={len(pair)}  rho {rho:+.3f}  (참고, 판정 아님)")
-        print("      칸 안:  " + "  ".join(
-            f"{c} {np.corrcoef(np.array([g[(r['ep'],r['f'])] for r in v if (r['ep'],r['f']) in g]).argsort().argsort(), np.array([r['conf'] for r in v if (r['ep'],r['f']) in g]).argsort().argsort())[0,1]:+.2f}"
-            for c, v in sorted(by.items())
-            if len([r for r in v if (r['ep'],r['f']) in g]) > 5))
+        k = r.get("K_snap", r.get("K"))
+        if k is not None:
+            g[(r["ep"], r["f"])] = snap(float(k))
+    mine = {}
+    for cell, v in by.items():
+        lo, hi = TASK_RANGE.get(cell, DEFAULT_RANGE)
+        for r, k in zip(v, band_place([r["conf"] for r in v], lo, hi)):
+            mine[(r["ep"], r["f"])] = snap(float(k))
+    pair = [(g[k], mine[k]) for k in mine if k in g]
+    if pair:
+        same = sum(1 for a, b in pair if abs(a - b) < 1e-9)
+        d = [b - a for a, b in pair]
+        print(f"\nv2 가 매긴 배속과 견주기   겹치는 청크 {len(pair)}개")
+        print(f"      같은 배속 {100*same/len(pair):.1f}%   "
+              f"한 칸(0.5) 차이 {100*sum(1 for x in d if abs(abs(x)-0.5)<1e-9)/len(pair):.1f}%   "
+              f"그 이상 {100*sum(1 for x in d if abs(x)>0.5+1e-9)/len(pair):.1f}%")
+        print(f"      평균 배속  v2 {np.mean([a for a,_ in pair]):.3f}  "
+              f"지금 {np.mean([b for _,b in pair]):.3f}   "
+              f"치우침 {np.mean(d):+.3f}")
+        for cell in sorted(by):
+            q = [(g[(r["ep"], r["f"])], mine[(r["ep"], r["f"])]) for r in by[cell]
+                 if (r["ep"], r["f"]) in g]
+            if not q:
+                continue
+            s_ = sum(1 for a, b in q if abs(a - b) < 1e-9)
+            print(f"      {cell:<14} n={len(q):4d}  같음 {100*s_/len(q):5.1f}%   "
+                  f"v2 {np.mean([a for a,_ in q]):.2f} -> 지금 {np.mean([b for _,b in q]):.2f}")
     else:
-        print(f"[7] 정답지  겹치는 청크 {len(pair)}개뿐 -- 판정 불가")
+        print("\nv2 와 겹치는 청크가 없다")
+else:
+    print("\nv2 라벨 경로(ALLEX_V2)가 없어 견주지 못했다")
 
 print("\n=== 판정 ===")
 for k, v in info.items():

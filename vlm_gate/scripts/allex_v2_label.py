@@ -54,7 +54,21 @@ gate = VLMGate(f"http://127.0.0.1:{PORT}", timeout=300)
 episodes = []
 for l in open(f"{DS}/meta/episodes.jsonl"):
     d = json.loads(l); episodes.append((d["episode_index"], d["length"]))
-if EPS is not None:
+# 청크 표본만 라벨링하는 길. v3 루프의 참고 지표([7])는 v2 의 stage-1 확신과
+# 견주는 것인데, 층화 표본이 에피소드 70여 개에 흩어져 있어 에피소드 단위로
+# 돌리면 표본의 수십 배를 라벨링하게 된다. 표본 파일이 주어지면 그 청크만 한다.
+WANT = None
+_sf = os.environ.get("ALLEX_SAMPLE_FILE", "")
+if _sf:
+    _d = json.load(open(os.path.expanduser(_sf)))
+    WANT = {}
+    for _v in _d["strata"].values():
+        for _ep, _f in _v:
+            WANT.setdefault(int(_ep), set()).add(int(_f))
+    episodes = [(e, n) for e, n in episodes if e in WANT and e % NSH == SHARD]
+    print(f"  표본 {sum(len(v) for v in WANT.values())} 청크, "
+          f"에피소드 {len(WANT)}개 중 이 샤드 {len(episodes)}개", flush=True)
+elif EPS is not None:
     episodes = [(e, n) for e, n in episodes if e in EPS]
 else:
     episodes = [(e, n) for e, n in episodes if e % NSH == SHARD]
@@ -89,7 +103,8 @@ for ep, N in episodes:
     WR = np.stack(d["action.right_wrist_wrt_base"].values)
     WL = np.stack(d["action.left_wrist_wrt_base"].values)
     ti = d["task_index"].values
-    starts = [f for f in range(0, len(A) - CHUNK, CHUNK) if (ep, f) not in done]
+    starts = [f for f in range(0, len(A) - CHUNK, CHUNK) if (ep, f) not in done
+              and (WANT is None or f in WANT[ep])]
     if not starts:
         print(f"ep{ep}: already done", flush=True); continue
     L = grab(ep, starts, "left"); R = grab(ep, starts, "right")
