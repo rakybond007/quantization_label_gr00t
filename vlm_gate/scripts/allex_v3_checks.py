@@ -455,8 +455,13 @@ POOL = {
           "   so that the thing carries on where it was sent even if the hand comes off?",
  "FLIP":  "Is the thing UP ON AN EDGE OR FOLDED OVER under a hand that took it\n"
           "   anywhere -- so that any other hold on it would have done as well?",
- "FREE":  "Are the hands PASSING THROUGH holding nothing -- so there is no hold to\n"
-          "   lose in this moment?",
+ # 청크의 52% 가 "손이 물체에 갔지만 아직 잡지 않은" 순간이고, 그 국면을 이름
+ # 붙인 문항이 없었다. FREE 가 "안 쥔 채 지나간다" 라 그 프레임에서 1 로
+ # 떨어졌고, 다섯 문항이 전부 3등급("향해 가는 중")으로 뭉쳤다. 잡기 전이면
+ # 잃을 파지가 없으므로 그 국면은 FREE 가 덮어야 한다.
+ "FREE":  "Has NOTHING BEEN TAKEN HOLD OF YET -- the hands empty or resting on\n"
+          "   something they have not closed on -- so there is no hold to lose in\n"
+          "   this moment?",
 }
 ACTIVE = tuple(os.environ.get("ALLEX_CHECKS", "CLAMP,LOOSE,SHOVE,FLIP,FREE").split(","))
 _CHECKS = tuple((q, POOL[q]) for q in ACTIVE)
