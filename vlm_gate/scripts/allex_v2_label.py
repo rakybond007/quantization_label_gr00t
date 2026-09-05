@@ -47,6 +47,14 @@ SHARD = int(sys.argv[2]) if len(sys.argv) > 2 else 0
 NSH = int(sys.argv[3]) if len(sys.argv) > 3 else 1
 EPS = [int(e) for e in sys.argv[4].split(",")] if len(sys.argv) > 4 else None
 TAG = os.environ.get("TAG", f"s{NSH}_{SHARD}")
+# 청크를 건너뛰며 라벨링한다. 사이 청크는 나중에 같은 서브태스크 구간 안에서
+# 가장 가까운 라벨을 받는다(allex_v2_fill.py). 16프레임 청크에 30fps 이므로
+# stride 4 는 2.1초마다 한 번 보는 것이다.
+STRIDE = int(os.environ.get("ALLEX_STRIDE", 1))
+# 배치는 이 경로에서 못 쓴다. 판정기의 배치 함수는 모델이 자유롭게 쓴 글을
+# 파싱하는 길이고, v2 는 YES/NO 자리를 강제해 놓고 그 확률을 읽는 다른 길이라
+# 배치 응답에 confidences 가 없다. 쓰려면 판정기에 강제 슬롯용 배치 경로를
+# 새로 넣어야 하는데, 그 서버는 다른 잡도 쓴다.
 OUT = f"{OUTDIR}/labels_{TAG}.jsonl"
 
 gate = VLMGate(f"http://127.0.0.1:{PORT}", timeout=300)
@@ -141,7 +149,29 @@ for ep, N in episodes:
     WR = np.stack(d["action.right_wrist_wrt_base"].values)
     WL = np.stack(d["action.left_wrist_wrt_base"].values)
     ti = d["task_index"].values
-    starts = [f for f in range(0, len(A) - CHUNK, CHUNK) if (ep, f) not in done
+    allf = list(range(0, len(A) - CHUNK, CHUNK))
+    if STRIDE > 1 and SEGS.get(ep):
+        # 에피소드 전체에 대고 4칸마다 찍으면 짧은 구간은 하나도 안 걸린다.
+        # 구간 평균이 7청크이므로 그런 구간이 적지 않다. 구간 **안에서** 세면
+        # 구간마다 첫 청크는 반드시 라벨되고, 뒤 청크가 메울 곳이 생긴다.
+        keep, cnt = [], {}
+        for f in allf:
+            si = None
+            mid = f + CHUNK // 2
+            for k, (a, b, _lab) in enumerate(SEGS[ep]):
+                if a <= mid < b:
+                    si = k
+                    break
+            if si is None:
+                continue                      # 어느 구간에도 안 들면 라벨 안 한다
+            c = cnt.get(si, 0)
+            cnt[si] = c + 1
+            if c % STRIDE == 0:
+                keep.append(f)
+        allf = keep
+    elif STRIDE > 1:
+        allf = allf[::STRIDE]
+    starts = [f for f in allf if (ep, f) not in done
               and (WANT is None or f in WANT[ep])]
     if not starts:
         print(f"ep{ep}: already done", flush=True); continue

@@ -1,15 +1,23 @@
 #!/bin/bash
 #SBATCH --wckey=project-short-name:sub_fast
-#SBATCH --job-name=label_merged_v5tempo_with_v2_prompt_and_measured_ceilings_shard_array
+#SBATCH --job-name=label_merged_v5tempo_v2_prompt_measured_ceilings_stride4_two_gpus
 #SBATCH --nodes=1
 #SBATCH --gpus=1
 #SBATCH --partition=sjw_alinlab_premium
 #SBATCH --time=1-00:00:00
-#SBATCH --array=0-7
+#SBATCH --array=0-1
 #SBATCH --output=out/%A_%a-v5tempo.out
 #SBATCH --error=out/%A_%a-v5tempo.err
 #SBATCH --comment="Label merged_v5tempo with the v2 prompt and the measured ceilings (Rotate Box 1.5-2.0). 1280 episodes over 8 shards."
 set -u
+# stride 4: 구간 안에서 네 청크마다 하나만 라벨하고, 사이 청크는 나중에
+# allex_v2_fill.py 가 같은 구간의 가장 가까운 라벨로 메운다. 구간 안에서 세므로
+# 짧은 구간도 첫 청크는 반드시 라벨된다.
+#
+# 실측 1.2 청크/초. 13만 청크를 stride 4 로 줄이면 약 4.6만이고 GPU 2대면
+# 대여섯 시간이다. 배치는 못 쓴다 -- 판정기의 배치 경로는 자유 서술을 파싱하고
+# v2 는 강제 슬롯의 확률을 읽어서, 배치 응답에 그 확률이 없다.
+export ALLEX_STRIDE=4
 # 프롬프트는 v2 그대로. 상한/하한도 최신 실측 그대로다:
 #   Rotate Box 1.5~2.0, Rotate PolyBag 2.5, Bring 3.0(박스)/2.0(봉투), Pass 3.0.
 # 이 데이터셋만 다른 점 둘 -- 에피소드가 1280 개라 chunk-001 이 있고,
@@ -21,7 +29,7 @@ cd "$HOME/quantization_agent_workspace/vlm_gate" || exit 1
 export ALLEX_DS="/rlwrld2/home/david/action_quantization/v5_matched/merged_v5tempo"
 export ALLEX_OUT="$PWD/output/allex_v5tempo"
 mkdir -p "$ALLEX_OUT" out
-NSH=8
+NSH=2
 SH=${SLURM_ARRAY_TASK_ID:-0}
 PORT=$((13500 + SLURM_ARRAY_JOB_ID % 300 + SH))
 LOG="$ALLEX_OUT/judge_s${SH}.log"
