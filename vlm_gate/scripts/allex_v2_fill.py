@@ -1,4 +1,4 @@
-"""건너뛰며 라벨링한 결과를 모든 청크로 채운다.
+"""건너뛰며 라벨링한 결과를 모든 청크로 채운다. v2·v3 둘 다.
 
 stride 로 라벨링하면 청크의 1/stride 만 값을 갖는다. 나머지는 **같은 서브태스크
 구간 안에서** 가장 가까운 라벨을 받는다. 구간을 넘어 가져오지 않는다 -- 상한이
@@ -18,8 +18,10 @@ DS = os.environ.get(
 OUT = os.path.expanduser(os.environ.get(
     "ALLEX_OUT", "~/quantization_agent_workspace/vlm_gate/output/allex_v5tempo"))
 CHUNK = 16
-SRC = f"{OUT}/records.jsonl"
-DST = f"{OUT}/records_full.jsonl"
+SRC = os.environ.get("ALLEX_SRC", f"{OUT}/records.jsonl")
+DST = os.environ.get("ALLEX_DST", f"{OUT}/records_full.jsonl")
+# 어느 열이 최종 배속인가. v2 는 K, v3 는 띠에 편 K_spread 를 스냅한 값이다.
+KEY = os.environ.get("ALLEX_KEY", "K")
 
 info = json.load(open(f"{DS}/meta/info.json"))
 CH = int(info["chunks_size"])
@@ -74,7 +76,7 @@ with open(DST, "w") as fh:
             d = min(abs(c - f) for c in cand)
             near = [c for c in cand if abs(c - f) == d]
             # 같은 거리에 둘이면 느린 쪽
-            src = min(near, key=lambda c: mine[c]["K"])
+            src = min(near, key=lambda c: mine[c][KEY])
             r = dict(mine[src])
             r["ep"], r["f"] = ep, f
             r["filled_from"] = src

@@ -41,6 +41,11 @@ os.makedirs(OUTDIR, exist_ok=True)
 CHUNK = 16
 BATCH = int(os.environ.get("ALLEX_BATCH", 8))
 
+FULL = os.environ.get("ALLEX_FULL", "") == "1"
+STRIDE = int(os.environ.get("ALLEX_STRIDE", 1))
+SHARD = int(os.environ.get("ALLEX_SHARD", 0))
+NSH = int(os.environ.get("ALLEX_NSHARDS", 1))
+
 PORT = sys.argv[1]
 # 표본 파일(allex_v3_sample.py 가 만든 D.json/H.json)이면 그 (ep, f) 만 돈다.
 # 층 이름도 같이 읽어 기록에 넣는다 -- 검증이 쓰고, 모델에는 안 간다.
@@ -52,10 +57,85 @@ if SAMPLE:
     for (e, f) in CELL:
         WANT.setdefault(e, []).append(f)
     EPS = sorted(WANT)
+elif FULL:
+    CELL, WANT = {}, {}
+    EPS = []
+    for _l in open(f"{DS}/meta/episodes.jsonl"):
+        _e = json.loads(_l)["episode_index"]
+        if _e % NSH == SHARD:
+            EPS.append(_e)
+    EPS.sort()
 else:
     CELL, WANT = {}, {}
     EPS = [int(e) for e in sys.argv[2].split(",")] if len(sys.argv) > 2 else [0]
-OUT = f"{OUTDIR}/records.jsonl"
+# ---- 데이터셋 전체를 도는 길 -------------------------------------------
+# 개발집합은 표본 파일로 돌지만 배달은 전체를 돈다. 이 길에서만 필요한 것 셋:
+# 에피소드가 1000 개를 넘으면 chunk-001 이 있고, 칸은 주기에서 뽑아야 하고,
+# stride 로 건너뛰며 본다.
+try:
+    CHUNKS_SIZE = int(json.load(open(f"{DS}/meta/info.json"))["chunks_size"])
+except Exception:
+    CHUNKS_SIZE = 1000
+SEGS = {}
+
+
+def cdir(ep):
+    return f"chunk-{ep // CHUNKS_SIZE:03d}"
+
+
+if FULL:
+    # 주기가 물체를 말해 준다: 가져오기 -> (뒤집기) -> 넘기기. 그 주기에 낀
+    # 회전이 그 주기의 물체다. 회전이 없는 주기는 물체를 모르므로 뺀다 --
+    # 칸을 모르면 상한을 못 준다.
+    _OBJ = {"Rotate Box": "Box", "Rotate PolyBag": "PolyBag"}
+    _by = {}
+    for _l in open(f"{DS}/meta/subtasks.jsonl"):
+        _r = json.loads(_l)
+        _by.setdefault(_r["episode_index"], []).append(_r)
+    _cell_of_seg, _unknown = {}, 0
+    for _ep, _v in _by.items():
+        _v.sort(key=lambda z: z["start_frame"])
+        for _x in _v:
+            if _x["label"] in _OBJ:
+                _cell_of_seg[_x["id"]] = f"Rotate {_OBJ[_x['label']]}"
+        _i = 0
+        while _i < len(_v):
+            if _v[_i]["label"] != "Bring Object":
+                _i += 1
+                continue
+            _j, _mid = _i + 1, []
+            while _j < len(_v) and _v[_j]["label"] not in ("Bring Object", "Pass Object"):
+                _mid.append(_v[_j]["label"])
+                _j += 1
+            if _j < len(_v) and _v[_j]["label"] == "Pass Object":
+                _o = {_OBJ[_m] for _m in _mid if _m in _OBJ}
+                if len(_o) == 1:
+                    _oo = _o.pop()
+                    _cell_of_seg[_v[_i]["id"]] = f"Bring {_oo}"
+                    _cell_of_seg[_v[_j]["id"]] = f"Pass {_oo}"
+                else:
+                    _unknown += 2
+                _i = _j + 1
+            else:
+                _unknown += 1
+                _i = _j
+        SEGS[_ep] = [(_x["start_frame"], _x["end_frame"],
+                      _cell_of_seg.get(_x["id"]), _x["label"]) for _x in _v]
+    print(f"  구간 {sum(len(v) for v in SEGS.values())}개, 칸을 못 정한 구간 {_unknown}개",
+          flush=True)
+
+
+def seg_at(ep, f):
+    """청크 한가운데가 든 구간의 (칸, 서브태스크 이름, 구간 번호)."""
+    mid = f + CHUNK // 2
+    for k, (a, b, cell, lab) in enumerate(SEGS.get(ep, ())):
+        if a <= mid < b:
+            return cell, lab, k
+    return None, None, None
+
+
+OUT = (f"{OUTDIR}/records_s{NSH}_{SHARD}.jsonl" if FULL and NSH > 1
+       else f"{OUTDIR}/records.jsonl")
 
 gate = VLMGate(f"http://127.0.0.1:{PORT}", timeout=300)
 
@@ -72,7 +152,7 @@ if os.path.exists(OUT):
 def grab(ep, frames, side):
     """Decode the requested frame indices from one ego camera."""
     want, got = set(frames), {}
-    path = (f"{DS}/videos/chunk-000/observation.images.camera_ego_{side}/"
+    path = (f"{DS}/videos/{cdir(ep)}/observation.images.camera_ego_{side}/"
             f"episode_{ep:06d}.mp4")
     with av.open(path) as c:
         for i, fr in enumerate(c.decode(video=0)):
@@ -86,13 +166,26 @@ def grab(ep, frames, side):
 out = open(OUT, "a")
 ntot = nempty = 0
 for ep in EPS:
-    d = pd.read_parquet(f"{DS}/data/chunk-000/episode_{ep:06d}.parquet")
+    d = pd.read_parquet(f"{DS}/data/{cdir(ep)}/episode_{ep:06d}.parquet")
     A = np.stack(d["action"].values)
     WR = np.stack(d["action.right_wrist_wrt_base"].values)
     WL = np.stack(d["action.left_wrist_wrt_base"].values)
     ti = d["task_index"].values
     if SAMPLE:
         starts = sorted(f for f in WANT.get(ep, []) if (ep, f) not in done)
+    elif FULL:
+        # stride 를 구간 **안에서** 센다. 에피소드 전체에 대고 세면 짧은 구간이
+        # 통째로 빠진다. 이러면 구간마다 첫 청크는 반드시 라벨된다.
+        starts, cnt = [], {}
+        for f in range(0, len(A) - CHUNK, CHUNK):
+            cell, lab, si = seg_at(ep, f)
+            if cell is None:
+                continue                      # 칸을 모르면 상한을 못 준다
+            c = cnt.get(si, 0)
+            cnt[si] = c + 1
+            if c % STRIDE == 0 and (ep, f) not in done:
+                starts.append(f)
+                CELL[(ep, f)] = cell
     else:
         starts = [f for f in range(0, len(A) - CHUNK, CHUNK) if (ep, f) not in done]
     if not starts:
@@ -105,7 +198,8 @@ for ep in EPS:
         for f in grp:
             x = descriptors(A, WR, WL, f, CHUNK)
             seg = ti[f:f + CHUNK]
-            task = TASKS[int(np.bincount(seg, minlength=len(TASKS)).argmax())]
+            task = (seg_at(ep, f)[1] if FULL else None) or \
+                TASKS[int(np.bincount(seg, minlength=len(TASKS)).argmax())]
             # The subtask name is recorded but NOT sent: see facts_v3.
             # 지시문은 넣어봤다가 뺐다. 넣으면 모델이 화면 대신 지시문을 보고 답해
             # 칸 안에서 상수가 된다 -- Rotate Box 77청크가 전부 한 값이 됐고
@@ -143,6 +237,10 @@ for ep in EPS:
         out.flush()
     print(f"ep{ep}: {ntot} chunks", flush=True)
 out.close()
+
+if FULL and NSH > 1:
+    print(f"끝: {ntot} chunks -> {OUT}  (샤드라 띠에 펴는 것은 합친 뒤에 한다)")
+    raise SystemExit(0)
 
 # 확신을 칸의 띠에 편다. 정답지를 쓰지 않고 띠 폭과 그 칸의 자기 분포만 쓴다.
 import collections as _c
