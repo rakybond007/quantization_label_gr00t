@@ -243,8 +243,15 @@ def main():
                 raise RuntimeError("nonfinite loss")
             loss.backward()
             if not gradients:
-                for name in ("net.0.0.weight","motion.0.weight","head.0.weight"):
-                    grad = dict(model.named_parameters())[name].grad
+                # 검사할 층은 모델에 있는 것만 고른다. baseline 에는 motion 가지가
+                # 없으므로 이름을 박아 두면 그 팔에서만 터진다.
+                named = dict(model.named_parameters())
+                probe = [nm for nm in ("net.0.0.weight", "motion.0.weight",
+                                       "head.0.weight") if nm in named]
+                if len(probe) < 2:
+                    raise RuntimeError(f"검사할 층을 못 찾았다: {sorted(named)[:5]}")
+                for name in probe:
+                    grad = named[name].grad
                     if grad is None or not torch.isfinite(grad).all() or not grad.abs().sum() > 0:
                         raise RuntimeError(f"missing/nonfinite/zero gradient: {name}")
                     gradients[name] = float(grad.norm())

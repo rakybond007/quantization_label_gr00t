@@ -104,6 +104,9 @@ class SmallGateBaseline(nn.Module):
     """Unmodified architecture copied for same-process timing, not retrained here."""
     def __init__(self, text_dim=384, width=32):
         super().__init__()
+        # 체크포인트를 같은 모양으로 저장하기 위한 것. 두 팔의 산출물이 같은
+        # 도구로 읽혀야 비교가 편하다.
+        self.config = dict(arch="baseline", text_dim=text_dim, width=width)
         def blk(i, o):
             return nn.Sequential(nn.Conv2d(i, o, 3, 2, 1), nn.BatchNorm2d(o), nn.ReLU())
         self.net = nn.Sequential(blk(9,width), blk(width,width*2), blk(width*2,width*4),
