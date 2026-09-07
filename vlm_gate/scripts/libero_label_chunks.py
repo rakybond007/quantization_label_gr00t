@@ -33,6 +33,7 @@ MAN = os.environ.get("MANIFEST", f"{BASE}/output/_gate_distill/libero_tiles_mani
 TAG = os.environ.get("TAG", "libero_v2")
 NVIEW = 2
 NQ, SLOTS = 5, "ABCDE"
+NGRADE = 5          # 1~5 등급. phase9·allex 와 같은 경로다.
 
 PORT, SHARD, NSH = sys.argv[1], int(sys.argv[2]), int(sys.argv[3])
 LIMIT = int(os.environ.get("LIMIT", "0"))          # >0 이면 스모크용으로 이만큼만
@@ -102,15 +103,19 @@ for nm in sorted(open(MAN).read().split()):
     h, w, _ = im.shape
     views = [Image.fromarray(im[:, k * w // NVIEW:(k + 1) * w // NVIEW]) for k in range(NVIEW)]
     ins = f"{instr.get(ep, '')}\n{facts_text(x)}"
-    r = gate.judge(views, ins, G, question=ASK, n_ask=NQ)
-    c = r.get("confidences")
-    if not c or len(c) != NQ:               # 판정 실패 — 쓰지 않고 다음 실행에 넘긴다
+    # **n_grade 를 반드시 넘긴다.** 없이 부르면 판정기가 강제된 YES/NO 슬롯의
+    # 로짓을 읽는 경로로 간다 -- 모델이 하지 않은 답을 짓는 것이라 저장소가
+    # 금지한 것이다(CLAUDE.md 되돌리지 말 것 1). v1 이 YES/NO 였던 이유가 이것이고,
+    # 실제로 그 경로에서는 신뢰도가 0.503~0.527 에 붙어 아무것도 가르지 못했다.
+    r = gate.judge(views, ins, G, question=ASK, n_ask=NQ, n_grade=NGRADE)
+    c = r.get("picks")
+    if not c or len(c) != NQ or any(v is None for v in c):   # 판정 실패 — 다음 실행에 넘긴다
         skipped += 1
         if skipped % 20 == 1:
             print(f"shard{SHARD}: judge miss ep{ep} f{f}: {r.get('error','')}", flush=True)
         continue
-    rec = {"ep": ep, "f": f, **{k: float(v) for k, v in zip(SLOTS, c)},
-           **computed_risk(x), "speed_mean": x["speed_mean"], "ans": r.get("answer", "")}
+    rec = {"ep": ep, "f": f, **{k: int(v) for k, v in zip(SLOTS, c)},
+           **computed_risk(x), "speed_mean": x["speed_mean"], "ans": r.get("text", "")}
     out.write(json.dumps(rec) + "\n"); out.flush()   # 선점에 대비해 매 행 flush
     n += 1
     if n % 200 == 0: print(f"shard{SHARD}: {n}", flush=True)
