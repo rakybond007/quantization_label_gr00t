@@ -23,6 +23,9 @@ INTERP_KMAX="${INTERP_KMAX:-8}"
 INTERP_SPACE="${INTERP_SPACE:-path}"
 CLIP_SCALE="${CLIP_SCALE:-1}"
 DYN_SCALE="${DYN_SCALE:-1}"
+# nearest = F_level 배속별 디코더와 같은 블록 경계·실행 행 수.
+# 배속이 요청값에 정확히 떨어진다. le 는 기존 실행들이 쓰던 규칙.
+REPLAN_RULE="${REPLAN_RULE:-nearest}"
 BASE_DIR="$HOME/quantization_agent_workspace/vlm_gate"
 PRIV="$HOME/quantization_agent_workspace/Isaac-GR00T"
 CONDA="$HOME/miniconda3"
@@ -35,6 +38,9 @@ N_EPISODES="${N_EPISODES:-50}"
 VARK_BOUND="${VARK_BOUND:-0}"
 CLIP_SCALE="${CLIP_SCALE:-1}"
 DYN_SCALE="${DYN_SCALE:-1}"
+# nearest = F_level 배속별 디코더와 같은 블록 경계·실행 행 수.
+# 배속이 요청값에 정확히 떨어진다. le 는 기존 실행들이 쓰던 규칙.
+REPLAN_RULE="${REPLAN_RULE:-nearest}"
 VARK_FLOOR2="${VARK_FLOOR2:-0}"
 # 분수 배속이 오면 폴더 이름에 점이 들어간다. 1.5 -> K1p5 로 적는다.
 KTAG="$(printf '%s' "$K" | sed 's/\./p/; s/p0$//')"
@@ -70,7 +76,7 @@ for SUITE in "${SUITES[@]}"; do
       --args.task-suite-name "$SUITE" --args.task_idx=$SLURM_ARRAY_TASK_ID \
       --args.port=$PORT --args.host=127.0.0.1 --args.num_trials_per_task=$N_EPISODES \
       --args.compress_k=$K --args.interp-eps=$INTERP_EPS --args.interp-ratio-max=$INTERP_RATIO_MAX --args.interp-kmax=$INTERP_KMAX --args.interp-space=$INTERP_SPACE --args.clip-scale=$CLIP_SCALE --args.dyn-scale=$DYN_SCALE --args.video-out-path "$ODIR" \
-      --args.gate-out-dir "$OUTPUT_BASE" --args.vark-bound $VARK_BOUND --args.vark-floor2 $VARK_FLOOR2 --args.clip-scale $CLIP_SCALE --args.dyn-scale $DYN_SCALE \
+      --args.gate-out-dir "$OUTPUT_BASE" --args.vark-bound $VARK_BOUND --args.vark-floor2 $VARK_FLOOR2 --args.clip-scale $CLIP_SCALE --args.dyn-scale $DYN_SCALE --args.replan-rule "$REPLAN_RULE" \
       >& "$ODIR/eval-$SLURM_ARRAY_TASK_ID.log" &
     MAIN_PIDS+=($!)
 done

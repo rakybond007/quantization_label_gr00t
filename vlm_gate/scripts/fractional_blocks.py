@@ -77,6 +77,69 @@ def realised_ratio(T, r, chunks=1):
     return tot_in / tot_out if tot_out else 1.0
 
 
+# ---------------------------------------------------------------------------
+# F_level 과 같은 규칙. `papers/reproducing/FLARE/flare/action_head_flevel.py`
+# 의 `block_sizes` · `replan_rows` 를 그대로 옮긴 것이다. 배속별 디코더가 이
+# 경계로 학습되므로, 평가의 균일 배속도 같은 경계를 써야 사다리 칸이 디코더
+# 칸과 같은 것을 가리킨다.
+#
+# 위의 `blocks_for` 는 청크 사이로 잔여를 넘겨 평균을 맞추는 판이라 창마다
+# 행 수가 달라진다. 평가에는 쓸 수 있지만 **디코더에는 못 쓴다** -- 디코더는
+# 출력 개수가 고정이고 직전 창의 잔여를 알 수 없다. 결합을 할 것이므로
+# 아래 두 함수를 쓴다.
+# ---------------------------------------------------------------------------
+
+
+def block_sizes(horizon, k):
+    """16스텝 청크를 K 로 묶은 블록 길이. 소수 K 는 floor 와 ceil 을 교대로 놓는다.
+
+        K=1    [1]*16
+        K=1.5  [1,2,1,2,1,2,1,2,1,2,1]   11행
+        K=2    [2]*8
+        K=2.5  [2,3,2,3,2,3,1]            7행
+        K=3    [3,3,3,3,3,1]              6행
+        K=4    [4]*4
+    """
+    kf = float(k)
+    k = int(kf) if kf == int(kf) else kf
+    if k <= 1:
+        return [1] * horizon
+    lo = int(k)
+    hi = lo if isinstance(k, int) else lo + 1
+    pattern = [lo] if lo == hi else [lo, hi]
+    out, cur, j = [], 0, 0
+    while cur < horizon:
+        n = pattern[j % len(pattern)]
+        if cur + n > horizon:
+            break
+        out.append(n)
+        cur += n
+        j += 1
+    out += [1] * (horizon - cur)
+    return out
+
+
+def replan_rows(sizes, replan_steps):
+    """실행할 행 수. 앞에서부터 더한 원본 스텝 수가 `replan_steps` 에 **가장 가까운**
+    행 수를 고른다. 같은 거리면 더 많이 실행하는 쪽.
+
+    5 이하로만 자르면 6스텝을 못 써서 K=1.5 가 실제 1.27 로 내려앉는다. 가장
+    가까운 쪽을 고르면 창이 4~6스텝으로 흔들리는 대신 배속이 정확히 떨어진다:
+
+        replan 5 에서  K=1 -> 5행(5)  1.5 -> 4행(6)  2 -> 3행(6)
+                       2.5 -> 2행(5)  3 -> 2행(6)    4 -> 1행(4)
+    """
+    best, best_d, cum = 1, None, 0
+    for r, n in enumerate(sizes, start=1):
+        cum += n
+        d = abs(cum - replan_steps)
+        if best_d is None or d <= best_d:
+            best, best_d = r, d
+        if cum >= replan_steps:
+            break
+    return best
+
+
 if __name__ == "__main__":
     for T in (16, 20):
         print(f"T={T}")

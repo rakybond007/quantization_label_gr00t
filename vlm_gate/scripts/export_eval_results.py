@@ -43,8 +43,27 @@ EXTERNAL = {
                     "ckpt prehj/GR00T-N1.5-libero-baseline-bs32-60k, seed 7, "
                     "gate_mode=none, 태스크당 50에피. clip1/dyn1(당시 플래그 없음). "
                     "output/libero/baseline_raw(0.932)는 b64 라 b32 사다리의 "
-                    "기준선으로 쓸 수 없고 이쪽을 쓴다.",
-        }
+                    "기준선으로 쓸 수 없고 이쪽을 쓴다. 실측 0.9565.",
+        },
+        "taekwan_r1p67_clipon": {
+            "path": "/sjw_alinlab2/home/taekwan/Data/libnaive_clipon_s7_K2_allk2",
+            "note": "이름은 K2 지만 **실제 배속은 1.67 배다.** libero 는 replan 이 "
+                    "5스텝마다 걸려서 정수 블록으로는 5를 (2,2,1) 로밖에 못 쪼갠다 "
+                    "-- 5스텝이 3스텝이 되므로 5/3=1.67 이다. 2.0 이 아니다. "
+                    "b32 체크포인트·seed 7·40태스크 50에피, 클리핑 켠 채. "
+                    "실측 0.9060, 기준선 0.9565 대비 -5.05%p. "
+                    "**libero 문항을 뽑을 때 깔았던 'K2 는 공짜(93.0 vs 92.9)' 는 "
+                    "b64 숫자였고, b32 에서는 1.67 배만으로도 5%p 가 깎인다.**",
+        },
+        "taekwan_r1p67_clipoff": {
+            "path": "/sjw_alinlab2/home/taekwan/Data/libnaive_clipoff_s7_K2_allk2",
+            "note": "위와 같은 1.67 배에 명령 클리핑만 푼 것. 실측 0.9460, "
+                    "-1.05%p. 클리핑을 푸는 것만으로 손상의 4%p 가 돌아온다. "
+                    "구동부 한계(dyn)는 켠 채라 CLIP_SCALE=3,DYN_SCALE=3 으로 "
+                    "돌린 released_* 와 같은 조건이 아니다. "
+                    "진짜 2.0 배는 fractional_blocks 로 청크 사이에 잔여를 넘겨야 "
+                    "나오고, 그게 released_K2(job 162314)다.",
+        },
     }
 }
 

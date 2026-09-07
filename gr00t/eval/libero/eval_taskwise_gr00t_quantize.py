@@ -28,6 +28,8 @@ class Args:
     port: int = 8000
     resize_size: int = 224
     replan_steps: int = 5
+    replan_rule: str = "le"   # "le": 원본 스텝 합이 replan_steps 이하 (기존 실행들)
+                              # "nearest": 가장 가까운 행 수 (F_level 디코더와 동일)
     # Naive fixed-K action quantization applied client-side to the 16-step chunk:
     # continuous (eef pos/rot delta, dims 0:6) are block-summed, the gripper
     # (dim 6, latching) takes the block's last value. K=1 disables quantization.
@@ -511,16 +513,26 @@ def eval_libero(args: Args) -> None:
                             # 연속 6축은 델타라 합, 그리퍼는 래치. K 가 정수면
                             # 기존과 같은 경계가 나온다.
                             #
-                            # carry 는 청크 사이로 넘어간다. 16스텝 청크 하나로는
-                            # 1.5 를 못 만들지만(11블록이면 1.455, 10이면 1.60),
-                            # 덜 압축한 만큼을 다음 청크가 갚으면 에피소드 전체
-                            # 배속이 요청값에 수렴한다.
+                            # replan_rule=nearest 면 F_level 의 배속별 디코더와
+                            # **같은 블록 경계**를 쓴다 (action_head_flevel.block_sizes).
+                            # 디코더가 그 경계로 학습되므로, 평가 사다리의 한 칸이
+                            # 디코더 한 칸과 같은 것을 가리키게 된다. 잔여를 청크
+                            # 사이로 넘기는 판(blocks_for)은 창마다 행 수가 달라져서
+                            # 디코더가 흉내낼 수 없으므로 여기서는 안 쓴다.
                             import sys as _s2, os as _o2
                             _s2.path.insert(0, _o2.path.expanduser(
                                 "~/quantization_agent_workspace/vlm_gate/scripts"))
-                            from fractional_blocks import blocks_for
-                            T = action_chunk.shape[0]
-                            _spans, _frac_carry = blocks_for(T, float(K_eff), _frac_carry)
+                            if args.replan_rule == "nearest":
+                                from fractional_blocks import block_sizes
+                                _lens = block_sizes(action_chunk.shape[0], float(K_eff))
+                                _spans, _c = [], 0
+                                for _n in _lens:
+                                    _spans.append((_c, _c + _n))
+                                    _c += _n
+                            else:
+                                from fractional_blocks import blocks_for
+                                T = action_chunk.shape[0]
+                                _spans, _frac_carry = blocks_for(T, float(K_eff), _frac_carry)
                             blocks, spans = [], []
                             for b, e in _spans:
                                 blk = action_chunk[b:e]
@@ -538,11 +550,21 @@ def eval_libero(args: Args) -> None:
                         # was partly the cost of replanning less often. Take whole blocks
                         # until their raw span reaches replan_steps, always at least one.
                         spans = _blk_spans if _blk_spans else [1] * len(action_chunk)
-                        rs, raw = 0, 0
-                        for sp in spans:
-                            if rs and raw + sp > args.replan_steps:
-                                break
-                            rs += 1; raw += sp
+                        if args.replan_rule == "nearest":
+                            # 5 **이하**로만 자르면 6스텝짜리를 못 써서 K=1.5 의 실제
+                            # 배속이 1.27 로 내려앉는다. 5에 가장 가까운 행 수를 고르면
+                            # 창이 4~6스텝으로 흔들리는 대신 배속이 정확히 떨어진다.
+                            import sys as _s3, os as _o3
+                            _s3.path.insert(0, _o3.path.expanduser(
+                                "~/quantization_agent_workspace/vlm_gate/scripts"))
+                            from fractional_blocks import replan_rows
+                            rs = replan_rows(spans, int(args.replan_steps))
+                        else:
+                            rs, raw = 0, 0
+                            for sp in spans:
+                                if rs and raw + sp > args.replan_steps:
+                                    break
+                                rs += 1; raw += sp
                         action_plan.extend(action_chunk[: rs])
 
                     action = action_plan.popleft()
