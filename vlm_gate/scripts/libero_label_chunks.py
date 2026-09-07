@@ -30,7 +30,7 @@ BASE = "/sjw_alinlab/home/hojin2/quantization_agent_workspace/vlm_gate"
 DS = "/sjw_alinlab2/home/myungkyu/.cache/huggingface/lerobot/kimtaey/libero_gr00t_delta"
 TIL = f"{BASE}/output/_gate_distill/libero_full/tiles"
 MAN = os.environ.get("MANIFEST", f"{BASE}/output/_gate_distill/libero_tiles_manifest.txt")
-TAG = os.environ.get("TAG", "libero_v1")
+TAG = os.environ.get("TAG", "libero_v2")
 NVIEW = 2
 NQ, SLOTS = 5, "ABCDE"
 
@@ -38,8 +38,12 @@ PORT, SHARD, NSH = sys.argv[1], int(sys.argv[2]), int(sys.argv[3])
 LIMIT = int(os.environ.get("LIMIT", "0"))          # >0 이면 스모크용으로 이만큼만
 OUT = f"{BASE}/output/_gate_distill/{TAG}_s{NSH}_{SHARD}.jsonl"
 
-G = open(f"{BASE}/analysis/_evolver/_libero/libero_guidance_v1.txt").read().strip()
-ASK = open(f"{BASE}/analysis/_evolver/_libero/libero_questions_v1.txt").read().strip()
+# 프롬프트 판은 env 로 고른다. v1 은 YES/NO 5문항(등급 없음)이고 검증 루프를
+# 거친 적이 없다. v2 는 측정된 손상에서 뽑은 5문항 + robocasa 와 같은 5등급이다
+# (`prompts/libero_v2.txt`, 도출은 `scripts/derive_libero_questions.py`).
+PV = os.environ.get("PROMPT_VER", "v2")
+G = open(f"{BASE}/analysis/_evolver/_libero/libero_guidance_{PV}.txt").read().strip()
+ASK = open(f"{BASE}/analysis/_evolver/_libero/libero_questions_{PV}.txt").read().strip()
 
 info = json.load(open(f"{DS}/meta/info.json"))
 instr = {}
