@@ -31,7 +31,10 @@ class Args:
     # Naive fixed-K action quantization applied client-side to the 16-step chunk:
     # continuous (eef pos/rot delta, dims 0:6) are block-summed, the gripper
     # (dim 6, latching) takes the block's last value. K=1 disables quantization.
-    compress_k: int = 1
+    # 분수 배속을 받는다. 블록 길이는 정수여야 하지만 평균은 아니어도 되고,
+    # 그 평균이 곧 배속이다. 손상표를 1x/2x/3x 세 칸이 아니라 태스크별 띠로
+    # 만들려면 1.5 와 2.5 가 필요하다.
+    compress_k: float = 1.0
 
     # ---- Optional VLM gate (per-chunk quantize decision) -------------------
     # If judge_url is set, query the gate per action chunk with the current
@@ -341,6 +344,10 @@ def eval_libero(args: Args) -> None:
             if client is None:
                 client = _websocket_client_policy.WebsocketClientPolicy(args.host, args.port)
 
+            # 분수 배속의 이월은 에피소드마다 0 에서 시작한다. 에피소드를 넘겨
+            # 이월하면 뒤 에피소드가 앞 에피소드의 반올림 빚을 갚게 된다.
+            _frac_carry = 0.0
+
             # Reset environment
             env.reset()
             # robosuite reset() RE-CREATES robots/controllers, wiping any
@@ -500,19 +507,27 @@ def eval_libero(args: Args) -> None:
                         elif K_eff > 1 and args.vark_bound > 0:
                             action_chunk = _vark_compress(action_chunk, K_eff, args.vark_bound, floor2=args.vark_floor2 > 0)
                         elif K_eff > 1:
-                            K = K_eff
+                            # 블록 경계만 분수 배속에서 받고 집계는 그대로다 --
+                            # 연속 6축은 델타라 합, 그리퍼는 래치. K 가 정수면
+                            # 기존과 같은 경계가 나온다.
+                            #
+                            # carry 는 청크 사이로 넘어간다. 16스텝 청크 하나로는
+                            # 1.5 를 못 만들지만(11블록이면 1.455, 10이면 1.60),
+                            # 덜 압축한 만큼을 다음 청크가 갚으면 에피소드 전체
+                            # 배속이 요청값에 수렴한다.
+                            import sys as _s2, os as _o2
+                            _s2.path.insert(0, _o2.path.expanduser(
+                                "~/quantization_agent_workspace/vlm_gate/scripts"))
+                            from fractional_blocks import blocks_for
                             T = action_chunk.shape[0]
-                            nfull = T // K
-                            blocks = []
-                            for i in range(nfull):
-                                blk = action_chunk[i * K:(i + 1) * K]
+                            _spans, _frac_carry = blocks_for(T, float(K_eff), _frac_carry)
+                            blocks, spans = [], []
+                            for b, e in _spans:
+                                blk = action_chunk[b:e]
                                 agg = blk.sum(axis=0)
                                 agg[6] = blk[-1, 6]   # gripper latch
                                 blocks.append(agg)
-                            spans = [K] * nfull
-                            for j in range(nfull * K, T):
-                                blocks.append(action_chunk[j])  # raw tail
-                                spans.append(1)
+                                spans.append(e - b)
                             action_chunk = np.stack(blocks)
                             _blk_spans = spans
                         # replan_steps counts RAW timesteps, not compressed blocks.

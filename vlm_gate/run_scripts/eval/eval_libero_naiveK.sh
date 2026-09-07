@@ -36,10 +36,12 @@ VARK_BOUND="${VARK_BOUND:-0}"
 CLIP_SCALE="${CLIP_SCALE:-1}"
 DYN_SCALE="${DYN_SCALE:-1}"
 VARK_FLOOR2="${VARK_FLOOR2:-0}"
-case "$VARK_BOUND" in ""|0|0.0|0.00) VARTAG="K${K}";; *) VARTAG="varK${K}";; esac
-case "$CLIP_SCALE" in ""|1|1.0) :;; *) VARTAG="clipK${K}";; esac
-case "$DYN_SCALE" in ""|1|1.0) :;; *) VARTAG="dynK${K}";; esac
-case "$VARK_FLOOR2" in ""|0) :;; *) VARTAG="fvarK${K}";; esac
+# 분수 배속이 오면 폴더 이름에 점이 들어간다. 1.5 -> K1p5 로 적는다.
+KTAG="$(printf '%s' "$K" | sed 's/\./p/; s/p0$//')"
+case "$VARK_BOUND" in ""|0|0.0|0.00) VARTAG="K${KTAG}";; *) VARTAG="varK${KTAG}";; esac
+case "$CLIP_SCALE" in ""|1|1.0) :;; *) VARTAG="clipK${KTAG}";; esac
+case "$DYN_SCALE" in ""|1|1.0) :;; *) VARTAG="dynK${KTAG}";; esac
+case "$VARK_FLOOR2" in ""|0) :;; *) VARTAG="fvarK${KTAG}";; esac
 OUTPUT_BASE="${OUTPUT_BASE:-$BASE_DIR/output/libero/baseline_${VARTAG}}"
 mkdir -p out "$OUTPUT_BASE"; cd "$PRIV"
 export NO_ALBUMENTATIONS_UPDATE=1
