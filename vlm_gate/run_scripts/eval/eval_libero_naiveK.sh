@@ -23,9 +23,10 @@ INTERP_KMAX="${INTERP_KMAX:-8}"
 INTERP_SPACE="${INTERP_SPACE:-path}"
 CLIP_SCALE="${CLIP_SCALE:-1}"
 DYN_SCALE="${DYN_SCALE:-1}"
-# nearest = F_level 배속별 디코더와 같은 블록 경계·실행 행 수.
-# 배속이 요청값에 정확히 떨어진다. le 는 기존 실행들이 쓰던 규칙.
-REPLAN_RULE="${REPLAN_RULE:-nearest}"
+# carry = F_level 과 같은 블록 경계 + 재예측 평균을 5에 맞추는 장부.
+# 배속이 요청값에 떨어지고 재예측 주기가 K 에 따라 안 갈린다.
+# le 는 기존 실행들이 쓰던 규칙(6스텝 창을 못 써서 배속이 내려앉는다).
+REPLAN_RULE="${REPLAN_RULE:-carry}"
 BASE_DIR="$HOME/quantization_agent_workspace/vlm_gate"
 PRIV="$HOME/quantization_agent_workspace/Isaac-GR00T"
 CONDA="$HOME/miniconda3"
@@ -38,9 +39,10 @@ N_EPISODES="${N_EPISODES:-50}"
 VARK_BOUND="${VARK_BOUND:-0}"
 CLIP_SCALE="${CLIP_SCALE:-1}"
 DYN_SCALE="${DYN_SCALE:-1}"
-# nearest = F_level 배속별 디코더와 같은 블록 경계·실행 행 수.
-# 배속이 요청값에 정확히 떨어진다. le 는 기존 실행들이 쓰던 규칙.
-REPLAN_RULE="${REPLAN_RULE:-nearest}"
+# carry = F_level 과 같은 블록 경계 + 재예측 평균을 5에 맞추는 장부.
+# 배속이 요청값에 떨어지고 재예측 주기가 K 에 따라 안 갈린다.
+# le 는 기존 실행들이 쓰던 규칙(6스텝 창을 못 써서 배속이 내려앉는다).
+REPLAN_RULE="${REPLAN_RULE:-carry}"
 VARK_FLOOR2="${VARK_FLOOR2:-0}"
 # 분수 배속이 오면 폴더 이름에 점이 들어간다. 1.5 -> K1p5 로 적는다.
 KTAG="$(printf '%s' "$K" | sed 's/\./p/; s/p0$//')"

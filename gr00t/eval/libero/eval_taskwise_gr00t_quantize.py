@@ -28,8 +28,9 @@ class Args:
     port: int = 8000
     resize_size: int = 224
     replan_steps: int = 5
-    replan_rule: str = "le"   # "le": 원본 스텝 합이 replan_steps 이하 (기존 실행들)
-                              # "nearest": 가장 가까운 행 수 (F_level 디코더와 동일)
+    replan_rule: str = "le"   # "le":      원본 스텝 합이 replan_steps 이하 (기존 실행들)
+                              # "nearest":  가장 가까운 행 수 하나로 고정 (F_level 현재 규칙)
+                              # "carry":    장부로 골라 재예측 평균을 replan_steps 에 맞춤
     # Naive fixed-K action quantization applied client-side to the 16-step chunk:
     # continuous (eef pos/rot delta, dims 0:6) are block-summed, the gripper
     # (dim 6, latching) takes the block's last value. K=1 disables quantization.
@@ -349,6 +350,7 @@ def eval_libero(args: Args) -> None:
             # 분수 배속의 이월은 에피소드마다 0 에서 시작한다. 에피소드를 넘겨
             # 이월하면 뒤 에피소드가 앞 에피소드의 반올림 빚을 갚게 된다.
             _frac_carry = 0.0
+            _replan_carry = 0.0
 
             # Reset environment
             env.reset()
@@ -522,7 +524,7 @@ def eval_libero(args: Args) -> None:
                             import sys as _s2, os as _o2
                             _s2.path.insert(0, _o2.path.expanduser(
                                 "~/quantization_agent_workspace/vlm_gate/scripts"))
-                            if args.replan_rule == "nearest":
+                            if args.replan_rule in ("nearest", "carry"):
                                 from fractional_blocks import block_sizes
                                 _lens = block_sizes(action_chunk.shape[0], float(K_eff))
                                 _spans, _c = [], 0
@@ -550,15 +552,25 @@ def eval_libero(args: Args) -> None:
                         # was partly the cost of replanning less often. Take whole blocks
                         # until their raw span reaches replan_steps, always at least one.
                         spans = _blk_spans if _blk_spans else [1] * len(action_chunk)
-                        if args.replan_rule == "nearest":
+                        if args.replan_rule in ("nearest", "carry"):
                             # 5 **이하**로만 자르면 6스텝짜리를 못 써서 K=1.5 의 실제
-                            # 배속이 1.27 로 내려앉는다. 5에 가장 가까운 행 수를 고르면
-                            # 창이 4~6스텝으로 흔들리는 대신 배속이 정확히 떨어진다.
+                            # 배속이 1.27 로 내려앉는다.
+                            #
+                            # nearest 는 5에 가장 가까운 행 수 하나로 고정이라 K 마다
+                            # 재예측 주기가 4·5·6 으로 갈린다 -- 재예측을 덜 한 이득이
+                            # 압축 효과에 섞인다. carry 는 "5씩 썼어야 할 양 − 실제로
+                            # 쓴 양" 장부를 들고 다니며 골라서 재예측 평균이 정확히 5로
+                            # 붙는다. 앞을 안 보므로 추론에서도 쓸 수 있다.
                             import sys as _s3, os as _o3
                             _s3.path.insert(0, _o3.path.expanduser(
                                 "~/quantization_agent_workspace/vlm_gate/scripts"))
-                            from fractional_blocks import replan_rows
-                            rs = replan_rows(spans, int(args.replan_steps))
+                            if args.replan_rule == "carry":
+                                from fractional_blocks import replan_rows_carry
+                                rs, _replan_carry = replan_rows_carry(
+                                    spans, int(args.replan_steps), _replan_carry)
+                            else:
+                                from fractional_blocks import replan_rows
+                                rs = replan_rows(spans, int(args.replan_steps))
                         else:
                             rs, raw = 0, 0
                             for sp in spans:

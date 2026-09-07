@@ -140,6 +140,39 @@ def replan_rows(sizes, replan_steps):
     return best
 
 
+def replan_rows_carry(sizes, replan_steps, carry=0.0):
+    """실행할 행 수를 **장부**로 고른다. `(행 수, 다음 carry)` 를 돌려준다.
+
+    `replan_rows` 는 매번 replan_steps 에 가장 가까운 하나로 고정이라, K 마다
+    재예측 주기가 4·5·6 으로 갈린다. 그러면 "level 2 를 많이 쓴 에피소드" 가
+    압축 이득과 재예측을 덜 한 이득을 같이 받아서 둘을 못 가른다.
+
+    carry 는 "지금까지 replan_steps 씩 썼어야 할 양 − 실제로 쓴 양" 이다.
+    앞만 보므로 추론에서도 쓸 수 있다 -- 다음에 어느 level 이 뽑힐지 알 필요가
+    없고, level 이 정해진 뒤에 이 함수를 부르면 된다.
+
+        K=1.5  6,4,6,4,...   재예측 평균 5, 배속 10/7 = 1.429
+        K=2    6,4,6,4,...   재예측 평균 5, 배속 10/5 = 2.000
+        K=3    6,3,6,...     재예측 평균 5, 배속 15/5 = 3.000
+        K=4    4,8,4,4,...   재예측 평균 5, 배속 20/5 = 4.000
+
+    `replan_rows` 와 달리 K=2.5 만 빼면 창 길이가 번갈아 든다. 배속은 K=1.5 만
+    1.429 이고(블록이 [1,2] 교대라 홀수 행에서 반 스텝이 어긋난다) 나머지는
+    요청값에 정확히 떨어진다.
+    """
+    want = replan_steps + carry
+    best, best_d, best_raw = 1, None, sizes[0] if sizes else 1
+    cum = 0
+    for r, n in enumerate(sizes, start=1):
+        cum += n
+        d = abs(cum - want)
+        if best_d is None or d <= best_d:      # 같으면 더 많이 실행하는 쪽
+            best, best_d, best_raw = r, d, cum
+        if cum >= want + max(sizes):           # 더 가 봐야 멀어지기만 한다
+            break
+    return best, want - best_raw
+
+
 if __name__ == "__main__":
     for T in (16, 20):
         print(f"T={T}")
