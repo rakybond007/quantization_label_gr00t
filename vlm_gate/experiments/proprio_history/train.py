@@ -47,15 +47,25 @@ def select_split(labels, args):
     tasks = sorted(ep_task.unique())
     if args.max_tasks:
         tasks = [tasks[i] for i in sorted(rng.choice(len(tasks), min(len(tasks), args.max_tasks), replace=False))]
-    split = {}
+    split, dropped = {}, []
     for task in tasks:
         eps = rng.permutation(ep_task[ep_task == task].index.to_numpy())
         if args.episodes_per_task:
             eps = eps[:args.episodes_per_task]
         if len(eps) < 2:
-            raise ValueError(f"need >=2 episodes for task-stratified split: {task}")
+            # 한 에피소드짜리 지시문은 층화 분할이 성립하지 않는다 -- 학습과 검증
+            # 어느 한쪽에만 들어가고, 그러면 그 지시문에 대해 두 집합이 비교되지
+            # 않는다. 통째로 실패시키는 대신 그 지시문만 빼고 몇 개를 뺐는지
+            # 남긴다. phase9 라벨에서는 334종 중 9종 · 408행(0.2%) 이다.
+            dropped.append(task)
+            continue
         nv = min(len(eps)-1, max(1, round(len(eps)*args.val_frac)))
         split.update({int(ep): ("val" if i < nv else "train") for i, ep in enumerate(eps)})
+    if dropped:
+        print(json.dumps({"dropped_single_episode_tasks": len(dropped),
+                          "examples": dropped[:3]}, ensure_ascii=False), flush=True)
+    if not split:
+        raise ValueError("에피소드가 2개 이상인 지시문이 하나도 없다")
     lab = labels[labels.episode_index.isin(split)].copy()
     if args.frames_per_episode:
         groups = []
