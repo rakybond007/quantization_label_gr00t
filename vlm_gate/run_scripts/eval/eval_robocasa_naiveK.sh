@@ -96,6 +96,7 @@ for TASK in "${SELECTED[@]}"; do
         --max_episode_steps $MAX_STEPS --generative_textures \
         --compress-k $K --vark-bound $VARK_BOUND --vark-floor2 $VARK_FLOOR2 --clip-scale $CLIP_SCALE --dyn-scale $DYN_SCALE \
         --interp-eps $INTERP_EPS --interp-ratio-max $INTERP_RATIO_MAX --interp-kmax $INTERP_KMAX --interp-space $INTERP_SPACE \
+        --policy-ckpt "$CKPT_DIR" \
         --frac-ratio $FRAC_RATIO --ceiling-floor $CEILING_FLOOR --ceiling-mode $CEILING_MODE \
         --eps-min $EPS_MIN --eps-max $EPS_MAX \
         ${TASK_CEILINGS:+--task-ceilings $TASK_CEILINGS} \

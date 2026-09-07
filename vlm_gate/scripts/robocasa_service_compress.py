@@ -281,6 +281,10 @@ def main():
     p.add_argument("--gate-k3-threshold", type=float, default=0.0,
                    help="If >0, chunks with gate confidence >= this use K=3 merge "
                         "(confidence ladder: fine < tau < K2 < tau3 < K3).")
+    p.add_argument("--policy-ckpt", type=str, default="",
+                   help="Policy checkpoint the server was started from. Recorded in the "
+                        "results header so a run's numbers can never be attributed to the "
+                        "wrong training run -- folder timestamps are not evidence.")
     p.add_argument("--frac-ratio", type=float, default=0.0,
                    help="Uniform compression at a fractional rate (1.5, 2.5). Block "
                         "lengths stay integers but their mean is this ratio, and the "
@@ -707,6 +711,8 @@ def main():
     with open(pred_path, "a") as f:
         f.write(f"is_success: {succ_rate:.4f}\n")
         f.write(f"compress_k: {K}\n")
+        if args.policy_ckpt:
+            f.write(f"policy_ckpt: {args.policy_ckpt}\n")
         if args.interp_eps > 0:
             f.write(f"interp_eps: {args.interp_eps}\n")
             f.write(f"interp_ratio_max: {args.interp_ratio_max}\n")
