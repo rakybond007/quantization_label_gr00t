@@ -27,6 +27,14 @@ INTERP_EPS="${INTERP_EPS:-0}"
 INTERP_RATIO_MAX="${INTERP_RATIO_MAX:-2.5}"
 INTERP_KMAX="${INTERP_KMAX:-8}"
 INTERP_SPACE="${INTERP_SPACE:-path}"
+# 분수 배속(1.5/2.5): 블록 길이는 정수지만 평균이 이 값이 되게 흩어 깐다.
+FRAC_RATIO="${FRAC_RATIO:-0}"
+# 태스크별 상한표 + 게이트 confidence 로 청크마다 배속을 정하는 경로.
+TASK_CEILINGS="${TASK_CEILINGS:-}"
+CEILING_FLOOR="${CEILING_FLOOR:-1.0}"
+CEILING_MODE="${CEILING_MODE:-frac}"
+EPS_MIN="${EPS_MIN:-0.01}"
+EPS_MAX="${EPS_MAX:-0}"
 CLIP_SCALE="${CLIP_SCALE:-1}"
 DYN_SCALE="${DYN_SCALE:-1}"
 VARK_FLOOR2="${VARK_FLOOR2:-0}"
@@ -36,6 +44,8 @@ case "$VARK_BOUND" in ""|0|0.0|0.00) VARTAG="K${K}";; *) VARTAG="varK${K}";; esa
 case "$CLIP_SCALE" in ""|1|1.0) :;; *) VARTAG="clipK${K}";; esac
 case "$DYN_SCALE" in ""|1|1.0) :;; *) VARTAG="dynK${K}";; esac
 case "$VARK_FLOOR2" in ""|0) :;; *) VARTAG="fvarK${K}";; esac
+case "$FRAC_RATIO" in ""|0|0.0) :;; *) VARTAG="fracK${FRAC_RATIO}";; esac
+[ -n "$TASK_CEILINGS" ] && VARTAG="ceil_${CEILING_MODE}"
 OUTPUT_BASE="${OUTPUT_BASE:-$BASE_DIR/output/robocasa/baseline_compress_${VARTAG}}"
 mkdir -p out "$OUTPUT_BASE"
 cd "$BASE_DIR"
@@ -86,6 +96,9 @@ for TASK in "${SELECTED[@]}"; do
         --max_episode_steps $MAX_STEPS --generative_textures \
         --compress-k $K --vark-bound $VARK_BOUND --vark-floor2 $VARK_FLOOR2 --clip-scale $CLIP_SCALE --dyn-scale $DYN_SCALE \
         --interp-eps $INTERP_EPS --interp-ratio-max $INTERP_RATIO_MAX --interp-kmax $INTERP_KMAX --interp-space $INTERP_SPACE \
+        --frac-ratio $FRAC_RATIO --ceiling-floor $CEILING_FLOOR --ceiling-mode $CEILING_MODE \
+        --eps-min $EPS_MIN --eps-max $EPS_MAX \
+        ${TASK_CEILINGS:+--task-ceilings $TASK_CEILINGS} \
         >& "$ODIR/eval-$SLURM_ARRAY_TASK_ID.log" &
     MAIN_PIDS+=($!)
 done

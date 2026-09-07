@@ -25,7 +25,7 @@ _sys.path.insert(0, str(Path(__file__).resolve().parent))
 from robosuite.controllers import load_composite_controller_config
 from tqdm import tqdm, trange
 
-from interp_compress import interp_compress_chunk
+from interp_compress import interp_compress_chunk, frac_compress_chunk
 from gr00t.eval.robocasa_simulation import SimulationInferenceClient
 from gr00t.eval.wrappers.multistep_wrapper import MultiStepWrapper
 from gr00t.eval.wrappers.record_video import RecordVideo
@@ -281,6 +281,28 @@ def main():
     p.add_argument("--gate-k3-threshold", type=float, default=0.0,
                    help="If >0, chunks with gate confidence >= this use K=3 merge "
                         "(confidence ladder: fine < tau < K2 < tau3 < K3).")
+    p.add_argument("--frac-ratio", type=float, default=0.0,
+                   help="Uniform compression at a fractional rate (1.5, 2.5). Block "
+                        "lengths stay integers but their mean is this ratio, and the "
+                        "rounding remainder carries into the next chunk so the episode "
+                        "converges on it. 0 = off.")
+    p.add_argument("--task-ceilings", type=str, default="",
+                   help="JSON file mapping task name -> maximum rate. The gate's "
+                        "confidence then picks the rate under that ceiling per chunk, "
+                        "instead of one global cap for every task.")
+    p.add_argument("--ceiling-floor", type=float, default=1.0,
+                   help="Rate a chunk gets at confidence 0.")
+    p.add_argument("--ceiling-mode", type=str, default="frac", choices=["frac", "eps"],
+                   help="What the gate's confidence controls. 'frac': confidence picks the "
+                        "rate directly under the task ceiling and uniform fractional blocks "
+                        "realise it exactly. 'eps': confidence picks the interpolation "
+                        "tolerance and the ceiling is only a cap -- the rate then also "
+                        "depends on how straight this particular chunk is.")
+    p.add_argument("--eps-min", type=float, default=0.01,
+                   help="Interpolation tolerance at confidence 0 (ceiling-mode eps).")
+    p.add_argument("--eps-max", type=float, default=0.0,
+                   help="Interpolation tolerance at confidence 1. 0 = confidence does not "
+                        "drive eps; --interp-eps is used flat.")
     p.add_argument("--interp-eps", type=float, default=0.0,
                    help=">0 이면 고정 K 대신 보간 기반 가변 세그먼트 압축.")
     p.add_argument("--interp-ratio-max", type=float, default=2.5,
@@ -406,6 +428,7 @@ def main():
     comp_clip_total = 0.0   # summed |clip excess| in action units
     comp_clip_steps = 0     # merged steps where clipping occurred
     rule_blocks = 0; rule_reasons = {}
+    _raw_in = 0; _exec_out = 0      # realised rate = raw steps folded / steps executed
     merge_clip_steps = 0; merge_clip_excess = 0.0; merge_steps = 0
     comp_steps = 0          # merged steps compensated
     if args.compensate != "none":
@@ -419,6 +442,15 @@ def main():
         # frame would alias axes whenever the base yaw != 0).
         v = o.get("state.end_effector_position_relative")
         return None if v is None else np.asarray(v, dtype=float).reshape(-1, 3)[-1]
+
+    ceilings = None
+    if args.task_ceilings:
+        with open(args.task_ceilings) as _f:
+            ceilings = json.load(_f)
+        _c = ceilings.get(args.env_name)
+        print(f"[ceiling] table={args.task_ceilings} task={args.env_name} "
+              f"ceiling={_c} floor={args.ceiling_floor} mode={args.ceiling_mode}"
+              + ("" if _c is not None else "  (task absent -> no compression)"), flush=True)
 
     # Optional zero-shot VLM gate: per chunk get confidence P(safe-to-compress);
     # quantize (K) when conf >= threshold, else raw (K=1).
@@ -479,6 +511,7 @@ def main():
         if gate is not None:
             print(f"[gate] ep {i} instruction={ep_instruction!r}", flush=True)
         # Per-episode TTL-policy state
+        _frac_carry = 0.0      # rounding debt is per episode, never across
         _g_ttl = 0
         _g_last_conf = None
         _g_last_q = None
@@ -575,7 +608,32 @@ def main():
                 else:
                     k_eff = K
                 blocks = None
-                if k_eff > 1 and args.interp_eps > 0:
+                # Per-chunk rate: the task's measured ceiling scaled by how
+                # confident the gate is that this chunk survives compression.
+                _c = conf if gate is not None else 1.0
+                _ceil = (float(ceilings.get(args.env_name, 1.0)) if ceilings is not None
+                         else args.interp_ratio_max)
+                if ceilings is not None and args.ceiling_mode == "eps":
+                    # Confidence moves the tolerance, which is what actually binds;
+                    # the task ceiling stays a cap so a straight stretch cannot run
+                    # past what that task was measured to survive.
+                    _eps = (args.eps_min + _c * (args.eps_max - args.eps_min)
+                            if args.eps_max > 0 else args.interp_eps)
+                    sub_exec, blocks = interp_compress_chunk(
+                        sub, _eps, ratio_max=_ceil, kmax=args.interp_kmax,
+                        discrete_keys=DISCRETE_KEYS, space=args.interp_space,
+                        mode="delta", return_blocks=True)
+                elif ceilings is not None or args.frac_ratio > 0:
+                    # Confidence picks the rate itself; fractional blocks hit it exactly.
+                    r_chunk = (args.ceiling_floor + _c * (_ceil - args.ceiling_floor)
+                               if ceilings is not None else args.frac_ratio)
+                    if r_chunk > 1.0:
+                        sub_exec, blocks, _frac_carry = frac_compress_chunk(
+                            sub, r_chunk, _frac_carry, discrete_keys=DISCRETE_KEYS,
+                            mode="delta", return_blocks=True)
+                    else:
+                        sub_exec = sub      # rate at or below 1: run raw
+                elif k_eff > 1 and args.interp_eps > 0:
                     # 경계를 데이터가 정한다: 직선 근사가 eps 안에서 되는 동안
                     # 세그먼트를 늘리고, 안 되는 지점에서 끊는다. 압축비 상한은
                     # 세그먼트마다가 아니라 청크 전체에 건다 — 세그먼트 길이가
@@ -618,6 +676,8 @@ def main():
                         if _e > 0:
                             comp_clip_total += _e
                             comp_clip_steps += 1
+                    _raw_in += (blocks[j][1] - blocks[j][0]) if blocks is not None else 1
+                    _exec_out += 1
                     obs, reward, terminated, truncated, info = step_action(sub_exec, j, env)
                     _ee_cur = _obs_ee(obs)
                     if _ee_cur is not None and _ee_prev is not None:
@@ -661,6 +721,17 @@ def main():
         if args.dyn_scale != 1.0:
             f.write(f"dyn_scale: {args.dyn_scale}\n")
         f.write(f"exec_chunk_len_mean: {np.mean(chunk_lens) if chunk_lens else 0:.2f}\n")
+        f.write(f"realised_ratio: {(_raw_in / _exec_out) if _exec_out else 1.0:.4f}"
+                f" ({_raw_in}/{_exec_out})\n")
+        if args.frac_ratio > 0:
+            f.write(f"frac_ratio: {args.frac_ratio}\n")
+        if args.task_ceilings:
+            f.write(f"task_ceilings: {args.task_ceilings}\n")
+            f.write(f"task_ceiling: {ceilings.get(args.env_name)}\n")
+            f.write(f"ceiling_floor: {args.ceiling_floor}\n")
+            f.write(f"ceiling_mode: {args.ceiling_mode}\n")
+            if args.ceiling_mode == "eps" and args.eps_max > 0:
+                f.write(f"eps_min: {args.eps_min} eps_max: {args.eps_max}\n")
         if args.action_rules:
             f.write(f"action_rule_blocks: {rule_blocks} {rule_reasons}\n")
         if compensator is not None:

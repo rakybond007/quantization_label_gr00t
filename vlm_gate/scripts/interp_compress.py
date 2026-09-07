@@ -109,10 +109,7 @@ def interp_compress_chunk(chunk_dict, eps, ratio_max=2.5, kmax=8,
                           return_blocks=False):
     """Drop-in alternative to compress_chunk with data-chosen boundaries."""
     keys = list(chunk_dict.keys())
-    arrs = {}
-    for k, v in chunk_dict.items():
-        v = np.asarray(v, dtype=float)
-        arrs[k] = v if v.ndim >= 2 else v[..., None]
+    arrs = _as_2d(chunk_dict)
     T = next(iter(arrs.values())).shape[0]
     cont_k = [k for k in keys if k not in discrete_keys]
     disc_k = [k for k in keys if k in discrete_keys]
@@ -123,12 +120,50 @@ def interp_compress_chunk(chunk_dict, eps, ratio_max=2.5, kmax=8,
     spans = segment(cont, disc, eps, kmax, "path" if mode == "delta" and space == "path" else space)
     spans = _cap_ratio(spans, T, ratio_max)
 
-    out = {k: [] for k in keys}
+    res = aggregate_spans(arrs, spans, cont_k, disc_k, mode)
+    return (res, spans) if return_blocks else res
+
+
+def _as_2d(chunk_dict):
+    arrs = {}
+    for k, v in chunk_dict.items():
+        v = np.asarray(v, dtype=float)
+        arrs[k] = v if v.ndim >= 2 else v[..., None]
+    return arrs
+
+
+def aggregate_spans(arrs, spans, cont_k, disc_k, mode):
+    """Collapse each span to one row. The only place aggregation is defined.
+
+    Continuous keys: sum for delta embodiments (robocasa/libero end-effector
+    deltas), block-last for absolute ones (dexjoco joint targets).
+    Discrete keys always latch to the last value in the span, so a gripper
+    command is never averaged into a half-open state.
+    """
+    out = {k: [] for k in list(cont_k) + list(disc_k)}
     for s, e in spans:
         for k in cont_k:
             blk = arrs[k][s:e]
             out[k].append(blk.sum(axis=0) if mode == "delta" else blk[-1])
         for k in disc_k:
             out[k].append(arrs[k][e - 1])
-    res = {k: np.stack(v) for k, v in out.items()}
-    return (res, spans) if return_blocks else res
+    return {k: np.stack(v) for k, v in out.items()}
+
+
+def frac_compress_chunk(chunk_dict, ratio, carry=0.0, discrete_keys=(),
+                        mode="delta", return_blocks=False):
+    """Uniform compression at a fractional rate, sharing one aggregation path.
+
+    Boundaries come from fractional_blocks.blocks_for, which mixes block
+    lengths so the mean is the requested ratio and carries the rounding
+    remainder into the next chunk. Aggregation is identical to the
+    interpolation path -- only where the cuts fall differs.
+    """
+    from fractional_blocks import blocks_for
+    arrs = _as_2d(chunk_dict)
+    T = next(iter(arrs.values())).shape[0]
+    cont_k = [k for k in arrs if k not in discrete_keys]
+    disc_k = [k for k in arrs if k in discrete_keys]
+    spans, carry = blocks_for(T, ratio, carry)
+    res = aggregate_spans(arrs, spans, cont_k, disc_k, mode)
+    return (res, spans, carry) if return_blocks else (res, carry)
