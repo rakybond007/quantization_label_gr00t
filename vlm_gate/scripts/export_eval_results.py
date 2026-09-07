@@ -37,15 +37,24 @@ for bench in ("robocasa", "libero", "dexjoco"):
     runs = {}
     for r in E.list_runs(bench):
         try:
-            tasks = {t: {"success": round(v.success, 4), "n": v.n,
-                         "n_success": v.n_success}
-                     for t, v in r.tasks.items()}
+            # 성공 스텝 수도 같이 뽑는다. 배속을 올렸는데 스텝이 그만큼 안 주는
+            # 태스크가 있다 -- 과한 명령이 유발한 재시도로 사라지기 때문이다.
+            # 성공률만 보면 그게 안 보인다.
+            tasks = {}
+            for t, v in r.tasks.items():
+                st = v.steps_on_success
+                tasks[t] = {"success": round(v.success, 4), "n": v.n,
+                            "n_success": v.n_success,
+                            "steps_on_success": (round(st, 1) if st else None)}
         except Exception:
             continue
         if not tasks:
             continue
+        rs_ = r.steps_on_success
         runs[r.name] = {"success": round(r.success, 4), "n": r.n,
-                        "n_tasks": len(tasks), "tasks": tasks}
+                        "n_tasks": len(tasks),
+                        "steps_on_success": (round(rs_, 1) if rs_ else None),
+                        "tasks": tasks}
     db[bench] = runs
     notes[bench] = {"baseline": BASE.get(bench), "n_runs": len(runs)}
     print(f"{bench}: 실행 {len(runs)}개")
