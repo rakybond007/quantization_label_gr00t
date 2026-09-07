@@ -28,7 +28,9 @@ from libero_descriptors import descriptors, facts_text, computed_risk
 
 BASE = "/sjw_alinlab/home/hojin2/quantization_agent_workspace/vlm_gate"
 DS = "/sjw_alinlab2/home/myungkyu/.cache/huggingface/lerobot/kimtaey/libero_gr00t_delta"
-TIL = f"{BASE}/output/_gate_distill/libero_full/tiles"
+# 타일 디렉터리도 env 로 고른다. 부호 검증에는 두 풀이 다 들어간
+# libero_pools 를 쓴다 (gen_libero_tiles_pools.py).
+TIL = os.environ.get("TILES", f"{BASE}/output/_gate_distill/libero_full/tiles")
 MAN = os.environ.get("MANIFEST", f"{BASE}/output/_gate_distill/libero_tiles_manifest.txt")
 TAG = os.environ.get("TAG", "libero_v2")
 NVIEW = 2
@@ -103,16 +105,23 @@ for nm in sorted(open(MAN).read().split()):
     h, w, _ = im.shape
     views = [Image.fromarray(im[:, k * w // NVIEW:(k + 1) * w // NVIEW]) for k in range(NVIEW)]
     ins = f"{instr.get(ep, '')}\n{facts_text(x)}"
-    # **n_grade 를 반드시 넘긴다.** 없이 부르면 판정기가 강제된 YES/NO 슬롯의
-    # 로짓을 읽는 경로로 간다 -- 모델이 하지 않은 답을 짓는 것이라 저장소가
-    # 금지한 것이다(CLAUDE.md 되돌리지 말 것 1). v1 이 YES/NO 였던 이유가 이것이고,
-    # 실제로 그 경로에서는 신뢰도가 0.503~0.527 에 붙어 아무것도 가르지 못했다.
-    r = gate.judge(views, ins, G, question=ASK, n_ask=NQ, n_grade=NGRADE)
+    # **n_grade 와 mode="text" 를 반드시 같이 넘긴다.** 둘 중 하나라도 빠지면
+    # 판정기가 강제된 YES/NO 슬롯의 로짓을 읽는 경로로 간다 -- 모델이 하지 않은
+    # 답을 짓는 것이라 저장소가 금지한 것이다(CLAUDE.md 되돌리지 말 것 1).
+    # v1 이 YES/NO 였던 이유가 이것이고, 그 경로에서는 신뢰도가 0.503~0.527 에
+    # 붙어 아무것도 가르지 못했다. phase9·allex 와 같은 호출로 맞춘다.
+    r = gate.judge(views, ins, G, question=ASK, n_ask=NQ, n_grade=NGRADE,
+                   mode="text")
+    # 죽은 판정기는 모든 호출에 같은 답을 준다. 길이만 맞는 파일이 나오면
+    # 개수를 세는 것으로는 성공과 구별되지 않는다 -- 본문이 비면 실패로 센다.
     c = r.get("picks")
-    if not c or len(c) != NQ or any(v is None for v in c):   # 판정 실패 — 다음 실행에 넘긴다
+    if r.get("error") or not str(r.get("text", "")).strip() \
+            or not c or len(c) != NQ or any(v is None for v in c):
         skipped += 1
         if skipped % 20 == 1:
-            print(f"shard{SHARD}: judge miss ep{ep} f{f}: {r.get('error','')}", flush=True)
+            print(f"shard{SHARD}: judge miss ep{ep} f{f}: "
+                  f"err={r.get('error','')!r} picks={r.get('picks')!r} "
+                  f"text={str(r.get('text',''))[:60]!r}", flush=True)
         continue
     rec = {"ep": ep, "f": f, **{k: int(v) for k, v in zip(SLOTS, c)},
            **computed_risk(x), "speed_mean": x["speed_mean"], "ans": r.get("text", "")}
