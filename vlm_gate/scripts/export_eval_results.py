@@ -32,6 +32,55 @@ BASE = {"robocasa": "baseline_full_v2_with_action_steps",
 # 배속이 청크마다 달라서 "이 태스크는 몇 배속까지 견디나" 를 말해 주지 않는다.
 UNIFORM = ("baseline_compress_K", "baseline_K", "baseline_60k_K")
 
+# 결과가 이 저장소의 output/ 안에만 있는 것이 아니다. 동료가 낸 것도 있고,
+# 그것을 못 찾아 같은 실행을 다시 뜨는 것이 실제로 있었다. 밖에 있는 정본은
+# 여기에 적어 두고 같이 읽는다.
+EXTERNAL = {
+    "libero": {
+        "baseline_bs32_allfine_K1": {
+            "path": "/sjw_alinlab2/home/taekwan/Data/libero_all_Fine",
+            "note": "taekwan 이 2026-08-05 에 정리한 40태스크 K=1 정본. "
+                    "ckpt prehj/GR00T-N1.5-libero-baseline-bs32-60k, seed 7, "
+                    "gate_mode=none, 태스크당 50에피. clip1/dyn1(당시 플래그 없음). "
+                    "output/libero/baseline_raw(0.932)는 b64 라 b32 사다리의 "
+                    "기준선으로 쓸 수 없고 이쪽을 쓴다.",
+        }
+    }
+}
+
+
+def read_external(root):
+    """suite/<idx>_results.txt 의 에피소드 줄에서 직접 센다. 요약줄을 안 믿는다."""
+    from pathlib import Path
+    tasks, tot, ok = {}, 0, 0
+    for f in sorted(Path(root).glob("*/*_results.txt")):
+        name = f"{f.parent.name}_{f.stem.split('_')[0]}"
+        n = s = 0
+        st = []
+        for line in open(f):
+            q = line.split("\t")
+            if len(q) >= 2 and q[1].strip() in ("True", "False"):
+                n += 1
+                if q[1].strip() == "True":
+                    s += 1
+                    if len(q) >= 3:
+                        try:
+                            st.append(float(q[2]))
+                        except ValueError:
+                            pass
+        if n:
+            tasks[name] = {"success": round(s / n, 4), "n": n, "n_success": s,
+                           "steps_on_success": (round(sum(st) / len(st), 1) if st else None)}
+            tot += n
+            ok += s
+    if not tot:
+        return None
+    allst = [t["steps_on_success"] for t in tasks.values() if t["steps_on_success"]]
+    return {"success": round(ok / tot, 4), "n": tot, "n_tasks": len(tasks),
+            "steps_on_success": (round(sum(allst) / len(allst), 1) if allst else None),
+            "tasks": tasks}
+
+
 db, notes = {}, {}
 for bench in ("robocasa", "libero", "dexjoco"):
     runs = {}
@@ -55,6 +104,17 @@ for bench in ("robocasa", "libero", "dexjoco"):
                         "n_tasks": len(tasks),
                         "steps_on_success": (round(rs_, 1) if rs_ else None),
                         "tasks": tasks}
+    for nm, meta_ in EXTERNAL.get(bench, {}).items():
+        try:
+            r = read_external(meta_["path"])
+        except Exception as e:
+            print(f"  바깥 결과 {nm} 못 읽음: {e}")
+            r = None
+        if r:
+            r["external_path"] = meta_["path"]
+            r["note"] = meta_["note"]
+            runs[nm] = r
+            print(f"  바깥 결과 {nm}: {r['success']:.4f} · {r['n_tasks']}태스크")
     db[bench] = runs
     notes[bench] = {"baseline": BASE.get(bench), "n_runs": len(runs)}
     print(f"{bench}: 실행 {len(runs)}개")
