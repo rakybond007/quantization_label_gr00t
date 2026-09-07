@@ -47,6 +47,36 @@ def select_split(labels, args):
     tasks = sorted(ep_task.unique())
     if args.max_tasks:
         tasks = [tasks[i] for i in sorted(rng.choice(len(tasks), min(len(tasks), args.max_tasks), replace=False))]
+    if args.val_frac <= 0:
+        # 전량 학습. VLA 학습이 그렇듯 끝까지 돌리고 마지막 것을 쓴다.
+        # 판정은 폐루프 eval 이 한다 -- 게이트는 수단이고, 안 본 데이터의 BCE 가
+        # 낮은 쪽이 실제로 성공률을 올리는 쪽이라는 보장이 없다.
+        #
+        # 그러면 지시문마다 에피소드 2개를 요구할 이유도 없어진다. 나눌 것이
+        # 없으니 한 에피소드짜리 지시문도 그냥 학습에 들어간다.
+        lab = labels.copy()
+        if args.max_tasks:
+            keep = set(tasks[:args.max_tasks])
+            lab = lab[lab.task.isin(keep)]
+        if args.episodes_per_task or args.frames_per_episode:
+            sel = []
+            for _, g in lab.groupby("task"):
+                eps = rng.permutation(g.episode_index.unique())
+                if args.episodes_per_task:
+                    eps = eps[:args.episodes_per_task]
+                gg = g[g.episode_index.isin(eps)]
+                if args.frames_per_episode:
+                    gg = (gg.sort_values("frame_index").groupby("episode_index")
+                          .head(args.frames_per_episode))
+                sel.append(gg)
+            lab = pd.concat(sel) if sel else lab
+        lab = lab.sort_values(keys).reset_index(drop=True)
+        lab["split"] = "train"
+        print(json.dumps({"val_frac": 0, "train_rows": len(lab),
+                          "train_episodes": int(lab.episode_index.nunique()),
+                          "tasks": int(lab.task.nunique())}), flush=True)
+        return lab
+
     split, dropped = {}, []
     for task in tasks:
         eps = rng.permutation(ep_task[ep_task == task].index.to_numpy())
@@ -186,14 +216,17 @@ def main():
     p.add_argument("--bs", type=int, default=64)
     p.add_argument("--lr", type=float, default=3e-4)
     p.add_argument("--seed", type=int, default=42)
-    p.add_argument("--val-frac", type=float, default=.25)
+    # 0 이면 나누지 않고 전량 학습한다. VLA 학습이 그렇듯 끝까지 돌리고 마지막을
+    # 쓰며, 어느 구조가 나은지는 폐루프 eval 이 판정한다.
+    p.add_argument("--val-frac", type=float, default=0.0)
     p.add_argument("--max-tasks", type=int, default=0)
     p.add_argument("--episodes-per-task", type=int, default=0)
     p.add_argument("--frames-per-episode", type=int, default=0)
     p.add_argument("--num-workers", type=int, default=0)
     p.add_argument("--preload", action="store_true", help="RAM cache for bounded smoke runs")
     args = p.parse_args()
-    if not 0 < args.val_frac < 1 or args.history < 1 or args.epochs < 1 or args.bs < 1:
+    # val_frac 0 은 홀드아웃 없이 전량 학습이다. 음수나 1 이상은 여전히 오류다.
+    if not 0 <= args.val_frac < 1 or args.history < 1 or args.epochs < 1 or args.bs < 1:
         raise ValueError("invalid training configuration")
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=False)  # Never overwrite or silently resume.
@@ -211,6 +244,7 @@ def main():
         data.preload()
     train_idx = np.flatnonzero(labels.split.to_numpy() == "train")
     val_idx = np.flatnonzero(labels.split.to_numpy() == "val")
+    HOLDOUT = len(val_idx) > 0
     if args.arch == "baseline":
         # 이미지와 지시문만 본다. state/action 은 로더에서 그대로 오지만 무시된다 --
         # 데이터 경로를 공유해야 두 팔이 정확히 같은 행을 같은 순서로 본다.
@@ -226,12 +260,13 @@ def main():
                       "parameters": sum(p_.numel() for p_ in model.parameters())}), flush=True)
     tr = DataLoader(torch.utils.data.Subset(data, train_idx), batch_size=args.bs, shuffle=True,
                     num_workers=args.num_workers, pin_memory=True)
-    va = DataLoader(torch.utils.data.Subset(data, val_idx), batch_size=args.bs,
-                    num_workers=args.num_workers, pin_memory=True)
+    va = (DataLoader(torch.utils.data.Subset(data, val_idx), batch_size=args.bs,
+                     num_workers=args.num_workers, pin_memory=True)
+          if HOLDOUT else None)
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr)
     loss_fn = torch.nn.BCEWithLogitsLoss()
     setup_s = time.perf_counter()-start
-    initial = evaluate(model, va, "cuda")
+    initial = evaluate(model, va, "cuda") if HOLDOUT else None
     print(json.dumps({"setup_seconds":setup_s,"train_rows":len(train_idx),"val_rows":len(val_idx),"initial":initial}), flush=True)
     metrics, gradients = [], {}
     best = float("inf")
@@ -267,13 +302,15 @@ def main():
                     gradients[name] = float(grad.norm())
             opt.step(); total += float(loss.detach())*len(y); n += len(y)
         torch.cuda.synchronize(); train_s=time.perf_counter()-tick
-        tick=time.perf_counter(); v=evaluate(model,va,"cuda")
+        tick=time.perf_counter(); v=evaluate(model,va,"cuda") if HOLDOUT else None
         item={"epoch":epoch+1,"train_bce":total/n,"train_seconds":train_s,
               "val_seconds":time.perf_counter()-tick,"val":v}
         metrics.append(item); print(json.dumps(item), flush=True)
-        # Select on soft-target BCE, not a thresholded surrogate. AUC remains reported.
-        if v["bce"] < best:
-            best=v["bce"]
+        # 홀드아웃이 있으면 가장 좋은 에폭을, 없으면 마지막 에폭을 저장한다.
+        # 같은 집합으로 고르고 채점하면 점수가 낙관적으로 나오므로, 비교가
+        # 목적일 때는 홀드아웃 없이 마지막을 쓰는 쪽이 깨끗하다.
+        if (v["bce"] < best) if HOLDOUT else (epoch + 1 == args.epochs):
+            best = v["bce"] if HOLDOUT else float(total / n)
             torch.save({"model":model.state_dict(),"config":model.config,"epoch":epoch+1,
                         "res":128,"views":VIEW_KEYS,"task_emb_file":str(Path(args.task_emb).resolve()),
                         "args":vars(args),"val":v,"format":"proprio_history_v1",
