@@ -4,7 +4,7 @@
 #SBATCH --nodes=1
 #SBATCH --gpus=1
 #SBATCH --partition=background
-#SBATCH --exclude=worker-node100
+#SBATCH --exclude=worker-node100,worker-node1,worker-node104,worker-node3
 #SBATCH --array=0-9
 #SBATCH --output=out/%A_%a-eval_libero_naiveK.out
 #SBATCH --error=out/%A_%a-eval_libero_naiveK.err
