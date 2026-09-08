@@ -23,6 +23,7 @@ import json
 import os
 import re
 import sys
+import urllib.error
 import urllib.request
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
@@ -258,7 +259,7 @@ class VLMGate:
 
 
     def judge_batch(self, items, guidance="", question="", n_ask=0, n_grade=0,
-                    max_new_tokens=192):
+                    max_new_tokens=192, mode=""):
         """Judge many frames in one forward. items: [(imgs, instruction), ...]"""
         try:
             bat = []
@@ -274,6 +275,7 @@ class VLMGate:
             payload = json.dumps({"batch": bat, "guidance": guidance,
                                   "question": question, "n_ask": n_ask,
                                   "n_grade": n_grade,
+                                  "mode": mode,
                                   "max_new_tokens": max_new_tokens}).encode()
             req = urllib.request.Request(
                 self.url + "/judge", data=payload,
@@ -281,6 +283,12 @@ class VLMGate:
             with urllib.request.urlopen(req, timeout=self.timeout) as r:
                 out = json.loads(r.read())
             return out.get("results") or [{"error": out.get("error", "no results")}] * len(items)
+        except urllib.error.HTTPError as e:
+            try:
+                detail = e.read().decode("utf-8", errors="replace")
+            except Exception:
+                detail = ""
+            return [{"error": f"HTTPError {e.code}: {detail}"}] * len(items)
         except Exception as e:  # noqa
             return [{"error": f"{type(e).__name__}: {e}"}] * len(items)
 

@@ -26,6 +26,7 @@ import io
 import json
 import re
 import time
+import traceback
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 from PIL import Image
@@ -462,6 +463,7 @@ def run_server(model_id, port, host, max_new_tokens, dtype):
                     res = judge(*args)
                 self._send(200, res)
             except Exception as e:  # noqa
+                traceback.print_exc()
                 self._send(500, {"error": f"{type(e).__name__}: {e}"})
 
     srv = HTTPServer((host, port), Handler)

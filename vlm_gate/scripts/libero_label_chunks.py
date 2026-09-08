@@ -7,8 +7,7 @@
   * 뷰가 둘(front + left_wrist)이다. 타일을 3등분하지 않고 2등분한다.
   * 액션이 7차원(0:3 위치 델타 · 3:6 회전 델타 · 6 그리퍼 ±1)이다 —
     libero_descriptors 가 이미 그 규격으로 계산한다.
-  * 프레임 스트라이드 4 (10fps · 평균 162 스텝). 로보카사 stride 8/20fps 와
-    같은 0.4 초 간격이다.
+  * 타일 매니페스트의 모든 프레임을 읽는다. 전량 실행의 타일 stride는 1이다.
 
 재개(resume) 규율. 백그라운드 파티션은 선점당한다. 시작할 때
   1) 기존 출력에서 파싱되는 줄만 남기고 다시 쓴다 (선점으로 끊긴 마지막 줄 제거),
@@ -26,12 +25,21 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from vlm_gate import VLMGate
 from libero_descriptors import descriptors, facts_text, computed_risk
 
-BASE = "/sjw_alinlab/home/hojin2/quantization_agent_workspace/vlm_gate"
-DS = "/sjw_alinlab2/home/myungkyu/.cache/huggingface/lerobot/kimtaey/libero_gr00t_delta"
+BASE = os.environ.get(
+    "VLM_GATE_ROOT", "/sjw_alinlab/home/hojin2/quantization_agent_workspace/vlm_gate"
+)
+DS = os.environ.get(
+    "LIBERO_DATASET",
+    "/sjw_alinlab2/home/myungkyu/.cache/huggingface/lerobot/kimtaey/libero_gr00t_delta",
+)
 # 타일 디렉터리도 env 로 고른다. 부호 검증에는 두 풀이 다 들어간
 # libero_pools 를 쓴다 (gen_libero_tiles_pools.py).
-TIL = os.environ.get("TILES", f"{BASE}/output/_gate_distill/libero_full/tiles")
-MAN = os.environ.get("MANIFEST", f"{BASE}/output/_gate_distill/libero_tiles_manifest.txt")
+TILE_OUT = os.environ.get("LIBERO_TILE_OUT", f"{BASE}/output/_gate_distill/libero_full")
+TIL = os.environ.get("TILES", f"{TILE_OUT}/tiles")
+MAN = os.environ.get(
+    "MANIFEST",
+    os.environ.get("LIBERO_MANIFEST", f"{BASE}/output/_gate_distill/libero_tiles_manifest.txt"),
+)
 TAG = os.environ.get("TAG", "libero_v2")
 NVIEW = 2
 NQ, SLOTS = 5, "ABCDE"
@@ -39,7 +47,8 @@ NGRADE = 5          # 1~5 등급. phase9·allex 와 같은 경로다.
 
 PORT, SHARD, NSH = sys.argv[1], int(sys.argv[2]), int(sys.argv[3])
 LIMIT = int(os.environ.get("LIMIT", "0"))          # >0 이면 스모크용으로 이만큼만
-OUT = f"{BASE}/output/_gate_distill/{TAG}_s{NSH}_{SHARD}.jsonl"
+OUT_DIR = os.environ.get("LIBERO_LABEL_OUT", f"{BASE}/output/_gate_distill")
+OUT = f"{OUT_DIR}/{TAG}_s{NSH}_{SHARD}.jsonl"
 
 # 프롬프트 판은 env 로 고른다. v1 은 YES/NO 5문항(등급 없음)이고 검증 루프를
 # 거친 적이 없다. v2 는 측정된 손상에서 뽑은 5문항 + robocasa 와 같은 5등급이다
@@ -47,6 +56,21 @@ OUT = f"{BASE}/output/_gate_distill/{TAG}_s{NSH}_{SHARD}.jsonl"
 PV = os.environ.get("PROMPT_VER", "v2")
 G = open(f"{BASE}/analysis/_evolver/_libero/libero_guidance_{PV}.txt").read().strip()
 ASK = open(f"{BASE}/analysis/_evolver/_libero/libero_questions_{PV}.txt").read().strip()
+BATCH = int(os.environ.get("LIBERO_BATCH", "8"))
+META = OUT.replace(".jsonl", "_meta.json")
+expected_meta = {"batch": BATCH, "shard": SHARD, "nshard": NSH, "prompt": PV,
+                 "tag": TAG, "tiles": TIL, "manifest": MAN}
+
+os.makedirs(OUT_DIR, exist_ok=True)
+if os.path.exists(OUT) and not os.path.exists(META):
+    raise RuntimeError(f"기존 출력의 resume metadata가 없다: {META}")
+if os.path.exists(META):
+    old_meta = json.load(open(META))
+    for key in ("batch", "prompt", "nshard"):
+        if old_meta.get(key) != expected_meta[key]:
+            raise RuntimeError(
+                f"resume metadata 불일치: {key}={old_meta.get(key)!r}, "
+                f"이번 실행={expected_meta[key]!r}; 기존 출력을 덮어쓰지 않는다")
 
 info = json.load(open(f"{DS}/meta/info.json"))
 instr = {}
@@ -73,7 +97,10 @@ if os.path.exists(OUT):
     os.replace(tmp, OUT)
     print(f"shard{SHARD}: resume, {len(done)} chunks already done", flush=True)
 
-gate = VLMGate(f"http://127.0.0.1:{PORT}", timeout=180)
+gate = VLMGate(
+    f"http://127.0.0.1:{PORT}",
+    timeout=float(os.environ.get("LIBERO_JUDGE_TIMEOUT", "180")),
+)
 
 acts = {}
 def A(ep):
@@ -82,8 +109,8 @@ def A(ep):
         try:
             acts[ep] = np.stack(pd.read_parquet(
                 f"{DS}/data/chunk-{ch:03d}/episode_{ep:06d}.parquet")["action"].values)
-        except Exception:
-            acts[ep] = None
+        except Exception as e:
+            raise RuntimeError(f"ep{ep}: action parquet를 읽지 못했다") from e
         if len(acts) > 40:
             for k in list(acts)[:20]:
                 acts.pop(k, None)
@@ -95,10 +122,8 @@ n = skipped = 0
 # **배치는 라벨의 일부다.** phase9 에서 재어 보니 단건과 배치8 이 32칸 중 2칸
 # 달랐다 -- 배치 폭이 다르면 다른 커널이 잡히고 bfloat16 끝자리가 움직인다.
 # 각각은 재현되므로 값을 meta 에 적어 두고 재실행 때 같은 값을 쓴다.
-BATCH = int(os.environ.get("LIBERO_BATCH", "8"))
-json.dump({"batch": BATCH, "shard": SHARD, "nshard": NSH, "prompt": PV,
-           "tag": TAG, "tiles": TIL, "manifest": MAN},
-          open(OUT.replace(".jsonl", "_meta.json"), "w"), ensure_ascii=False, indent=1)
+if not os.path.exists(META):
+    json.dump(expected_meta, open(META, "w"), ensure_ascii=False, indent=1)
 
 
 def prep(nm):
@@ -107,13 +132,13 @@ def prep(nm):
     if ep % NSH != SHARD or (ep, f) in done:
         return None
     a = A(ep)
-    if a is None or f >= len(a) - 4:
+    if f >= len(a) - 4:
         return None
     x = descriptors(a, f)
     try:
         im = np.array(Image.open(f"{TIL}/{nm}").convert("RGB"))
-    except Exception:
-        return None
+    except Exception as e:
+        raise RuntimeError(f"필수 타일을 읽지 못했다: {TIL}/{nm}") from e
     h, w, _ = im.shape
     views = [Image.fromarray(im[:, k * w // NVIEW:(k + 1) * w // NVIEW])
              for k in range(NVIEW)]
@@ -142,12 +167,15 @@ for nm in names + [None]:                      # None 이 마지막 배치를 �
         print(f"shard{SHARD}: batch {type(e).__name__}: {e}", flush=True)
         buf = []
         continue
+    if len(rs) != len(buf):
+        raise RuntimeError(f"judge 응답 수 {len(rs)} != 요청 수 {len(buf)}")
     for (ep, f, x, _), r in zip(buf, rs):
         # 죽은 판정기는 모든 호출에 같은 답을 준다. 길이만 맞는 파일이 나오면
         # 개수를 세는 것으로는 성공과 구별되지 않는다 -- 본문이 비면 실패로 센다.
         c = r.get("picks")
         if r.get("error") or not str(r.get("text", "")).strip() \
-                or not c or len(c) != NQ or any(v is None for v in c):
+                or not c or len(c) != NQ or any(
+                    v is None or not 1 <= int(v) <= NGRADE for v in c):
             skipped += 1
             if skipped % 200 == 1:
                 print(f"shard{SHARD}: judge miss ep{ep} f{f}: "

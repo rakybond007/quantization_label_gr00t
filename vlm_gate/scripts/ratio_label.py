@@ -122,6 +122,7 @@ DS = {"libero": "/sjw_alinlab2/home/myungkyu/.cache/huggingface/lerobot/"
                 "kimtaey/libero_gr00t_delta",
       "robocasa": "/sjw_alinlab2/home/myungkyu/.cache/huggingface/lerobot/"
                   "kimtaey/robocasa_mg_gr00t_300"}
+DS["libero"] = os.environ.get("LIBERO_DATASET", DS["libero"])
 
 
 def ep_to_task(bench):
