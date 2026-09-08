@@ -91,43 +91,80 @@ def A(ep):
 
 out = open(OUT, "a")
 n = skipped = 0
-for nm in sorted(open(MAN).read().split()):
+
+# **배치는 라벨의 일부다.** phase9 에서 재어 보니 단건과 배치8 이 32칸 중 2칸
+# 달랐다 -- 배치 폭이 다르면 다른 커널이 잡히고 bfloat16 끝자리가 움직인다.
+# 각각은 재현되므로 값을 meta 에 적어 두고 재실행 때 같은 값을 쓴다.
+BATCH = int(os.environ.get("LIBERO_BATCH", "8"))
+json.dump({"batch": BATCH, "shard": SHARD, "nshard": NSH, "prompt": PV,
+           "tag": TAG, "tiles": TIL, "manifest": MAN},
+          open(OUT.replace(".jsonl", "_meta.json"), "w"), ensure_ascii=False, indent=1)
+
+
+def prep(nm):
+    """타일 하나를 판정 입력으로. 못 읽으면 None."""
     ep = int(nm[2:6]); f = int(nm.split("_f")[1][:3])
-    if ep % NSH != SHARD: continue
-    if (ep, f) in done: continue
+    if ep % NSH != SHARD or (ep, f) in done:
+        return None
     a = A(ep)
-    if a is None or f >= len(a) - 4: continue
+    if a is None or f >= len(a) - 4:
+        return None
     x = descriptors(a, f)
     try:
         im = np.array(Image.open(f"{TIL}/{nm}").convert("RGB"))
     except Exception:
-        skipped += 1; continue
+        return None
     h, w, _ = im.shape
-    views = [Image.fromarray(im[:, k * w // NVIEW:(k + 1) * w // NVIEW]) for k in range(NVIEW)]
-    ins = f"{instr.get(ep, '')}\n{facts_text(x)}"
+    views = [Image.fromarray(im[:, k * w // NVIEW:(k + 1) * w // NVIEW])
+             for k in range(NVIEW)]
+    return ep, f, x, (views, f"{instr.get(ep, '')}\n{facts_text(x)}")
+
+
+names = sorted(open(MAN).read().split())
+buf = []
+for nm in names + [None]:                      # None 이 마지막 배치를 흘려보낸다
+    if nm is not None:
+        g = prep(nm)
+        if g is None:
+            continue
+        buf.append(g)
+        if len(buf) < BATCH:
+            continue
+    if not buf:
+        continue
     # **n_grade 와 mode="text" 를 반드시 같이 넘긴다.** 둘 중 하나라도 빠지면
     # 판정기가 강제된 YES/NO 슬롯의 로짓을 읽는 경로로 간다 -- 모델이 하지 않은
     # 답을 짓는 것이라 저장소가 금지한 것이다(CLAUDE.md 되돌리지 말 것 1).
-    # v1 이 YES/NO 였던 이유가 이것이고, 그 경로에서는 신뢰도가 0.503~0.527 에
-    # 붙어 아무것도 가르지 못했다. phase9·allex 와 같은 호출로 맞춘다.
-    r = gate.judge(views, ins, G, question=ASK, n_ask=NQ, n_grade=NGRADE,
-                   mode="text")
-    # 죽은 판정기는 모든 호출에 같은 답을 준다. 길이만 맞는 파일이 나오면
-    # 개수를 세는 것으로는 성공과 구별되지 않는다 -- 본문이 비면 실패로 센다.
-    c = r.get("picks")
-    if r.get("error") or not str(r.get("text", "")).strip() \
-            or not c or len(c) != NQ or any(v is None for v in c):
-        skipped += 1
-        if skipped % 20 == 1:
-            print(f"shard{SHARD}: judge miss ep{ep} f{f}: "
-                  f"err={r.get('error','')!r} picks={r.get('picks')!r} "
-                  f"text={str(r.get('text',''))[:60]!r}", flush=True)
+    try:
+        rs = gate.judge_batch([g[3] for g in buf], G, question=ASK,
+                              n_ask=NQ, n_grade=NGRADE, mode="text")
+    except Exception as e:
+        print(f"shard{SHARD}: batch {type(e).__name__}: {e}", flush=True)
+        buf = []
         continue
-    rec = {"ep": ep, "f": f, **{k: int(v) for k, v in zip(SLOTS, c)},
-           **computed_risk(x), "speed_mean": x["speed_mean"], "ans": r.get("text", "")}
-    out.write(json.dumps(rec) + "\n"); out.flush()   # 선점에 대비해 매 행 flush
-    n += 1
-    if n % 200 == 0: print(f"shard{SHARD}: {n}", flush=True)
-    if LIMIT and n >= LIMIT: break
+    for (ep, f, x, _), r in zip(buf, rs):
+        # 죽은 판정기는 모든 호출에 같은 답을 준다. 길이만 맞는 파일이 나오면
+        # 개수를 세는 것으로는 성공과 구별되지 않는다 -- 본문이 비면 실패로 센다.
+        c = r.get("picks")
+        if r.get("error") or not str(r.get("text", "")).strip() \
+                or not c or len(c) != NQ or any(v is None for v in c):
+            skipped += 1
+            if skipped % 200 == 1:
+                print(f"shard{SHARD}: judge miss ep{ep} f{f}: "
+                      f"err={r.get('error','')!r} picks={r.get('picks')!r} "
+                      f"text={str(r.get('text',''))[:60]!r}", flush=True)
+            continue
+        rec = {"ep": ep, "f": f, **{k: int(v) for k, v in zip(SLOTS, c)},
+               **computed_risk(x), "speed_mean": x["speed_mean"],
+               "ans": r.get("text", "")}
+        out.write(json.dumps(rec) + "\n")
+        n += 1
+    out.flush()                                 # 선점에 대비해 배치마다 flush
+    buf = []
+    if n % 400 < BATCH:
+        print(f"shard{SHARD}: {n} (miss {skipped})", flush=True)
+    if LIMIT and n >= LIMIT:
+        break
 out.close()
+print(f"shard{SHARD} done: {n} rows, {skipped} miss", flush=True)
 print(f"shard{SHARD} 완료 {n} (skipped {skipped}) -> {OUT}")
