@@ -420,28 +420,56 @@ def main():
     # 배포용 parquet 도 같이 낸다. `apply_ratio_labels.py` 가 읽는 형식이고,
     # 다른 기계에서는 이것 하나만 받으면 된다 -- 등급도 jsonl 도 필요 없다.
     try:
-        import pandas as pd
         pq = out.replace(".jsonl", ".parquet")
         # **등급을 같이 담는다.** 비싼 것은 VLM 이 매기는 등급뿐이고 그 뒤는
         # 전부 산수다. 등급이 있으면 띠나 규칙을 바꿔 CPU 만으로 몇 초 만에
         # 다시 라벨링할 수 있다 -- VLM 을 다시 돌릴 필요가 없다.
-        cols = {
-            "episode_index": [int(r["ep"]) for r in rows],
-            "frame_index": [int(r["f"]) for r in rows],
-            "task": [ep2t.get(r["ep"]) for r in rows],
-            "ratio": np.asarray(ratio, dtype=np.float32),
-            "conf": np.array([confidence(r, SIGN, WEIGHT, NGRADE) for r in rows], dtype=np.float32),
-            "fixed": np.array([1 if contact(r) else 0 for r in rows], dtype=np.int8),
-        }
-        for k in SLOTS:                              # 등급 A~E
-            cols[k] = np.array([int(r[k]) for r in rows], dtype=np.int8)
-        for k in ("grip_transition", "precise_hold"):   # 접촉 판정의 입력
-            cols[k] = np.array([float(r.get(k, 0.0)) for r in rows], dtype=np.float32)
-        pd.DataFrame(cols).sort_values(
-            ["episode_index", "frame_index"]).to_parquet(pq, index=False)
+        #
+        # **한 DataFrame 으로 올리지 않는다.** 204만 행 x 14열을 통째로 만들면
+        # 이미 메모리에 있는 원본 행과 겹쳐 로그인 노드에서 exit 137 로 죽는다
+        # (robocasa 에서 두 번 같은 자리에서 죽었다). 덩이로 흘려 쓴다.
+        #
+        # **행마다 키 집합이 다르다.** `guard` 는 접촉이 걸린 행에만 붙는다.
+        # 첫 줄로 스키마를 잡으면 열 길이가 어긋나므로 열을 미리 못 박는다.
+        # `fixed` 는 접촉이 없는 판에도 0 으로 넣는다 -- 두 판을 나란히 놓는 것이
+        # 목적인데 열이 갈리면 "0.00% 대 16.56%" 라는 대조를 아예 못 쓴다.
+        import pyarrow as pa
+        import pyarrow.parquet as pqw
+        pq = out.replace(".jsonl", ".parquet")
+        CH = 200_000
+        # 덩이로 흘려 쓰므로 **미리 정렬한다.** 통째로 만들 때는 마지막에
+        # sort_values 로 맞췄는데, 흘려 쓰면 그 자리가 없다. 붙이는 쪽이
+        # (episode_index, frame_index) 로 찾으므로 순서가 서 있어야 빠르다.
+        order = sorted(range(len(rows)),
+                       key=lambda i: (int(rows[i]["ep"]), int(rows[i]["f"])))
+        w, sch = None, None
+        for b0 in range(0, len(order), CH):
+            idxs = order[b0:b0 + CH]
+            sl = [rows[i] for i in idxs]
+            cols = {
+                "episode_index": np.array([int(r["ep"]) for r in sl], dtype=np.int32),
+                "frame_index": np.array([int(r["f"]) for r in sl], dtype=np.int32),
+                "task": [ep2t.get(r["ep"]) for r in sl],
+                "ratio": np.array([ratio[i] for i in idxs], dtype=np.float32),
+                "conf": np.array([confidence(r, SIGN, WEIGHT, NGRADE) for r in sl],
+                                 dtype=np.float32),
+                "fixed": np.array([1 if contact(r) else 0 for r in sl], dtype=np.int8),
+            }
+            for k in SLOTS:
+                cols[k] = np.array([int(r[k]) for r in sl], dtype=np.int8)
+            for k in ("grip_transition", "precise_hold", "guard"):
+                cols[k] = np.array([float(r.get(k, 0.0)) for r in sl], dtype=np.float32)
+            t = pa.table(cols)
+            if w is None:
+                sch = t.schema
+                w = pqw.ParquetWriter(pq, sch, compression="zstd")
+            w.write_table(t.cast(sch))
+        if w is not None:
+            w.close()
         print(f"-> {pq}  (배포용. docs/RATIO_LABELS.md 참고)")
     except ImportError:
-        print("[!] pandas 가 없어 parquet 은 안 만들었다. jsonl 은 나왔다.")
+        print("[!] pyarrow 가 없어 parquet 은 안 만들었다. jsonl 은 나왔다 -- "
+              "ratio_jsonl_to_parquet.py 로 따로 만들 수 있다.")
 
     if MISS:
         print(f"\n[!] 상한표에서 못 찾은 태스크 {len(MISS)}개 -- 기본 띠 "
