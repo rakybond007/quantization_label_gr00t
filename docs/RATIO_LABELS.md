@@ -60,21 +60,63 @@ python vlm_gate/scripts/apply_ratio_labels.py \
 
 ## 라벨이 어떻게 만들어졌나
 
-두 갈래를 합친 하나의 값이다.
+두 갈래를 합친 **하나의 값**이다. 예전에는 F_level 이 접촉 가드로 level 1 을
+강제하고 우리가 따로 신뢰도를 냈는데, 그것을 합쳐 시점마다 배속 하나를 적는다.
 
 ```
-접촉이 잡히면      ->  1.0배 고정
-접촉이 아니면      ->  band_place( VLM 신뢰도, 그 태스크의 [1.0, 상한] )  ->  눈금으로 스냅
+가드가 서면      ->  1.0배로 박는다.  신뢰도를 아예 보지 않는다.
+가드가 안 서면   ->  신뢰도 순서로 그 태스크의 [하한, 상한] 안에 앉힌다
 ```
 
-**접촉 판정은 계산으로만 한다.** 그리퍼가 열리거나 닫히는 순간(무게가 옮겨 가는
-때)과 쥔 채 느리게 가는 구간(놓을 자리를 맞추는 중)이다. VLM 에게 묻지 않는다.
+### 가드 — 접촉이면 압축하지 않는다
 
-**신뢰도는 VLM 이 문항 다섯에 매긴 1~5 등급에서 나온다.**
+F_level 과 같은 식이다.
+
+```
+guard = (p_start != p_end)  또는  p_bnd
+```
+
+창 시작과 끝의 접촉이 다르거나, 창 안에서 접촉이 켜졌다 꺼지면 가드가 선다.
+그 시점은 **띠 계산에서 아예 빼고** `ratio = 1.0`, `ratio_fixed = 1` 로 박는다.
+무게가 옮겨 가는 순간이라 몇 밀리미터가 잡혔는지 떨어졌는지를 가르기 때문이다.
+
+접촉 라벨은 밖에서 온다.
+
+| 벤치마크 | 출처 |
+|---|---|
+| robocasa | [`TTaekwan/robocasa_contact`](https://huggingface.co/datasets/TTaekwan/robocasa_contact) |
+| libero | [`TTaekwan/libero_contact`](https://huggingface.co/datasets/TTaekwan/libero_contact) |
+
+`flevel_v1/sidecar/episode_XXXXXX.parquet` 의 `flevel` 열이 프레임마다
+`[p_start, p_end, p_bnd, level, valid]` 다. `CONTACT_DIR` 로 그 폴더를 주면 읽는다.
+
+**사이드카가 없으면 액션에서 짐작한다** -- 그리퍼가 열리거나 닫히는 창, 쥔 채
+느리게 가는 구간. 다만 이것은 약하다: robocasa 204만 행을 짐작으로만 돌렸더니
+가드가 **0.00%** 나왔다(phase9 라벨 파일에 그 정보가 아예 없었다). 실제 라벨을
+주면 16.56% 가 걸린다. **`ratio_fixed` 평균이 0 이면 사이드카를 못 읽은 것이다.**
+
+```
+                  가드 없음   가드 있음
+1.0배               21.4%      34.9%
+1.5배               60.1%      49.3%
+2.0배               11.0%       9.5%
+2.5배                7.5%       6.4%
+평균 배속           1.523      1.437
+ratio_fixed         0.00%     16.56%   (338,533행)
+평균 신뢰도         0.4267     0.4267
+```
+
+**신뢰도가 두 판에서 같다.** 가드는 신뢰도를 건드리지 않고 배속만 박기 때문이고,
+설계대로다. 고정된 33.8만 행 중 27만 행쯤이 원래는 압축 대상이었다 -- 1.0 비중이
+13.5%p 올랐는데 고정이 16.56% 이니 3%p 가량은 이미 1.0 이던 자리에 가드가 겹쳤다.
+
+### 신뢰도 — 가드가 안 선 시점의 배속
+
+VLM 이 문항 다섯에 매긴 1~5 등급에서 나온다.
 
 ```
 등급 -> 값     (g − 1) / 4
-확신           ( 1 + Σw·가점 − Σw·감점 ) / 2
+신뢰도         ( 1 + Σw·가점 − Σw·감점 ) / 2        0~1
 ```
 
 **문항도 가중치도 벤치마크마다 다르다.** 장면 인상으로 지은 것이 아니라 그
@@ -88,10 +130,8 @@ python vlm_gate/scripts/apply_ratio_labels.py \
 `ratio_label.py` 는 벤치마크를 인자로 받아 그쪽 `checks` 모듈에서 읽는다. 값을
 쓰는 쪽에 박아 두면 robocasa 라벨을 libero 가중치로 계산하는 일이 조용히 일어난다.
 
-**상한은 문항이 정하지 않는다. 평가가 준다.** 태스크마다 배속을 올려 가며 성공률과
-스텝을 재서, 성공률이 유지되고 스텝이 실제로 줄어드는 가장 높은 배속이 상한이다
-(`vlm_gate/scripts/derive_libero_ceilings.py`). 문항이 정하는 것은 **그 상한을
-얼마나 쓸 것인가** 뿐이다.
+**상한은 문항이 정하지 않는다. 평가가 준다.** 문항이 정하는 것은 그 상한을
+얼마나 쓸 것인가뿐이다.
 
 **신뢰도는 태스크 안에서 순서로 앉힌다.** 태스크를 섞으면 어려운 태스크의 쉬운
 순간이 쉬운 태스크의 어려운 순간보다 높은 배속을 받는다.
@@ -133,9 +173,23 @@ libero 검증 라벨 571행에서 셋이 이렇게 갈렸다.
 python vlm_gate/scripts/derive_libero_ceilings.py
 #    -> vlm_gate/analysis/<bench>_task_ceilings.json
 
-# 2. VLM 라벨(등급) + 상한표 -> 배속.  <bench> 는 libero 또는 robocasa
+# 2. VLM 라벨(등급) + 상한표 + 접촉 -> 배속.  <bench> 는 libero 또는 robocasa
+CONTACT_DIR=<...>/flevel_v1/sidecar \
+RATIO_RULE=levels \
 python vlm_gate/scripts/ratio_label.py <bench> <등급 labels.jsonl>
 #    -> <...>_ratio.jsonl 과 <...>_ratio.parquet
+```
+
+`CONTACT_DIR` 을 빼면 가드가 액션에서 짐작한 값으로만 서고, phase9 처럼 라벨에
+그 정보가 없으면 **0.00%** 가 된다. 접촉 라벨은 이렇게 받는다.
+
+```bash
+python - <<'EOF'
+from huggingface_hub import snapshot_download
+snapshot_download(repo_id="TTaekwan/robocasa_contact", repo_type="dataset",
+                  allow_patterns=["flevel_v1/sidecar/*", "flevel_v1/_*"],
+                  local_dir="robocasa_contact")
+EOF
 ```
 
 상한표는 **명령 클리핑만 푼** 사다리로 만든다. 구동부 한계까지 3배로 연 실행은
@@ -198,7 +252,7 @@ naive 사다리는 "압축 없이 학습된 모델은 이 정도로 깨진다" �
 지금 F_level 의 level 선택은 고정 배속보다 나은 것이 없다 — 우리 confidence 가
 넘어야 할 선이자, 넘을 여지가 있다는 뜻이기도 하다.
 
-### 판정에 쓰는 문턱 셋### 판정에 쓰는 문턱 셋
+### 판정에 쓰는 문턱 셋
 
 | | 값 | 왜 |
 |---|---:|---|
