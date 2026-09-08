@@ -9,7 +9,19 @@
 그것을 하나로 합친다 (2026-09-08 사용자 지시).
 
     접촉이 잡히면            -> 1.0배 고정
-    접촉이 아니면            -> band_place( VLM 신뢰도, 그 태스크의 [lo, hi] )
+    접촉이 아니면            -> 신뢰도 순서로 그 태스크의 [1.0, 상한] 안에 앉힌다
+
+**어디에 앉히느냐는 아직 정해진 규칙이 없다.** 셋을 넣어 두고 `RATIO_RULE` 로
+고른다. 지금까지 한 검증은 전부 **태스크 단위**(위험 태스크에서 감점 문항이
+높은가)이고, 같은 태스크 **안에서** 어느 순간이 위험한지는 확인한 적이 없다.
+그래서 규칙은 논증이 아니라 게이트 평가로 정해야 한다 -- 같은 평균 배속의 균일
+대조군보다 나은지를 본다.
+
+    levels (기본)  상한 아래 칸 수만큼 등분. 2.5 면 4분위, 2.0 이면 3분위
+    band           [1.0, 상한] 에 균등하게 편 뒤 가까운 눈금으로 스냅.
+                   양끝 칸이 절반만 받는다(2.5 상한에서 17/33/33/17)
+    mid            conf 0.5 를 경계로 상한 아니면 1.0. 0.5 는 가점 가중합과
+                   감점 가중합이 같아지는 자리라 지어낸 선이 아니다
 
 **배속은 연속값으로 적지 않는다.** 디코더가 이산이라 연속값을 적으면 결국
 반올림해서 쓰게 되고, 그러면 결정이 반올림에서 일어난다. 처음부터 디코더가 가진
@@ -34,6 +46,7 @@ import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 SLOTS = "ABCDE"
+RULE = "levels"
 
 # 디코더가 가진 눈금. F_level 의 level_ks 와 같아야 한다.
 GRID = (1.0, 1.5, 2.0, 2.5)
@@ -100,6 +113,38 @@ def snap(x):
     return float(g[int(np.argmin(np.abs(g - float(x))))])
 
 
+def levels_upto(hi):
+    """상한 아래의 눈금 칸들. 상한 2.0 이면 (1.0, 1.5, 2.0)."""
+    return tuple(g for g in GRID if g <= hi + 1e-9) or (1.0,)
+
+
+def assign_levels(confs, hi):
+    """**칸 수만큼 등분한다.** 상한 2.5 면 4분위, 2.0 이면 3분위, 1.5 면 2분위.
+
+    `band_place` 로 [1.0, hi] 에 균등하게 편 뒤 가까운 눈금으로 스냅하면 양끝 칸이
+    절반만 받는다(2.5 상한에서 17/33/33/17). 스냅의 부작용이지 의도가 아니다.
+    쓸 수 있는 칸 수만큼 등분하면 25/25/25/25 가 된다.
+
+    같은 confidence 는 같은 칸을 받는다 -- 답이 안 갈렸는데 배속을 갈라 놓지 않는다.
+    그래서 실제 비율은 동점 덩어리 크기만큼 등분에서 벗어난다.
+    """
+    lv = levels_upto(hi)
+    c = np.asarray(confs, dtype=float)
+    n = c.size
+    if n == 0 or len(lv) == 1:
+        return np.full(n, lv[0], dtype=float)
+    # 동점은 평균 순위를 받아 같은 칸으로 묶인다
+    order = c.argsort(kind="mergesort")
+    rank = np.empty(n, dtype=float)
+    rank[order] = np.arange(n, dtype=float)
+    for v in np.unique(c):
+        m = c == v
+        rank[m] = rank[m].mean()
+    q = rank / max(1, n - 1)                       # 0~1
+    k = np.minimum((q * len(lv)).astype(int), len(lv) - 1)
+    return np.asarray(lv, dtype=float)[k]
+
+
 def contact(rec):
     """이 시점이 접촉인가. 계산으로 끝난 것만 쓴다 -- VLM 에게 묻지 않는다.
 
@@ -118,6 +163,8 @@ def main():
     if len(sys.argv) < 3:
         raise SystemExit(__doc__)
     bench, src = sys.argv[1], sys.argv[2]
+    global RULE
+    RULE = os.environ.get("RATIO_RULE", "levels")
     out = sys.argv[3] if len(sys.argv) > 3 else src.replace(".jsonl", "_ratio.jsonl")
     SIGN, WEIGHT, NGRADE, ceil, ceil_path = load_bench(bench)
     print(f"[{bench}]  감점 " + " ".join(
@@ -150,16 +197,29 @@ def main():
     ratio = [None] * len(rows)
     nfix = 0
     for tk, idx in by_task.items():
-        lo, hi = ceil.get(tk, DEFAULT_BAND) if tk else DEFAULT_BAND
+        # 상한표는 값 하나(상한)를 준다. 아래끝은 언제나 1.0 이다.
+        c = ceil.get(tk) if tk else None
+        hi = float(c) if c is not None else DEFAULT_BAND[1]
         free = [i for i in idx if not contact(rows[i])]
         for i in idx:
             if i not in free:
                 ratio[i] = 1.0
                 nfix += 1
-        if free:
-            vals = band_place([confidence(rows[i], SIGN, WEIGHT, NGRADE) for i in free], lo, hi)
-            for i, v in zip(free, vals):
-                ratio[i] = snap(v)
+        if not free:
+            continue
+        cf = [confidence(rows[i], SIGN, WEIGHT, NGRADE) for i in free]
+        if RULE == "levels":
+            vals = assign_levels(cf, hi)
+        elif RULE == "band":
+            vals = [snap(v) for v in band_place(cf, 1.0, hi)]
+        elif RULE == "mid":
+            # conf 0.5 는 가점 가중합 = 감점 가중합 인 자리다. 지어낸 선이 아니라
+            # 수식이 주는 자리 -- 그 위는 상한, 아래는 1.0.
+            vals = [hi if v > 0.5 else 1.0 for v in cf]
+        else:
+            raise SystemExit(f"모르는 규칙 {RULE}. levels · band · mid 중 하나")
+        for i, v in zip(free, vals):
+            ratio[i] = float(v)
 
     with open(out, "w") as f:
         for r, v in zip(rows, ratio):
