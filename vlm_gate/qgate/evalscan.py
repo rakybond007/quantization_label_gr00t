@@ -23,8 +23,19 @@ _EP = re.compile(
 )
 
 # Config echoed into the header of prediction.txt by the eval services.
+#
+# `dyn_scale` matters as much as `clip_scale` and was missing: without it a scan
+# cannot tell clip3/dyn1 from clip3/dyn3, and on LIBERO those two are 33 points
+# apart (2026-09-08, 2000 episodes each). `policy_ckpt` is here because reading
+# a b64 number as if it were b32 has already inverted one conclusion.
+#
+# Note the header itself is NOT trusted for success rates. A requeued run can
+# append several `Total success rate:` headers and the last one need not cover
+# all episodes -- robocasa had files like that. Rates always come from counting
+# the `episode N is_success:` lines below.
 _CFG_KEYS = ("compress_k", "tau", "judge_threshold", "compensate",
-             "clip_scale", "vark_bound", "gate_k3_threshold")
+             "clip_scale", "dyn_scale", "replan_steps", "replan_rule",
+             "policy_ckpt", "vark_bound", "gate_k3_threshold")
 
 
 class Task:
