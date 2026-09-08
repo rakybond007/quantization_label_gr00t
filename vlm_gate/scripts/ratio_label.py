@@ -241,8 +241,83 @@ def assign_levels(confs, lo, hi):
     return np.asarray(lv, dtype=float)[k]
 
 
+DESC = {"libero": "libero_descriptors", "robocasa": "robocasa_descriptors"}
+
+
+def fill_contact(bench, rows):
+    """라벨 줄에 접촉 정보가 없으면 **액션에서 다시 계산해 채운다.**
+
+    phase9 는 등급 다섯 칸만 적었다. 그대로 두면 접촉이 하나도 안 걸려서
+    (robocasa 204만 행에서 0.0%) 놓기·집기 순간이 안 늦춰진다. 계산으로 끝나는
+    것이라 VLM 을 다시 부를 필요가 없다 -- 액션 청크만 읽으면 된다.
+    """
+    if all(("grip_transition" in r) for r in rows):
+        return 0
+    import numpy as _np
+    import pandas as _pd
+    mod = __import__(DESC[bench])
+    info = json.load(open(f"{DS[bench]}/meta/info.json"))
+    cs = info["chunks_size"]
+    cache, n = {}, 0
+    for r in sorted(rows, key=lambda r: (r["ep"], r["f"])):
+        ep = int(r["ep"])
+        if ep not in cache:
+            cache.clear()
+            try:
+                cache[ep] = _np.stack(_pd.read_parquet(
+                    f"{DS[bench]}/data/chunk-{ep // cs:03d}/"
+                    f"episode_{ep:06d}.parquet")["action"].values)
+            except Exception:
+                cache[ep] = None
+        a = cache[ep]
+        if a is None or int(r["f"]) >= len(a) - 4:
+            continue
+        r.update(mod.computed_risk(mod.descriptors(a, int(r["f"]))))
+        n += 1
+    return n
+
+
+# 실제 접촉 라벨. 있으면 이것을 쓴다 -- 액션에서 짐작한 것보다 낫다.
+#   robocasa  https://huggingface.co/datasets/TTaekwan/robocasa_contact
+#   libero    https://huggingface.co/datasets/TTaekwan/libero_contact
+# `flevel_v1/sidecar/episode_XXXXXX.parquet` 의 `flevel` 열이 프레임마다
+# [p_start, p_end, p_bnd, level, valid] 다. F_level 의 가드와 같은 식을 쓴다:
+# **p_start != p_end 이거나 p_bnd 면 접촉**이고 그 창은 1.0배로 간다.
+CONTACT_DIR = os.environ.get("CONTACT_DIR", "")
+
+
+def load_contact(rows):
+    """`CONTACT_DIR/episode_XXXXXX.parquet` 에서 가드를 읽어 라벨 줄에 채운다."""
+    if not CONTACT_DIR or not os.path.isdir(CONTACT_DIR):
+        return 0
+    import numpy as _np
+    import pandas as _pd
+    n, cache = 0, {}
+    for r in sorted(rows, key=lambda r: (r["ep"], r["f"])):
+        ep = int(r["ep"])
+        if ep not in cache:
+            cache.clear()
+            f = os.path.join(CONTACT_DIR, f"episode_{ep:06d}.parquet")
+            try:
+                cache[ep] = _np.stack(_pd.read_parquet(f)["flevel"].values)
+            except Exception:
+                cache[ep] = None
+        v = cache[ep]
+        i = int(r["f"])
+        if v is None or i >= len(v):
+            continue
+        p_start, p_end, p_bnd, _lv, valid = (float(x) for x in v[i][:5])
+        if valid < 0.5:
+            continue
+        r["guard"] = float((p_start != p_end) or p_bnd > 0.5)
+        n += 1
+    return n
+
+
 def contact(rec):
-    """이 시점이 접촉인가. 계산으로 끝난 것만 쓴다 -- VLM 에게 묻지 않는다.
+    """이 시점이 접촉인가.
+
+    실제 접촉 라벨(`guard`)이 있으면 그것만 쓴다. 없을 때만 액션에서 짐작한다.
 
     `libero_descriptors.computed_risk` 의 `grip_transition` 이 그리퍼가 이 창에서
     열리거나 닫힌다는 뜻이고, 그것이 곧 무게가 옮겨 가는 순간이다. 여기서
@@ -251,6 +326,8 @@ def contact(rec):
     `precise_hold`(들고 기어가는 중)도 접촉으로 센다 -- 쥔 채로 느리게 가는 것은
     놓을 자리를 맞추는 중이다.
     """
+    if "guard" in rec:
+        return bool(rec["guard"] > 0.5)
     return bool(rec.get("grip_transition", 0) > 0
                 or rec.get("precise_hold", 0) > 0.5)
 
@@ -284,6 +361,14 @@ def main():
     by_task = defaultdict(list)
     for i, r in enumerate(rows):
         by_task[ep2t.get(r["ep"])].append(i)
+
+    ng = load_contact(rows)
+    if ng:
+        print(f"실제 접촉 라벨을 읽었다: {ng:,}행  <- {CONTACT_DIR}")
+    nfill = 0 if ng else fill_contact(bench, rows)
+    if nfill:
+        print(f"접촉 정보를 액션에서 다시 계산했다: {nfill:,}행 "
+              f"(라벨 파일에 없었다 -- VLM 은 안 쓴다)")
 
     ratio = [None] * len(rows)
     nfix = 0

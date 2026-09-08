@@ -101,3 +101,18 @@ tools/dev run 'python vlm_gate/scripts/foo.py --limit 4'   # 이후 전부 그 G
 
 맥북의 클론이 코드의 원본이다. 의미 있는 진전마다 커밋하고 `origin`(rakybond007/quantization_label_gr00t)에 푸시한다.
 `dev`의 rsync는 이터레이션용 임시 전송일 뿐 이력이 아니다.
+
+## ssh 는 통로 하나만 쓴다
+
+**`ssh` 를 직접 열지 않는다.** 서버에 닿는 길은 `tools/dev` 하나뿐이다.
+`dev` 가 물려 있으면 **기다리거나 동료 세션에 넘긴다.** 옆으로 `ssh` 를 여는 것은
+우회이고, 그걸로 로그인 한도를 두 번 채워 사용자까지 못 들어가게 만들었다.
+
+확인이 필요하면 한 번에 묶는다. `ls` 한 줄, `wc` 한 줄을 따로 열지 않는다.
+
+    나쁨   ssh rlwrld2_1 'ls A'  →  ssh rlwrld2_1 'wc -l B'  →  ssh rlwrld2_1 '...'
+    좋음   tools/dev run 'ls A; wc -l B; ...'
+    막히면 동료 세션에 SendMessage 로 부탁 (확인 항목을 한 메시지에 다 적어서)
+
+로그인 한도는 **tmux 창 수**로 센다(`@developer maxlogins 4`). `dev` 가 창을
+늘리는 것도 로그인을 늘린다 — 노드마다 `dev` 를 새로 세우지 않는다.
