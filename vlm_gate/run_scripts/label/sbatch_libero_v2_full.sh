@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=libero_v2_full_ratio_labeling_16shard
+#SBATCH --job-name=libero_v2_ratio_label_five_graded_checks_cosmos_judge_batch8_16shard
 #SBATCH --wckey=project-short-name:sub_fast
 #SBATCH -p background
 #SBATCH --gpus=1
@@ -9,6 +9,7 @@
 #SBATCH --output=/sjw_alinlab/home/hojin2/quantization_agent_workspace/vlm_gate/out/%A_%a-%x.out
 #SBATCH --error=/sjw_alinlab/home/hojin2/quantization_agent_workspace/vlm_gate/out/%A_%a-%x.err
 set -u
+# job-name 이 50자 미만이면 클러스터가 제출을 거부한다.
 # libero v2 문항으로 전 프레임 라벨링. robocasa phase9 와 같은 모양이다 --
 # 샤드마다 제 판정 서버를 띄우고, 배치 8 로 부르고, 재개 가능하다.
 #
