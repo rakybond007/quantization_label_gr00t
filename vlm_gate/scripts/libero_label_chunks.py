@@ -18,7 +18,7 @@
 
 사용법:  python libero_label_chunks.py <port> <shard> <nshards>
 """
-import json, os, sys, numpy as np, pandas as pd
+import json, math, os, sys, numpy as np, pandas as pd
 from PIL import Image
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -57,16 +57,29 @@ PV = os.environ.get("PROMPT_VER", "v2")
 G = open(f"{BASE}/analysis/_evolver/_libero/libero_guidance_{PV}.txt").read().strip()
 ASK = open(f"{BASE}/analysis/_evolver/_libero/libero_questions_{PV}.txt").read().strip()
 BATCH = int(os.environ.get("LIBERO_BATCH", "8"))
+REQUIRE_GP = os.environ.get("REQUIRE_GRADE_PROBS", "0") == "1"
+GP_SCHEMA = "generated_digit_grade_probs_v1"
 META = OUT.replace(".jsonl", "_meta.json")
 expected_meta = {"batch": BATCH, "shard": SHARD, "nshard": NSH, "prompt": PV,
-                 "tag": TAG, "tiles": TIL, "manifest": MAN}
+                 "tag": TAG, "tiles": TIL, "manifest": MAN,
+                 "require_grade_probs": REQUIRE_GP}
+if REQUIRE_GP:
+    expected_meta.update({
+        "grade_probs_schema": GP_SCHEMA,
+        "judge_model_revision": os.environ.get("JUDGE_MODEL_REVISION", "unknown"),
+    })
 
 os.makedirs(OUT_DIR, exist_ok=True)
 if os.path.exists(OUT) and not os.path.exists(META):
     raise RuntimeError(f"기존 출력의 resume metadata가 없다: {META}")
 if os.path.exists(META):
     old_meta = json.load(open(META))
-    for key in ("batch", "prompt", "nshard"):
+    keys = ["batch", "prompt", "nshard"]
+    if REQUIRE_GP:
+        keys += ["require_grade_probs", "grade_probs_schema", "judge_model_revision"]
+    elif "require_grade_probs" in old_meta:
+        keys += ["require_grade_probs"]
+    for key in keys:
         if old_meta.get(key) != expected_meta[key]:
             raise RuntimeError(
                 f"resume metadata 불일치: {key}={old_meta.get(key)!r}, "
@@ -88,6 +101,9 @@ if os.path.exists(OUT):
             r = json.loads(l)
         except Exception:
             continue                      # 선점으로 잘린 줄 — 버린다
+        if REQUIRE_GP and ("gp" not in r or "expected_grades" not in r):
+            raise RuntimeError(
+                f"grade-probs 필수 실행인데 기존 행 ep={r.get('ep')} f={r.get('f')}에 없다")
         if (r.get("ep"), r.get("f")) in done:
             continue                      # 과거 실행이 남긴 중복 — 한 번만 남긴다
         done.add((r["ep"], r["f"])); keep.append(json.dumps(r))
@@ -118,6 +134,28 @@ def A(ep):
 
 out = open(OUT, "a")
 n = skipped = 0
+
+
+def validated_grade_probs(r, picks):
+    """Return normalized 5x5 probabilities, or fail a strict generation."""
+    gp = r.get("grade_probs")
+    token_picks = r.get("grade_token_picks")
+    if not isinstance(gp, list) or len(gp) != NQ:
+        raise ValueError(f"grade_probs shape: {type(gp).__name__}/{len(gp) if isinstance(gp, list) else '-'}")
+    if token_picks != [int(v) for v in picks]:
+        raise ValueError(f"generated digit positions {token_picks!r} != parsed picks {picks!r}")
+    normalized = []
+    for row in gp:
+        if not isinstance(row, list) or len(row) != NGRADE:
+            raise ValueError(f"grade_probs row shape: {row!r}")
+        vals = [float(v) for v in row]
+        if any(not math.isfinite(v) or v < 0 for v in vals):
+            raise ValueError(f"non-finite/negative grade_probs: {row!r}")
+        total = sum(vals)
+        if not total > 0:
+            raise ValueError(f"zero grade_probs: {row!r}")
+        normalized.append([v / total for v in vals])
+    return normalized
 
 # **배치는 라벨의 일부다.** phase9 에서 재어 보니 단건과 배치8 이 32칸 중 2칸
 # 달랐다 -- 배치 폭이 다르면 다른 커널이 잡히고 bfloat16 끝자리가 움직인다.
@@ -191,8 +229,17 @@ for nm in names + [None]:                      # None 이 마지막 배치를 �
         rec = {"ep": ep, "f": f, **{k: int(v) for k, v in zip(SLOTS, c)},
                **computed_risk(x), "speed_mean": x["speed_mean"],
                "ans": r.get("text", "")}
+        if REQUIRE_GP:
+            try:
+                gp = validated_grade_probs(r, c)
+            except ValueError as e:
+                raise RuntimeError(f"ep{ep} f{f}: 필수 grade_probs 불량: {e}") from e
         if gp and len(gp) == NQ:
-            rec["gp"] = [[round(float(v), 4) for v in row] for row in gp]
+            gp = [[float(v) for v in row] for row in gp]
+            rec["gp"] = gp
+            rec["expected_grades"] = [
+                sum((grade + 1) * p for grade, p in enumerate(row)) for row in gp
+            ]
         out.write(json.dumps(rec) + "\n")
         n += 1
     out.flush()                                 # 선점에 대비해 배치마다 flush

@@ -365,15 +365,21 @@ def run_server(model_id, port, host, max_new_tokens, dtype):
             for g in gid:
                 is_grade |= (emitted == g)
             probs_all = []
+            token_picks_all = []
             for i in range(emitted.shape[0]):
-                pos = torch.nonzero(is_grade[i]).flatten().tolist()[:max(1, n_ask)]
+                # Keep every emitted grade-token position.  The label client can
+                # then require exactly one digit per parsed A..E slot instead of
+                # silently accepting the first five digits from malformed text.
+                pos = torch.nonzero(is_grade[i]).flatten().tolist()
                 probs_all.append([[round(float(v), 4) for v in step_p[i, t]] for t in pos])
+                token_picks_all.append([gid.index(int(emitted[i, t])) + 1 for t in pos])
         res = []
         for i in range(len(items)):
             text = tok.decode(out[i][width:], skip_special_tokens=True).strip()
             r = _parse_text(text, n_ask, n_grade, int(out.shape[1] - width))
             if probs_all is not None:
                 r["grade_probs"] = probs_all[i]
+                r["grade_token_picks"] = token_picks_all[i]
             res.append(r)
         return res
 
