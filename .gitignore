@@ -162,3 +162,5 @@ logs/
 
 # tools/dev scratch: id of the last dispatched command
 .dev_last
+dist/
+tmp/

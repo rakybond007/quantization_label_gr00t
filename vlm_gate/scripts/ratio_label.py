@@ -118,6 +118,35 @@ def snap(x):
     return float(g[int(np.argmin(np.abs(g - float(x))))])
 
 
+DS = {"libero": "/sjw_alinlab2/home/myungkyu/.cache/huggingface/lerobot/"
+                "kimtaey/libero_gr00t_delta",
+      "robocasa": "/sjw_alinlab2/home/myungkyu/.cache/huggingface/lerobot/"
+                  "kimtaey/robocasa_mg_gr00t_300"}
+
+
+def ep_to_task(bench):
+    """에피소드 -> 태스크. **번호로 추측하지 않는다** -- 데이터셋 순서를 가정하면
+    조용히 틀리고, 그러면 띠가 통째로 어긋난다.
+
+    robocasa 는 `episodes.jsonl` 의 `tasks[1]` 이 곧 태스크 이름이다
+    (`["turn on the front right burner of the stove", "TurnOnStove", "Valid"]`).
+    libero 는 그런 칸이 없어 지시문으로 맞춘다.
+    """
+    if bench == "libero":
+        from libero_v2_verify import _ep_to_task
+        return _ep_to_task()
+    out = {}
+    for line in open(f"{DS[bench]}/meta/episodes.jsonl"):
+        d = json.loads(line)
+        t = d.get("tasks") or []
+        # 두 번째 칸이 태스크 이름이다. 한 단어이고 공백이 없다.
+        for v in t[1:]:
+            if isinstance(v, str) and v and " " not in v and v != "Valid":
+                out[d["episode_index"]] = v
+                break
+    return out
+
+
 def band_of(table, task):
     """그 태스크의 [하한, 상한]. 예전 형식(값 하나)도 읽는다.
 
@@ -248,12 +277,7 @@ def main():
               f"기본 띠 {DEFAULT_BAND} 를 쓴다 -- 사다리가 차면 "
               f"derive_libero_ceilings.py 로 만든다.")
 
-    if bench == "libero":
-        from libero_v2_verify import _ep_to_task
-        ep2t = _ep_to_task()
-    else:
-        # robocasa 는 라벨 줄이 태스크를 들고 있다(phase9_to_parquet 참고).
-        ep2t = {}
+    ep2t = ep_to_task(bench)
 
     # 신뢰도는 **태스크 안에서** 분위수로 앉힌다. 태스크를 섞으면 어려운
     # 태스크의 쉬운 순간이 쉬운 태스크의 어려운 순간보다 높은 배속을 받는다.
