@@ -17,7 +17,11 @@
 그래서 규칙은 논증이 아니라 게이트 평가로 정해야 한다 -- 같은 평균 배속의 균일
 대조군보다 나은지를 본다.
 
-    levels (기본)  상한 아래 칸 수만큼 등분. 2.5 면 4분위, 2.0 이면 3분위
+    global (기본)  **모든 시점을 한 줄로** 세워 눈금에 배분한 뒤 태스크 상한으로
+                   자른다. 태스크마다 1.0 과 상한이 다 나오도록 강제하지 않는다 --
+                   안전한 태스크는 전부 빠르게, 위험한 태스크는 전부 느리게 갈 수 있다
+    levels         태스크 **안에서** 상한 아래 칸 수만큼 등분. 2.5 면 4분위, 2.0 이면 3분위.
+                   태스크 사이 신호를 지우는데, 그건 이미 상한표가 담당하므로 두 번 다루는 것이다
     band           [1.0, 상한] 에 균등하게 편 뒤 가까운 눈금으로 스냅.
                    양끝 칸이 절반만 받는다(2.5 상한에서 17/33/33/17)
     mid            conf 0.5 를 경계로 상한 아니면 1.0. 0.5 는 가점 가중합과
@@ -47,6 +51,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 SLOTS = "ABCDE"
 RULE = "levels"
+MISS = set()          # 상한표에서 못 찾은 태스크. 비어 있어야 한다
 
 # 디코더가 가진 눈금. F_level 의 level_ks 와 같아야 한다.
 GRID = (1.0, 1.5, 2.0, 2.5)
@@ -113,12 +118,74 @@ def snap(x):
     return float(g[int(np.argmin(np.abs(g - float(x))))])
 
 
-def levels_upto(hi):
-    """상한 아래의 눈금 칸들. 상한 2.0 이면 (1.0, 1.5, 2.0)."""
-    return tuple(g for g in GRID if g <= hi + 1e-9) or (1.0,)
+def band_of(table, task):
+    """그 태스크의 [하한, 상한]. 예전 형식(값 하나)도 읽는다.
+
+    **하한이 1.0 이 아닐 수 있다.** allex 는 운용자가 태스크마다 둘 다 줬고
+    (Bring Box 2.0~3.0), 그래서 "태스크마다 1.0 이 강제로 나오는" 문제가 없었다.
+    시뮬은 사다리에서 뽑는다 -- 손상이 없는 가장 높은 배속이 하한이다.
+    """
+    # 키 이름이 두 갈래다 -- 상한표는 결과 디렉터리에서 와서 `libero_spatial/2`
+    # 이고, 라벨은 지시문 대조표에서 와서 `spatial/2` 다. 한쪽만 보면 전부
+    # 기본 띠로 떨어지는데 **숫자가 그럴듯해서 티가 안 난다.** 둘 다 본다.
+    # 이름이 세 갈래다. 상한표는 결과 디렉터리에서 와서 `libero_spatial/2` 이고,
+    # 라벨은 지시문 대조표에서 와서 `spatial/2` 다. 게다가 long-horizon 수트는
+    # 디렉터리가 `libero_10` 인데 대조표는 `long` 으로 부른다.
+    # 한쪽만 보면 전부 기본 띠로 떨어지는데 **숫자가 그럴듯해서 티가 안 난다.**
+    v = None
+    if task:
+        base = task.replace("libero_", "")
+        alts = [task, f"libero_{base}", base]
+        if base.startswith("long/"):
+            alts.append("libero_10/" + base.split("/", 1)[1])
+        elif base.startswith("10/"):
+            alts.append("long/" + base.split("/", 1)[1])
+        for k in alts:
+            if k in table:
+                v = table[k]
+                break
+    if v is None:
+        MISS.add(task)
+        return DEFAULT_BAND
+    if isinstance(v, (list, tuple)):
+        return float(v[0]), float(v[1])
+    return 1.0, float(v)                 # 예전 형식: 상한만 있었다
 
 
-def assign_levels(confs, hi):
+def levels_between(lo, hi):
+    """띠 안의 눈금 칸들. [1.5, 2.0] 이면 (1.5, 2.0), [2.0, 2.0] 이면 (2.0,)."""
+    return tuple(g for g in GRID if lo - 1e-9 <= g <= hi + 1e-9) or (float(lo),)
+
+
+def assign_global(confs, his):
+    """**전체를 한 줄로** 세워 눈금에 배분하고, 각자의 상한으로 자른다.
+
+    태스크 안에서 등분하면 위험한 순간이 하나도 없는 태스크에서도 하위 몫이
+    1.0 을 받고, 전부 위험한 태스크에서도 상위 몫이 상한을 받는다. 태스크 사이
+    차이는 상한표가 이미 담당하므로 안에서 또 등분하는 것은 두 번 다루는 것이다.
+
+    전체 순서로 앉히면 그 강제가 없어진다. 절대값을 그대로 쓰지 않는 이유는
+    실측 분포가 좁기 때문이다 -- conf 가 0.205~0.733 에 중앙값 0.441 이라
+    선형으로 옮기면 거의 다 한 칸에 뭉친다.
+    """
+    c = np.asarray(confs, dtype=float)
+    h = np.asarray(his, dtype=float)
+    n = c.size
+    if n == 0:
+        return c
+    order = c.argsort(kind="mergesort")
+    rank = np.empty(n, dtype=float)
+    rank[order] = np.arange(n, dtype=float)
+    for v in np.unique(c):
+        m = c == v
+        rank[m] = rank[m].mean()
+    q = rank / max(1, n - 1)
+    g = np.asarray(GRID, dtype=float)
+    k = np.minimum((q * len(g)).astype(int), len(g) - 1)
+    return np.minimum(g[k], h)          # 상한으로 자른다
+
+
+def assign_levels(confs, lo, hi):
     """**칸 수만큼 등분한다.** 상한 2.5 면 4분위, 2.0 이면 3분위, 1.5 면 2분위.
 
     `band_place` 로 [1.0, hi] 에 균등하게 편 뒤 가까운 눈금으로 스냅하면 양끝 칸이
@@ -128,7 +195,7 @@ def assign_levels(confs, hi):
     같은 confidence 는 같은 칸을 받는다 -- 답이 안 갈렸는데 배속을 갈라 놓지 않는다.
     그래서 실제 비율은 동점 덩어리 크기만큼 등분에서 벗어난다.
     """
-    lv = levels_upto(hi)
+    lv = levels_between(lo, hi)
     c = np.asarray(confs, dtype=float)
     n = c.size
     if n == 0 or len(lv) == 1:
@@ -196,10 +263,24 @@ def main():
 
     ratio = [None] * len(rows)
     nfix = 0
+    if RULE == "global":
+        free = [i for i, r in enumerate(rows) if not contact(r)]
+        for i, r in enumerate(rows):
+            if i not in set(free):
+                ratio[i] = 1.0
+                nfix += 1
+        if free:
+            hs = []
+            for i in free:
+                hs.append(band_of(ceil, ep2t.get(rows[i]["ep"]))[1])
+            vals = assign_global(
+                [confidence(rows[i], SIGN, WEIGHT, NGRADE) for i in free], hs)
+            for i, v in zip(free, vals):
+                ratio[i] = float(v)
+        by_task = {}
     for tk, idx in by_task.items():
         # 상한표는 값 하나(상한)를 준다. 아래끝은 언제나 1.0 이다.
-        c = ceil.get(tk) if tk else None
-        hi = float(c) if c is not None else DEFAULT_BAND[1]
+        lo, hi = band_of(ceil, tk)
         free = [i for i in idx if not contact(rows[i])]
         for i in idx:
             if i not in free:
@@ -209,13 +290,13 @@ def main():
             continue
         cf = [confidence(rows[i], SIGN, WEIGHT, NGRADE) for i in free]
         if RULE == "levels":
-            vals = assign_levels(cf, hi)
+            vals = assign_levels(cf, lo, hi)
         elif RULE == "band":
-            vals = [snap(v) for v in band_place(cf, 1.0, hi)]
+            vals = [snap(v) for v in band_place(cf, lo, hi)]
         elif RULE == "mid":
             # conf 0.5 는 가점 가중합 = 감점 가중합 인 자리다. 지어낸 선이 아니라
             # 수식이 주는 자리 -- 그 위는 상한, 아래는 1.0.
-            vals = [hi if v > 0.5 else 1.0 for v in cf]
+            vals = [hi if v > 0.5 else lo for v in cf]
         else:
             raise SystemExit(f"모르는 규칙 {RULE}. levels · band · mid 중 하나")
         for i, v in zip(free, vals):
@@ -232,17 +313,32 @@ def main():
     try:
         import pandas as pd
         pq = out.replace(".jsonl", ".parquet")
-        pd.DataFrame({
+        # **등급을 같이 담는다.** 비싼 것은 VLM 이 매기는 등급뿐이고 그 뒤는
+        # 전부 산수다. 등급이 있으면 띠나 규칙을 바꿔 CPU 만으로 몇 초 만에
+        # 다시 라벨링할 수 있다 -- VLM 을 다시 돌릴 필요가 없다.
+        cols = {
             "episode_index": [int(r["ep"]) for r in rows],
             "frame_index": [int(r["f"]) for r in rows],
             "task": [ep2t.get(r["ep"]) for r in rows],
             "ratio": np.asarray(ratio, dtype=np.float32),
             "conf": np.array([confidence(r, SIGN, WEIGHT, NGRADE) for r in rows], dtype=np.float32),
             "fixed": np.array([1 if contact(r) else 0 for r in rows], dtype=np.int8),
-        }).sort_values(["episode_index", "frame_index"]).to_parquet(pq, index=False)
+        }
+        for k in SLOTS:                              # 등급 A~E
+            cols[k] = np.array([int(r[k]) for r in rows], dtype=np.int8)
+        for k in ("grip_transition", "precise_hold"):   # 접촉 판정의 입력
+            cols[k] = np.array([float(r.get(k, 0.0)) for r in rows], dtype=np.float32)
+        pd.DataFrame(cols).sort_values(
+            ["episode_index", "frame_index"]).to_parquet(pq, index=False)
         print(f"-> {pq}  (배포용. docs/RATIO_LABELS.md 참고)")
     except ImportError:
         print("[!] pandas 가 없어 parquet 은 안 만들었다. jsonl 은 나왔다.")
+
+    if MISS:
+        print(f"\n[!] 상한표에서 못 찾은 태스크 {len(MISS)}개 -- 기본 띠 "
+              f"{DEFAULT_BAND} 로 갔다. 키 이름을 맞춰야 한다:")
+        for t in sorted(MISS)[:8]:
+            print(f"      {t}")
 
     import collections
     c = collections.Counter(ratio)

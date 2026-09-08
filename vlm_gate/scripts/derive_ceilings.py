@@ -41,9 +41,18 @@ from pathlib import Path
 import numpy as np
 
 GRID = (1.0, 1.5, 2.0, 2.5)
-TOL = 0.10          # 절대 허용폭. 50에피 표준오차 0.07 의 1.4배
-REL_TOL = 0.25      # 상대 허용폭. 기준선 대비 이만큼 넘게 잃으면 깨진 것으로 센다
-FLOOR = 0.35        # 기준선이 이보다 낮으면 상한을 논하지 않는다
+# 하한 -- 이 아래로 내려갈 이유가 없는 배속. allex 는 운용자가 태스크마다 하한과
+# 상한을 둘 다 줬고(Bring Box 2.0~3.0), 그래서 "태스크마다 1.0 이 강제로 나오는"
+# 문제가 없었다.
+#
+# **아예 망가지는 태스크가 아니면 1.5 로 고정한다(2026-09-08 사용자 지시).**
+# 사다리에서 재면 아홉 태스크가 하한 2.0 이 나오는데 그건 과하다 -- 손상이 0 이라는
+# 것은 50에피 점추정이고 표준오차가 0.07 이다. 그 위에 2.0 을 바닥으로 박으면
+# 어느 순간에도 절반 이하로 못 늦춘다.
+LO_FIXED = float(os.environ.get("LO_FIXED", "1.5"))
+TOL = float(os.environ.get("TOL", "0.10"))   # 절대 허용폭. 50에피 표준오차의 1.4배
+REL_TOL = float(os.environ.get("REL_TOL", "0.25"))   # 상대 허용폭. 기준선 대비 이만큼 넘게 잃으면 깨진 것으로 센다
+FLOOR = float(os.environ.get("FLOOR", "0.35"))       # 기준선이 이보다 낮으면 상한을 논하지 않는다
 MIN_PAIRS = 10
 
 _T = Path("/sjw_alinlab2/home/taekwan/Data")
@@ -77,11 +86,28 @@ LADDERS = {
         (2.000, _O / "robocasa/baseline_compress_K2"),
         (2.500, "baseline_compress_K2p5_clip3"),      # ALIN, json 에서 읽는다
     ],
+    # libero 는 **F_level 사다리**를 쓴다. 잡 157729 checkpoint-60000,
+    # level_ks 1·1.5·2·2.5 로 학습된 체크포인트에서 level 을 하나씩 고정한 arm 이다
+    # (seed 7 · replan 5 · --args.no-action-clip · kp 150 · torque stock).
+    #
+    # taekwan 의 naive 사다리(eqs_libero_naive_*)를 쓰지 않는 이유가 셋이다.
+    #
+    #   모양   naive 는 재예측 창을 K 로 쪼개고 꼬리를 낱개로 남긴다. "2.5배" 는
+    #          창 5 를 [4, 1] 로 자른 것이라 한 명령이 4스텝을 몰아 먹는다.
+    #          F_level 의 2.5 는 [2, 3] 이라 고르다. **모양이 배속만큼 중요하다** --
+    #          같은 1.667배인데 [2,2,1] 이 0.938, [3,1,1] 이 0.890 이었다.
+    #   모델   라벨이 결국 F_level 디코더를 고르는 데 쓰인다. 압축 없이 학습된
+    #          베이스라인의 상한이 아니라 그 디코더의 상한이어야 한다.
+    #   눈금   1 · 1.5 · 2 · 2.5 가 그대로 있다. naive 는 1.5 가 없어 1.667 을
+    #          가까운 칸으로 옮겨 써야 했다.
+    #
+    # naive 사다리는 "압축 없이 학습된 모델은 이 정도로 깨진다" 는 대조군으로 남는다
+    # (`analysis/eval_results/libero_ladder_noclip.md`).
     "libero": [
-        (1.000, _T / "libero_all_Fine"),
-        (1.667, _R / "eqs_libero_naive_k2_noclip_repeat"),   # 1.5 자리
-        (2.000, _R / "eqs_libero_naive_k2_replan6"),
-        (2.500, _R / "eqs_libero_naive_k4_noclip"),
+        (1.000, _T / "flevel_libero_157729_ckpt60000/K1"),
+        (1.500, _T / "flevel_libero_157729_ckpt60000/K1p5"),
+        (2.000, _T / "flevel_libero_157729_ckpt60000/K2"),
+        (2.500, _T / "flevel_libero_157729_ckpt60000/K2p5"),
     ],
 }
 
@@ -171,8 +197,8 @@ def main():
         raise SystemExit("기준선이 없다")
     base = D[have[0]]
 
-    print("\n%-28s %s | %6s  %s" % (
-        "task", " ".join(f"{r:>6.3f}" for r in have), "상한", "왜"))
+    print("\n%-28s %s | %11s  %s" % (
+        "task", " ".join(f"{r:>6.3f}" for r in have), "하한~상한", "왜"))
     out = {}
     for tk in sorted(base):
         sr = {r: (np.mean([v[0] for v in D[r][tk]]) if tk in D[r] else None)
@@ -183,7 +209,7 @@ def main():
         # 기준선이 바닥이면 상한을 논할 자리가 아니다. TurnOffStove 는 압축 없이도
         # 0.20 이라 어느 배속에서든 차이가 잡음이다.
         if b0 < FLOOR:
-            out[tk] = 1.0
+            out[tk] = [1.0, 1.0]
             print("%-28s %s | %6.2f  %s" % (
                 tk[:28], " ".join(f"{sr[r]:6.2f}" if sr[r] is not None else "     -"
                                   for r in have), 1.0,
@@ -214,15 +240,21 @@ def main():
                     break
             ceil = snap(r)
             why = f"{r:.3f} 까지 유지" + (" (짝검정 없음)" if r in nopair else "")
-        out[tk] = ceil
-        print("%-28s %s | %6.2f  %s" % (
+        # 하한은 고정이되 상한을 넘지 않는다. 상한이 1.0 인(망가진) 태스크는
+        # 띠가 [1.0, 1.0] 이라 압축하지 않는다.
+        lo = min(LO_FIXED, ceil)
+        out[tk] = [lo, ceil]
+        print("%-28s %s | %5.2f~%-5.2f  %s" % (
             tk[:28], " ".join(f"{sr[r]:6.2f}" if sr[r] is not None else "     -"
-                              for r in have), ceil, why))
+                              for r in have), lo, ceil, why))
 
     dst = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                        "..", "analysis", f"{bench}_task_ceilings.json")
     json.dump(out, open(dst, "w"), ensure_ascii=False, indent=1, sort_keys=True)
-    print("\n상한 분포:", dict(sorted(collections.Counter(out.values()).items())))
+    print("\n상한 분포:", dict(sorted(collections.Counter(
+        v[1] for v in out.values()).items())))
+    print("띠 분포:  ", dict(sorted(collections.Counter(
+        f"{v[0]}~{v[1]}" for v in out.values()).items())))
     print(f"-> {os.path.normpath(dst)}")
 
 

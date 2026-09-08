@@ -1,26 +1,98 @@
 {
- "CloseDoubleDoor": 1.5,
- "CloseDrawer": 2.5,
- "CloseSingleDoor": 2.0,
- "CoffeePressButton": 2.5,
- "CoffeeServeMug": 1.5,
- "CoffeeSetupMug": 1.0,
- "OpenDoubleDoor": 1.5,
- "OpenDrawer": 1.5,
- "OpenSingleDoor": 1.5,
- "PnPCabToCounter": 1.5,
- "PnPCounterToCab": 2.5,
- "PnPCounterToMicrowave": 1.0,
- "PnPCounterToSink": 1.5,
- "PnPCounterToStove": 2.5,
- "PnPMicrowaveToCounter": 1.0,
- "PnPSinkToCounter": 1.0,
- "PnPStoveToCounter": 1.5,
- "TurnOffMicrowave": 2.5,
- "TurnOffSinkFaucet": 1.5,
- "TurnOffStove": 1.0,
- "TurnOnMicrowave": 2.5,
- "TurnOnSinkFaucet": 2.0,
- "TurnOnStove": 2.5,
- "TurnSinkSpout": 2.5
+ "CloseDoubleDoor": [
+  1.5,
+  1.5
+ ],
+ "CloseDrawer": [
+  1.5,
+  2.5
+ ],
+ "CloseSingleDoor": [
+  1.5,
+  2.0
+ ],
+ "CoffeePressButton": [
+  1.5,
+  2.5
+ ],
+ "CoffeeServeMug": [
+  1.5,
+  1.5
+ ],
+ "CoffeeSetupMug": [
+  1.0,
+  1.0
+ ],
+ "OpenDoubleDoor": [
+  1.5,
+  1.5
+ ],
+ "OpenDrawer": [
+  1.5,
+  1.5
+ ],
+ "OpenSingleDoor": [
+  1.5,
+  1.5
+ ],
+ "PnPCabToCounter": [
+  1.5,
+  1.5
+ ],
+ "PnPCounterToCab": [
+  1.5,
+  2.5
+ ],
+ "PnPCounterToMicrowave": [
+  1.0,
+  1.0
+ ],
+ "PnPCounterToSink": [
+  1.5,
+  1.5
+ ],
+ "PnPCounterToStove": [
+  1.5,
+  2.5
+ ],
+ "PnPMicrowaveToCounter": [
+  1.0,
+  1.0
+ ],
+ "PnPSinkToCounter": [
+  1.0,
+  1.0
+ ],
+ "PnPStoveToCounter": [
+  1.5,
+  1.5
+ ],
+ "TurnOffMicrowave": [
+  1.5,
+  2.5
+ ],
+ "TurnOffSinkFaucet": [
+  1.5,
+  1.5
+ ],
+ "TurnOffStove": [
+  1.0,
+  1.0
+ ],
+ "TurnOnMicrowave": [
+  1.5,
+  2.5
+ ],
+ "TurnOnSinkFaucet": [
+  1.5,
+  2.0
+ ],
+ "TurnOnStove": [
+  1.5,
+  2.5
+ ],
+ "TurnSinkSpout": [
+  1.5,
+  2.5
+ ]
 }
