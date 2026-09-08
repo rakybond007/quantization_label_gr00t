@@ -99,32 +99,49 @@ CLICK_MOUSE_PREROLL = np.array([
 # Compression
 # -----------------------------------------------------------------------------
 
-def compress_chunk(chunk, K, return_blocks=False):
+def compress_chunk(chunk, K, return_blocks=False, carry=None):
     """Block-last K-compression of an ABSOLUTE action chunk.
 
-    chunk: (T, D) absolute targets.  Returns (T//K + T%K, D).
+    chunk: (T, D) absolute targets.
 
-    Blocks of K consecutive targets collapse to the block's LAST target (the
-    intermediate way-points are simply never commanded); the T mod K leftover
-    steps at the end are executed raw.  NEVER sum -- see the module docstring.
+    Blocks of consecutive targets collapse to the block's LAST target (the
+    intermediate way-points are simply never commanded).  NEVER sum -- see the
+    module docstring.
+
+    `K` may be fractional.  Block lengths have to be integers but their *mean*
+    does not, and that mean is the speed-up, so `fractional_blocks.blocks_for`
+    lays out a mixture (1.5x -> lengths 1 and 2 interleaved).  Aggregation is
+    untouched: robocasa sums its blocks because it commands deltas, we take the
+    block's last because we command absolute targets.  Only the boundaries come
+    from there, which is why that module serves both.
+
+    `carry` threads the fractional remainder across chunks.  A 16-step chunk
+    cannot realise 1.5x on its own (11 blocks is 1.455, 10 is 1.60); paying back
+    the shortfall on the next chunk converges the EPISODE ratio on the request.
+    Pass None to keep the old integer-only behaviour, or a float to thread it --
+    the caller then receives the updated carry as the last return value.
     """
     v = np.asarray(chunk, dtype=np.float32)
     if v.ndim == 1:
         v = v[None]
     T = v.shape[0]
-    if K <= 1:
+    if float(K) <= 1.0:
         blocks = [(i, i + 1) for i in range(T)]
-        return (v, blocks) if return_blocks else v
-    num_full = T // K
+        out = v
+        if carry is None:
+            return (out, blocks) if return_blocks else out
+        return (out, blocks, 0.0) if return_blocks else (out, 0.0)
+
+    from fractional_blocks import blocks_for
+    spans, new_carry = blocks_for(T, float(K), 0.0 if carry is None else carry)
     out, blocks = [], []
-    for i in range(num_full):
-        out.append(v[(i + 1) * K - 1])            # block-last (absolute skip)
-        blocks.append((i * K, (i + 1) * K))
-    for j in range(num_full * K, T):
-        out.append(v[j])                          # raw remainder
-        blocks.append((j, j + 1))
+    for b, e in spans:
+        out.append(v[e - 1])                      # block-last (absolute skip)
+        blocks.append((b, e))
     out = np.stack(out) if out else v
-    return (out, blocks) if return_blocks else out
+    if carry is None:
+        return (out, blocks) if return_blocks else out
+    return (out, blocks, new_carry) if return_blocks else (out, new_carry)
 
 
 def merge_jump_stats(sub_raw, sub_exec, prev_target):
@@ -177,7 +194,9 @@ def build_parser():
                    help="optional .npz path: dump every raw policy chunk "
                         "(used to calibrate the descriptor thresholds)")
     # --- compression --------------------------------------------------------
-    p.add_argument("--compress-k", type=int, default=2)
+    # 분수 배속을 받는다. 손상표를 1x/2x/3x 세 칸이 아니라 태스크별 띠로
+    # 만들려면 1.5 와 2.5 가 필요하다 (allex 운용자 실측이 그 자리에 있다).
+    p.add_argument("--compress-k", type=float, default=2.0)
     # --- gate ---------------------------------------------------------------
     p.add_argument("--judge-url", type=str, default="",
                    help="empty = always compress with K (naive-K baseline)")
@@ -324,6 +343,8 @@ def main():
     try:
         for i in range(args.n_episodes):
             env.reset()
+            # 분수 배속의 이월은 에피소드마다 0 에서 시작한다.
+            _frac_carry = 0.0
             if i < len(done_flags):
                 print(f"ep {i}: SKIP (already in prediction.txt)", flush=True)
                 continue
@@ -431,7 +452,7 @@ def main():
                                            f"{int(call)},{prompt!r}\n")
                             gate_log.flush()
 
-                    sub_exec = compress_chunk(sub, k_eff)
+                    sub_exec, _frac_carry = compress_chunk(sub, k_eff, carry=_frac_carry)
                     H_exec = sub_exec.shape[0]
                     chunk_lens.append(H_exec)
                     if k_eff > 1:
