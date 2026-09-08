@@ -182,9 +182,17 @@ for nm in names + [None]:                      # None 이 마지막 배치를 �
                       f"err={r.get('error','')!r} picks={r.get('picks')!r} "
                       f"text={str(r.get('text',''))[:60]!r}", flush=True)
             continue
+        # **등급 분포를 같이 적는다.** 모델이 텍스트로 답한 뒤 그 답이 얼마나
+        # 확실했는지를 덧붙이는 것이다 -- 강제된 슬롯의 로짓을 답으로 삼는
+        # 옛 방식과 다르다(CLAUDE.md 되돌리지 말 것 1 은 그쪽을 금지한 것이다).
+        # P(3)=0.9 와 P(2)=.3/P(3)=.35/P(4)=.3 은 전혀 다른 상태인데 정수로만
+        # 받으면 둘이 같아진다. allex 는 이미 이 값으로 신뢰도를 낸다.
+        gp = r.get("grade_probs")
         rec = {"ep": ep, "f": f, **{k: int(v) for k, v in zip(SLOTS, c)},
                **computed_risk(x), "speed_mean": x["speed_mean"],
                "ans": r.get("text", "")}
+        if gp and len(gp) == NQ:
+            rec["gp"] = [[round(float(v), 4) for v in row] for row in gp]
         out.write(json.dumps(rec) + "\n")
         n += 1
     out.flush()                                 # 선점에 대비해 배치마다 flush

@@ -80,11 +80,35 @@ def load_bench(bench):
     return sign, weight, ngrade, ceil, ceil_path
 
 
-def confidence(picks, sign, weight, ngrade=5):
-    """(1 + Σw·가점 − Σw·감점) / 2. 등급은 (g−1)/(n−1) 로 0~1 에 옮긴다."""
+def expected_grades(probs, ngrade=5):
+    """등급 분포에서 기댓값. 뽑힌 숫자 하나보다 정보가 많다.
+
+    `P(3)=0.9` 와 `P(2)=.3/P(3)=.35/P(4)=.3` 은 전혀 다른 상태인데 등급을
+    정수로만 받으면 둘이 같아진다. 모델은 여전히 **텍스트로 답하고**, 이건 그
+    답이 얼마나 확실했는지를 덧붙이는 것이다 -- 강제된 슬롯의 로짓을 답으로
+    삼는 옛 방식과 다르다. `allex_v3_checks.expected_grades` 와 같은 규칙이다.
+    """
+    if not probs:
+        return None
+    out = []
+    for row in probs:
+        if not row or len(row) != ngrade:
+            return None
+        out.append(sum((i + 1) * float(q) for i, q in enumerate(row)))
+    return out
+
+
+def confidence(rec, sign, weight, ngrade=5):
+    """(1 + Σw·가점 − Σw·감점) / 2. 등급은 (g−1)/(n−1) 로 0~1 에 옮긴다.
+
+    등급 분포(`gp`)가 있으면 정수 등급 대신 **기댓값**을 쓴다.
+    """
+    eg = expected_grades(rec.get("gp"), ngrade)
+    vals = ({k: v for k, v in zip(SLOTS, eg)} if eg and len(eg) == len(SLOTS)
+            else rec)
     d = float(ngrade - 1)
-    risk = sum(weight[k] * (picks[k] - 1) / d for k in SLOTS if sign[k] < 0)
-    safe = sum(weight[k] * (picks[k] - 1) / d for k in SLOTS if sign[k] > 0)
+    risk = sum(weight[k] * (float(vals[k]) - 1) / d for k in SLOTS if sign[k] < 0)
+    safe = sum(weight[k] * (float(vals[k]) - 1) / d for k in SLOTS if sign[k] > 0)
     return float(min(1.0, max(0.0, (1.0 + safe - risk) / 2.0)))
 
 
@@ -371,6 +395,11 @@ def main():
         print(f"접촉 정보를 액션에서 다시 계산했다: {nfill:,}행 "
               f"(라벨 파일에 없었다 -- VLM 은 안 쓴다)")
 
+    ngp = sum(1 for r in rows if r.get("gp"))
+    print(f"등급 분포(gp) 있는 행 {ngp:,}/{len(rows):,} = {ngp/max(1,len(rows)):.1%}"
+          + ("" if ngp else "  <- 없으면 정수 등급으로 떨어진다. 라벨러가 "
+                           "grade_probs 를 안 적은 것이다"))
+
     ratio = [None] * len(rows)
     nfix = 0
     if RULE == "global":
@@ -460,6 +489,12 @@ def main():
                 cols[k] = np.array([int(r[k]) for r in sl], dtype=np.int8)
             for k in ("grip_transition", "precise_hold", "guard"):
                 cols[k] = np.array([float(r.get(k, 0.0)) for r in sl], dtype=np.float32)
+            # 기대 등급. gp 가 없으면 정수 등급이 그대로 들어간다 -- 받는 쪽이
+            # 신뢰도가 어디서 나왔는지 되짚을 수 있어야 한다.
+            for i, k in enumerate(SLOTS):
+                cols["eg_" + k] = np.array(
+                    [(expected_grades(r.get("gp"), NGRADE) or [float(r[k])] * len(SLOTS))[i]
+                     for r in sl], dtype=np.float32)
             t = pa.table(cols)
             if w is None:
                 sch = t.schema
