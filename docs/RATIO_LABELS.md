@@ -77,8 +77,16 @@ python vlm_gate/scripts/apply_ratio_labels.py \
 확신           ( 1 + Σw·가점 − Σw·감점 ) / 2
 ```
 
-문항과 가중치는 **측정된 손상**에서 나왔지 장면 인상으로 지은 것이 아니다.
-전량은 `vlm_gate/prompts/`, 뽑은 과정은 `vlm_gate/analysis/libero_prompt_derivation.md`.
+**문항도 가중치도 벤치마크마다 다르다.** 장면 인상으로 지은 것이 아니라 그
+벤치마크에서 **측정된 손상**에서 나왔다.
+
+| | 프롬프트 전량 | 부호·가중치 | 뽑은 과정 |
+|---|---|---|---|
+| robocasa | `prompts/robocasa_phase9.txt` | `scripts/phase9_checks.py` | `local/PROMPT_METHOD.md` |
+| libero | `prompts/libero_v2.txt` | `scripts/libero_v2_checks.py` | `analysis/libero_prompt_derivation.md` |
+
+`ratio_label.py` 는 벤치마크를 인자로 받아 그쪽 `checks` 모듈에서 읽는다. 값을
+쓰는 쪽에 박아 두면 robocasa 라벨을 libero 가중치로 계산하는 일이 조용히 일어난다.
 
 **상한은 문항이 정하지 않는다. 평가가 준다.** 태스크마다 배속을 올려 가며 성공률과
 스텝을 재서, 성공률이 유지되고 스텝이 실제로 줄어드는 가장 높은 배속이 상한이다
@@ -95,11 +103,11 @@ python vlm_gate/scripts/apply_ratio_labels.py \
 ```bash
 # 1. 평가 사다리에서 태스크별 상한표
 python vlm_gate/scripts/derive_libero_ceilings.py
-#    -> vlm_gate/analysis/libero_task_ceilings.json
+#    -> vlm_gate/analysis/<bench>_task_ceilings.json
 
-# 2. VLM 라벨(등급) + 상한표 -> 배속
-python vlm_gate/scripts/libero_ratio_label.py <등급 labels.jsonl>
-#    -> <...>_ratio.jsonl
+# 2. VLM 라벨(등급) + 상한표 -> 배속.  <bench> 는 libero 또는 robocasa
+python vlm_gate/scripts/ratio_label.py <bench> <등급 labels.jsonl>
+#    -> <...>_ratio.jsonl 과 <...>_ratio.parquet
 ```
 
 상한표는 **명령 클리핑만 푼** 사다리로 만든다. 구동부 한계까지 3배로 연 실행은

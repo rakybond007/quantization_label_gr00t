@@ -18,10 +18,10 @@ from collections import Counter
 import numpy as np
 
 SLOTS = "ABCDE"
-SIGN = {"A": -1, "B": -1, "C": +1, "D": +1, "E": +1}
-WEIGHT = {"A": 0.636, "B": 0.364, "C": 0.533, "D": 0.267, "E": 0.200}
-NAME = {"A": "SMALL_TARGET", "B": "CROWDED_PICK", "C": "CATCHER",
-        "D": "WIDE_SURFACE", "E": "NO_HOLD"}
+# 부호·가중치는 한 군데에만 둔다. 두 벌을 두면 한쪽만 고쳐지고, 그러면 검증이
+# 통과한 값과 라벨이 쓴 값이 달라진다.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from libero_v2_checks import NAME, SIGN, WEIGHT  # noqa: E402
 
 # 도출에서 나온 두 풀 (derive_libero_questions.py 와 같은 값)
 RISK = {"long/1", "spatial/3", "spatial/0", "goal/1", "spatial/5", "spatial/8",
