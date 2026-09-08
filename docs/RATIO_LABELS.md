@@ -142,7 +142,16 @@ python vlm_gate/scripts/ratio_label.py <bench> <등급 labels.jsonl>
 쓰지 않는다 — libero 에서 1.429배가 이미 0.616 으로 무너져 압축이 아니라 제어기
 손상을 재고 있었다(2026-09-08, 각 2000에피).
 
-### 상한표는 어느 사다리에서 오나
+### 사다리 정본은 어디 있나
+
+`vlm_gate/analysis/eval_results/LADDERS.json` (기계) 와 `LADDERS.md` (사람).
+**균일 고정 배속만** 골라 태스크별 값까지 담았다 -- 문항을 다시 뽑거나 상한표를
+다시 만들거나 라벨 방식을 다듬을 때 필요한 것이 그것이다. 무엇을 왜 뺐는지도
+같은 파일에 적혀 있다(무효 실행 · 가변 압축 · 체크포인트가 다른 것 · 적응 게이트).
+
+    python vlm_gate/scripts/build_ladders.py
+
+## 상한표는 어느 사다리에서 오나
 
 **libero 는 F_level 사다리를 쓴다** — 잡 157729 checkpoint-60000, `level_ks`
 1·1.5·2·2.5 로 학습된 체크포인트에서 level 을 하나씩 고정한 arm 이다.
