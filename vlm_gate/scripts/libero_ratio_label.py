@@ -139,6 +139,23 @@ def main():
                                 "task": ep2t.get(r["ep"]),
                                 "conf": round(confidence(r), 4)}) + "\n")
 
+    # 배포용 parquet 도 같이 낸다. `apply_ratio_labels.py` 가 읽는 형식이고,
+    # 다른 기계에서는 이것 하나만 받으면 된다 -- 등급도 jsonl 도 필요 없다.
+    try:
+        import pandas as pd
+        pq = out.replace(".jsonl", ".parquet")
+        pd.DataFrame({
+            "episode_index": [int(r["ep"]) for r in rows],
+            "frame_index": [int(r["f"]) for r in rows],
+            "task": [ep2t.get(r["ep"]) for r in rows],
+            "ratio": np.asarray(ratio, dtype=np.float32),
+            "conf": np.array([confidence(r) for r in rows], dtype=np.float32),
+            "fixed": np.array([1 if contact(r) else 0 for r in rows], dtype=np.int8),
+        }).sort_values(["episode_index", "frame_index"]).to_parquet(pq, index=False)
+        print(f"-> {pq}  (배포용. docs/RATIO_LABELS.md 참고)")
+    except ImportError:
+        print("[!] pandas 가 없어 parquet 은 안 만들었다. jsonl 은 나왔다.")
+
     import collections
     c = collections.Counter(ratio)
     n = len(rows) or 1
