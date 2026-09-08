@@ -1909,6 +1909,2256 @@
       "success": 0.98
      }
     }
+   },
+   "flevel157729_K1": {
+    "external_path": "/sjw_alinlab2/home/taekwan/Data/flevel_libero_157729_ckpt60000/K1",
+    "n": 2000,
+    "n_tasks": 40,
+    "note": "잡 157729 checkpoint-60000, level_ks 1·1.5·2·2.5 로 학습된 체크포인트에서 level 1 을 모든 chunk 에 고정(--force-level 1). seed 7 · replan 5 · --args.no-action-clip · kp 150 · torque stock · level_hold 1.0.",
+    "steps_on_success": 153.1,
+    "success": 0.959,
+    "tasks": {
+     "libero_10/0": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 271.4,
+      "success": 0.94
+     },
+     "libero_10/1": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 258.3,
+      "success": 1.0
+     },
+     "libero_10/2": {
+      "n": 50,
+      "n_success": 44,
+      "steps_on_success": 251.3,
+      "success": 0.88
+     },
+     "libero_10/3": {
+      "n": 50,
+      "n_success": 45,
+      "steps_on_success": 242.1,
+      "success": 0.9
+     },
+     "libero_10/4": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 235.4,
+      "success": 0.94
+     },
+     "libero_10/5": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 173.2,
+      "success": 1.0
+     },
+     "libero_10/6": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 230.3,
+      "success": 0.94
+     },
+     "libero_10/7": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 259.0,
+      "success": 1.0
+     },
+     "libero_10/8": {
+      "n": 50,
+      "n_success": 36,
+      "steps_on_success": 423.0,
+      "success": 0.72
+     },
+     "libero_10/9": {
+      "n": 50,
+      "n_success": 41,
+      "steps_on_success": 301.4,
+      "success": 0.82
+     },
+     "libero_goal/0": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 127.5,
+      "success": 0.98
+     },
+     "libero_goal/1": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 86.3,
+      "success": 0.96
+     },
+     "libero_goal/2": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 92.0,
+      "success": 1.0
+     },
+     "libero_goal/3": {
+      "n": 50,
+      "n_success": 45,
+      "steps_on_success": 187.8,
+      "success": 0.9
+     },
+     "libero_goal/4": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 86.1,
+      "success": 1.0
+     },
+     "libero_goal/5": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 131.7,
+      "success": 0.98
+     },
+     "libero_goal/6": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 91.5,
+      "success": 0.96
+     },
+     "libero_goal/7": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 74.4,
+      "success": 1.0
+     },
+     "libero_goal/8": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 74.3,
+      "success": 1.0
+     },
+     "libero_goal/9": {
+      "n": 50,
+      "n_success": 45,
+      "steps_on_success": 133.9,
+      "success": 0.9
+     },
+     "libero_object/0": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 143.5,
+      "success": 1.0
+     },
+     "libero_object/1": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 131.4,
+      "success": 0.96
+     },
+     "libero_object/2": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 118.2,
+      "success": 1.0
+     },
+     "libero_object/3": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 137.5,
+      "success": 0.96
+     },
+     "libero_object/4": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 137.7,
+      "success": 1.0
+     },
+     "libero_object/5": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 134.7,
+      "success": 0.98
+     },
+     "libero_object/6": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 156.7,
+      "success": 1.0
+     },
+     "libero_object/7": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 130.2,
+      "success": 0.98
+     },
+     "libero_object/8": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 155.5,
+      "success": 1.0
+     },
+     "libero_object/9": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 126.0,
+      "success": 1.0
+     },
+     "libero_spatial/0": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 80.1,
+      "success": 0.96
+     },
+     "libero_spatial/1": {
+      "n": 50,
+      "n_success": 45,
+      "steps_on_success": 107.7,
+      "success": 0.9
+     },
+     "libero_spatial/2": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 93.7,
+      "success": 1.0
+     },
+     "libero_spatial/3": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 84.6,
+      "success": 1.0
+     },
+     "libero_spatial/4": {
+      "n": 50,
+      "n_success": 46,
+      "steps_on_success": 127.3,
+      "success": 0.92
+     },
+     "libero_spatial/5": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 91.6,
+      "success": 0.96
+     },
+     "libero_spatial/6": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 103.6,
+      "success": 0.96
+     },
+     "libero_spatial/7": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 121.1,
+      "success": 1.0
+     },
+     "libero_spatial/8": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 96.2,
+      "success": 0.98
+     },
+     "libero_spatial/9": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 116.4,
+      "success": 0.98
+     }
+    }
+   },
+   "flevel157729_K1p5": {
+    "external_path": "/sjw_alinlab2/home/taekwan/Data/flevel_libero_157729_ckpt60000/K1p5",
+    "n": 2000,
+    "n_tasks": 40,
+    "note": "같은 체크포인트, level 1.5 고정(force2). 블록 [1,2] 교대.",
+    "steps_on_success": 115.7,
+    "success": 0.935,
+    "tasks": {
+     "libero_10/0": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 210.6,
+      "success": 0.98
+     },
+     "libero_10/1": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 195.1,
+      "success": 0.96
+     },
+     "libero_10/2": {
+      "n": 50,
+      "n_success": 37,
+      "steps_on_success": 183.2,
+      "success": 0.74
+     },
+     "libero_10/3": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 176.8,
+      "success": 0.94
+     },
+     "libero_10/4": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 174.5,
+      "success": 0.96
+     },
+     "libero_10/5": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 126.1,
+      "success": 1.0
+     },
+     "libero_10/6": {
+      "n": 50,
+      "n_success": 42,
+      "steps_on_success": 177.2,
+      "success": 0.84
+     },
+     "libero_10/7": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 197.3,
+      "success": 0.98
+     },
+     "libero_10/8": {
+      "n": 50,
+      "n_success": 29,
+      "steps_on_success": 312.9,
+      "success": 0.58
+     },
+     "libero_10/9": {
+      "n": 50,
+      "n_success": 42,
+      "steps_on_success": 241.2,
+      "success": 0.84
+     },
+     "libero_goal/0": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 89.9,
+      "success": 0.98
+     },
+     "libero_goal/1": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 60.9,
+      "success": 1.0
+     },
+     "libero_goal/2": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 66.8,
+      "success": 0.98
+     },
+     "libero_goal/3": {
+      "n": 50,
+      "n_success": 39,
+      "steps_on_success": 150.6,
+      "success": 0.78
+     },
+     "libero_goal/4": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 60.9,
+      "success": 1.0
+     },
+     "libero_goal/5": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 88.2,
+      "success": 1.0
+     },
+     "libero_goal/6": {
+      "n": 50,
+      "n_success": 46,
+      "steps_on_success": 69.8,
+      "success": 0.92
+     },
+     "libero_goal/7": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 57.7,
+      "success": 1.0
+     },
+     "libero_goal/8": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 56.4,
+      "success": 1.0
+     },
+     "libero_goal/9": {
+      "n": 50,
+      "n_success": 44,
+      "steps_on_success": 110.0,
+      "success": 0.88
+     },
+     "libero_object/0": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 107.6,
+      "success": 0.98
+     },
+     "libero_object/1": {
+      "n": 50,
+      "n_success": 46,
+      "steps_on_success": 115.1,
+      "success": 0.92
+     },
+     "libero_object/2": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 87.5,
+      "success": 0.96
+     },
+     "libero_object/3": {
+      "n": 50,
+      "n_success": 45,
+      "steps_on_success": 113.3,
+      "success": 0.9
+     },
+     "libero_object/4": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 98.8,
+      "success": 1.0
+     },
+     "libero_object/5": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 95.5,
+      "success": 1.0
+     },
+     "libero_object/6": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 115.3,
+      "success": 1.0
+     },
+     "libero_object/7": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 95.0,
+      "success": 1.0
+     },
+     "libero_object/8": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 112.5,
+      "success": 1.0
+     },
+     "libero_object/9": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 93.9,
+      "success": 1.0
+     },
+     "libero_spatial/0": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 60.4,
+      "success": 0.94
+     },
+     "libero_spatial/1": {
+      "n": 50,
+      "n_success": 43,
+      "steps_on_success": 83.2,
+      "success": 0.86
+     },
+     "libero_spatial/2": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 68.4,
+      "success": 1.0
+     },
+     "libero_spatial/3": {
+      "n": 50,
+      "n_success": 41,
+      "steps_on_success": 65.6,
+      "success": 0.82
+     },
+     "libero_spatial/4": {
+      "n": 50,
+      "n_success": 45,
+      "steps_on_success": 94.2,
+      "success": 0.9
+     },
+     "libero_spatial/5": {
+      "n": 50,
+      "n_success": 46,
+      "steps_on_success": 67.7,
+      "success": 0.92
+     },
+     "libero_spatial/6": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 83.0,
+      "success": 0.98
+     },
+     "libero_spatial/7": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 97.8,
+      "success": 1.0
+     },
+     "libero_spatial/8": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 76.6,
+      "success": 0.98
+     },
+     "libero_spatial/9": {
+      "n": 50,
+      "n_success": 44,
+      "steps_on_success": 90.9,
+      "success": 0.88
+     }
+    }
+   },
+   "flevel157729_K2": {
+    "external_path": "/sjw_alinlab2/home/taekwan/Data/flevel_libero_157729_ckpt60000/K2",
+    "n": 2000,
+    "n_tasks": 40,
+    "note": "같은 체크포인트, level 2 고정(force3).",
+    "steps_on_success": 95.5,
+    "success": 0.8865,
+    "tasks": {
+     "libero_10/0": {
+      "n": 50,
+      "n_success": 46,
+      "steps_on_success": 162.5,
+      "success": 0.92
+     },
+     "libero_10/1": {
+      "n": 50,
+      "n_success": 46,
+      "steps_on_success": 189.3,
+      "success": 0.92
+     },
+     "libero_10/2": {
+      "n": 50,
+      "n_success": 36,
+      "steps_on_success": 149.0,
+      "success": 0.72
+     },
+     "libero_10/3": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 134.0,
+      "success": 0.96
+     },
+     "libero_10/4": {
+      "n": 50,
+      "n_success": 41,
+      "steps_on_success": 139.6,
+      "success": 0.82
+     },
+     "libero_10/5": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 92.9,
+      "success": 0.98
+     },
+     "libero_10/6": {
+      "n": 50,
+      "n_success": 36,
+      "steps_on_success": 177.3,
+      "success": 0.72
+     },
+     "libero_10/7": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 176.8,
+      "success": 0.96
+     },
+     "libero_10/8": {
+      "n": 50,
+      "n_success": 26,
+      "steps_on_success": 248.9,
+      "success": 0.52
+     },
+     "libero_10/9": {
+      "n": 50,
+      "n_success": 39,
+      "steps_on_success": 188.9,
+      "success": 0.78
+     },
+     "libero_goal/0": {
+      "n": 50,
+      "n_success": 45,
+      "steps_on_success": 65.2,
+      "success": 0.9
+     },
+     "libero_goal/1": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 53.2,
+      "success": 0.94
+     },
+     "libero_goal/2": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 56.8,
+      "success": 0.98
+     },
+     "libero_goal/3": {
+      "n": 50,
+      "n_success": 40,
+      "steps_on_success": 111.3,
+      "success": 0.8
+     },
+     "libero_goal/4": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 53.4,
+      "success": 1.0
+     },
+     "libero_goal/5": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 69.5,
+      "success": 1.0
+     },
+     "libero_goal/6": {
+      "n": 50,
+      "n_success": 45,
+      "steps_on_success": 66.5,
+      "success": 0.9
+     },
+     "libero_goal/7": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 48.4,
+      "success": 1.0
+     },
+     "libero_goal/8": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 62.6,
+      "success": 0.96
+     },
+     "libero_goal/9": {
+      "n": 50,
+      "n_success": 41,
+      "steps_on_success": 82.1,
+      "success": 0.82
+     },
+     "libero_object/0": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 81.6,
+      "success": 1.0
+     },
+     "libero_object/1": {
+      "n": 50,
+      "n_success": 46,
+      "steps_on_success": 96.8,
+      "success": 0.92
+     },
+     "libero_object/2": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 71.3,
+      "success": 1.0
+     },
+     "libero_object/3": {
+      "n": 50,
+      "n_success": 44,
+      "steps_on_success": 95.4,
+      "success": 0.88
+     },
+     "libero_object/4": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 76.2,
+      "success": 1.0
+     },
+     "libero_object/5": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 73.8,
+      "success": 1.0
+     },
+     "libero_object/6": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 104.7,
+      "success": 0.96
+     },
+     "libero_object/7": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 69.2,
+      "success": 0.98
+     },
+     "libero_object/8": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 89.1,
+      "success": 1.0
+     },
+     "libero_object/9": {
+      "n": 50,
+      "n_success": 46,
+      "steps_on_success": 71.2,
+      "success": 0.92
+     },
+     "libero_spatial/0": {
+      "n": 50,
+      "n_success": 25,
+      "steps_on_success": 70.9,
+      "success": 0.5
+     },
+     "libero_spatial/1": {
+      "n": 50,
+      "n_success": 41,
+      "steps_on_success": 70.8,
+      "success": 0.82
+     },
+     "libero_spatial/2": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 54.0,
+      "success": 1.0
+     },
+     "libero_spatial/3": {
+      "n": 50,
+      "n_success": 36,
+      "steps_on_success": 57.5,
+      "success": 0.72
+     },
+     "libero_spatial/4": {
+      "n": 50,
+      "n_success": 43,
+      "steps_on_success": 70.9,
+      "success": 0.86
+     },
+     "libero_spatial/5": {
+      "n": 50,
+      "n_success": 46,
+      "steps_on_success": 53.3,
+      "success": 0.92
+     },
+     "libero_spatial/6": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 73.8,
+      "success": 0.94
+     },
+     "libero_spatial/7": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 77.6,
+      "success": 0.94
+     },
+     "libero_spatial/8": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 67.1,
+      "success": 0.94
+     },
+     "libero_spatial/9": {
+      "n": 50,
+      "n_success": 28,
+      "steps_on_success": 64.8,
+      "success": 0.56
+     }
+    }
+   },
+   "flevel157729_K2p5": {
+    "external_path": "/sjw_alinlab2/home/taekwan/Data/flevel_libero_157729_ckpt60000/K2p5",
+    "n": 2000,
+    "n_tasks": 40,
+    "note": "같은 체크포인트, level 2.5 고정(force4). 블록 [2,3] 교대.",
+    "steps_on_success": 90.2,
+    "success": 0.785,
+    "tasks": {
+     "libero_10/0": {
+      "n": 50,
+      "n_success": 41,
+      "steps_on_success": 185.0,
+      "success": 0.82
+     },
+     "libero_10/1": {
+      "n": 50,
+      "n_success": 38,
+      "steps_on_success": 141.1,
+      "success": 0.76
+     },
+     "libero_10/2": {
+      "n": 50,
+      "n_success": 13,
+      "steps_on_success": 171.8,
+      "success": 0.26
+     },
+     "libero_10/3": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 124.5,
+      "success": 0.96
+     },
+     "libero_10/4": {
+      "n": 50,
+      "n_success": 38,
+      "steps_on_success": 141.1,
+      "success": 0.76
+     },
+     "libero_10/5": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 82.3,
+      "success": 1.0
+     },
+     "libero_10/6": {
+      "n": 50,
+      "n_success": 28,
+      "steps_on_success": 166.1,
+      "success": 0.56
+     },
+     "libero_10/7": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 151.8,
+      "success": 0.94
+     },
+     "libero_10/8": {
+      "n": 50,
+      "n_success": 17,
+      "steps_on_success": 204.0,
+      "success": 0.34
+     },
+     "libero_10/9": {
+      "n": 50,
+      "n_success": 37,
+      "steps_on_success": 164.5,
+      "success": 0.74
+     },
+     "libero_goal/0": {
+      "n": 50,
+      "n_success": 41,
+      "steps_on_success": 55.8,
+      "success": 0.82
+     },
+     "libero_goal/1": {
+      "n": 50,
+      "n_success": 42,
+      "steps_on_success": 62.6,
+      "success": 0.84
+     },
+     "libero_goal/2": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 48.5,
+      "success": 0.94
+     },
+     "libero_goal/3": {
+      "n": 50,
+      "n_success": 25,
+      "steps_on_success": 105.5,
+      "success": 0.5
+     },
+     "libero_goal/4": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 56.3,
+      "success": 0.94
+     },
+     "libero_goal/5": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 62.2,
+      "success": 0.98
+     },
+     "libero_goal/6": {
+      "n": 50,
+      "n_success": 32,
+      "steps_on_success": 67.7,
+      "success": 0.64
+     },
+     "libero_goal/7": {
+      "n": 50,
+      "n_success": 46,
+      "steps_on_success": 44.9,
+      "success": 0.92
+     },
+     "libero_goal/8": {
+      "n": 50,
+      "n_success": 41,
+      "steps_on_success": 68.1,
+      "success": 0.82
+     },
+     "libero_goal/9": {
+      "n": 50,
+      "n_success": 33,
+      "steps_on_success": 86.9,
+      "success": 0.66
+     },
+     "libero_object/0": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 71.7,
+      "success": 1.0
+     },
+     "libero_object/1": {
+      "n": 50,
+      "n_success": 42,
+      "steps_on_success": 113.0,
+      "success": 0.84
+     },
+     "libero_object/2": {
+      "n": 50,
+      "n_success": 38,
+      "steps_on_success": 68.9,
+      "success": 0.76
+     },
+     "libero_object/3": {
+      "n": 50,
+      "n_success": 46,
+      "steps_on_success": 89.7,
+      "success": 0.92
+     },
+     "libero_object/4": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 65.9,
+      "success": 1.0
+     },
+     "libero_object/5": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 64.0,
+      "success": 1.0
+     },
+     "libero_object/6": {
+      "n": 50,
+      "n_success": 42,
+      "steps_on_success": 110.1,
+      "success": 0.84
+     },
+     "libero_object/7": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 64.8,
+      "success": 0.96
+     },
+     "libero_object/8": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 97.3,
+      "success": 0.96
+     },
+     "libero_object/9": {
+      "n": 50,
+      "n_success": 44,
+      "steps_on_success": 59.2,
+      "success": 0.88
+     },
+     "libero_spatial/0": {
+      "n": 50,
+      "n_success": 27,
+      "steps_on_success": 43.9,
+      "success": 0.54
+     },
+     "libero_spatial/1": {
+      "n": 50,
+      "n_success": 32,
+      "steps_on_success": 81.4,
+      "success": 0.64
+     },
+     "libero_spatial/2": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 46.4,
+      "success": 1.0
+     },
+     "libero_spatial/3": {
+      "n": 50,
+      "n_success": 30,
+      "steps_on_success": 49.3,
+      "success": 0.6
+     },
+     "libero_spatial/4": {
+      "n": 50,
+      "n_success": 34,
+      "steps_on_success": 64.2,
+      "success": 0.68
+     },
+     "libero_spatial/5": {
+      "n": 50,
+      "n_success": 37,
+      "steps_on_success": 49.7,
+      "success": 0.74
+     },
+     "libero_spatial/6": {
+      "n": 50,
+      "n_success": 42,
+      "steps_on_success": 59.5,
+      "success": 0.84
+     },
+     "libero_spatial/7": {
+      "n": 50,
+      "n_success": 41,
+      "steps_on_success": 70.3,
+      "success": 0.82
+     },
+     "libero_spatial/8": {
+      "n": 50,
+      "n_success": 42,
+      "steps_on_success": 80.1,
+      "success": 0.84
+     },
+     "libero_spatial/9": {
+      "n": 50,
+      "n_success": 17,
+      "steps_on_success": 69.5,
+      "success": 0.34
+     }
+    }
+   },
+   "flevel157729_adaptive_rev": {
+    "external_path": "/sjw_alinlab2/home/taekwan/Data/flevel_libero_157729_ckpt60000/adaptive_rev",
+    "n": 2000,
+    "n_tasks": 40,
+    "note": "같은 체크포인트, readout 이 chunk 마다 level 을 고른다(level-map reverse). **우리 confidence 라벨의 대조군이다** -- 넘어야 할 선.",
+    "steps_on_success": 109.9,
+    "success": 0.9045,
+    "tasks": {
+     "libero_10/0": {
+      "n": 50,
+      "n_success": 45,
+      "steps_on_success": 200.7,
+      "success": 0.9
+     },
+     "libero_10/1": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 182.0,
+      "success": 0.96
+     },
+     "libero_10/2": {
+      "n": 50,
+      "n_success": 30,
+      "steps_on_success": 158.7,
+      "success": 0.6
+     },
+     "libero_10/3": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 156.1,
+      "success": 0.96
+     },
+     "libero_10/4": {
+      "n": 50,
+      "n_success": 37,
+      "steps_on_success": 149.7,
+      "success": 0.74
+     },
+     "libero_10/5": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 99.0,
+      "success": 0.98
+     },
+     "libero_10/6": {
+      "n": 50,
+      "n_success": 35,
+      "steps_on_success": 196.9,
+      "success": 0.7
+     },
+     "libero_10/7": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 178.8,
+      "success": 0.94
+     },
+     "libero_10/8": {
+      "n": 50,
+      "n_success": 21,
+      "steps_on_success": 302.3,
+      "success": 0.42
+     },
+     "libero_10/9": {
+      "n": 50,
+      "n_success": 37,
+      "steps_on_success": 203.1,
+      "success": 0.74
+     },
+     "libero_goal/0": {
+      "n": 50,
+      "n_success": 42,
+      "steps_on_success": 84.6,
+      "success": 0.84
+     },
+     "libero_goal/1": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 68.4,
+      "success": 0.96
+     },
+     "libero_goal/2": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 68.3,
+      "success": 0.98
+     },
+     "libero_goal/3": {
+      "n": 50,
+      "n_success": 43,
+      "steps_on_success": 140.1,
+      "success": 0.86
+     },
+     "libero_goal/4": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 64.8,
+      "success": 1.0
+     },
+     "libero_goal/5": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 91.3,
+      "success": 0.98
+     },
+     "libero_goal/6": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 74.9,
+      "success": 0.94
+     },
+     "libero_goal/7": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 53.8,
+      "success": 1.0
+     },
+     "libero_goal/8": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 60.4,
+      "success": 1.0
+     },
+     "libero_goal/9": {
+      "n": 50,
+      "n_success": 33,
+      "steps_on_success": 101.2,
+      "success": 0.66
+     },
+     "libero_object/0": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 97.3,
+      "success": 1.0
+     },
+     "libero_object/1": {
+      "n": 50,
+      "n_success": 46,
+      "steps_on_success": 106.1,
+      "success": 0.92
+     },
+     "libero_object/2": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 93.6,
+      "success": 0.98
+     },
+     "libero_object/3": {
+      "n": 50,
+      "n_success": 45,
+      "steps_on_success": 108.2,
+      "success": 0.9
+     },
+     "libero_object/4": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 95.1,
+      "success": 1.0
+     },
+     "libero_object/5": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 83.2,
+      "success": 1.0
+     },
+     "libero_object/6": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 113.6,
+      "success": 0.96
+     },
+     "libero_object/7": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 84.8,
+      "success": 1.0
+     },
+     "libero_object/8": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 109.3,
+      "success": 1.0
+     },
+     "libero_object/9": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 80.6,
+      "success": 0.94
+     },
+     "libero_spatial/0": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 64.8,
+      "success": 0.96
+     },
+     "libero_spatial/1": {
+      "n": 50,
+      "n_success": 44,
+      "steps_on_success": 82.8,
+      "success": 0.88
+     },
+     "libero_spatial/2": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 63.4,
+      "success": 1.0
+     },
+     "libero_spatial/3": {
+      "n": 50,
+      "n_success": 43,
+      "steps_on_success": 69.6,
+      "success": 0.86
+     },
+     "libero_spatial/4": {
+      "n": 50,
+      "n_success": 45,
+      "steps_on_success": 91.1,
+      "success": 0.9
+     },
+     "libero_spatial/5": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 70.2,
+      "success": 0.94
+     },
+     "libero_spatial/6": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 79.8,
+      "success": 0.94
+     },
+     "libero_spatial/7": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 82.4,
+      "success": 1.0
+     },
+     "libero_spatial/8": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 78.7,
+      "success": 0.98
+     },
+     "libero_spatial/9": {
+      "n": 50,
+      "n_success": 43,
+      "steps_on_success": 106.7,
+      "success": 0.86
+     }
+    }
+   },
+   "flevel157729_adaptive_rev_gs1p5": {
+    "external_path": "/sjw_alinlab2/home/taekwan/Data/flevel_libero_157729_ckpt60000/adaptive_rev_gs1p5",
+    "n": 2000,
+    "n_tasks": 40,
+    "note": "위와 같으나 gripper speed 1.5배.",
+    "steps_on_success": 113.3,
+    "success": 0.919,
+    "tasks": {
+     "libero_10/0": {
+      "n": 50,
+      "n_success": 40,
+      "steps_on_success": 177.0,
+      "success": 0.8
+     },
+     "libero_10/1": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 175.6,
+      "success": 0.98
+     },
+     "libero_10/2": {
+      "n": 50,
+      "n_success": 30,
+      "steps_on_success": 157.0,
+      "success": 0.6
+     },
+     "libero_10/3": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 142.2,
+      "success": 0.96
+     },
+     "libero_10/4": {
+      "n": 50,
+      "n_success": 41,
+      "steps_on_success": 149.0,
+      "success": 0.82
+     },
+     "libero_10/5": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 99.7,
+      "success": 1.0
+     },
+     "libero_10/6": {
+      "n": 50,
+      "n_success": 40,
+      "steps_on_success": 187.9,
+      "success": 0.8
+     },
+     "libero_10/7": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 175.7,
+      "success": 1.0
+     },
+     "libero_10/8": {
+      "n": 50,
+      "n_success": 34,
+      "steps_on_success": 281.6,
+      "success": 0.68
+     },
+     "libero_10/9": {
+      "n": 50,
+      "n_success": 45,
+      "steps_on_success": 181.6,
+      "success": 0.9
+     },
+     "libero_goal/0": {
+      "n": 50,
+      "n_success": 37,
+      "steps_on_success": 73.2,
+      "success": 0.74
+     },
+     "libero_goal/1": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 62.0,
+      "success": 1.0
+     },
+     "libero_goal/2": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 63.6,
+      "success": 0.96
+     },
+     "libero_goal/3": {
+      "n": 50,
+      "n_success": 43,
+      "steps_on_success": 146.9,
+      "success": 0.86
+     },
+     "libero_goal/4": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 63.4,
+      "success": 1.0
+     },
+     "libero_goal/5": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 91.7,
+      "success": 0.94
+     },
+     "libero_goal/6": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 69.7,
+      "success": 0.94
+     },
+     "libero_goal/7": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 51.4,
+      "success": 1.0
+     },
+     "libero_goal/8": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 57.1,
+      "success": 1.0
+     },
+     "libero_goal/9": {
+      "n": 50,
+      "n_success": 31,
+      "steps_on_success": 93.6,
+      "success": 0.62
+     },
+     "libero_object/0": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 139.3,
+      "success": 1.0
+     },
+     "libero_object/1": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 126.1,
+      "success": 0.96
+     },
+     "libero_object/2": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 118.6,
+      "success": 1.0
+     },
+     "libero_object/3": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 130.9,
+      "success": 0.94
+     },
+     "libero_object/4": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 134.8,
+      "success": 1.0
+     },
+     "libero_object/5": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 128.2,
+      "success": 1.0
+     },
+     "libero_object/6": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 137.9,
+      "success": 1.0
+     },
+     "libero_object/7": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 124.0,
+      "success": 1.0
+     },
+     "libero_object/8": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 134.0,
+      "success": 1.0
+     },
+     "libero_object/9": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 82.0,
+      "success": 0.94
+     },
+     "libero_spatial/0": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 65.8,
+      "success": 0.94
+     },
+     "libero_spatial/1": {
+      "n": 50,
+      "n_success": 35,
+      "steps_on_success": 81.3,
+      "success": 0.7
+     },
+     "libero_spatial/2": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 61.2,
+      "success": 0.98
+     },
+     "libero_spatial/3": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 67.1,
+      "success": 0.94
+     },
+     "libero_spatial/4": {
+      "n": 50,
+      "n_success": 46,
+      "steps_on_success": 91.3,
+      "success": 0.92
+     },
+     "libero_spatial/5": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 70.9,
+      "success": 0.98
+     },
+     "libero_spatial/6": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 78.0,
+      "success": 1.0
+     },
+     "libero_spatial/7": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 83.7,
+      "success": 0.94
+     },
+     "libero_spatial/8": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 81.6,
+      "success": 0.98
+     },
+     "libero_spatial/9": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 95.6,
+      "success": 0.94
+     }
+    }
+   },
+   "naive_r1p667_even": {
+    "external_path": "/rlwrld-unified-checkpoints/taekwan/eqs_libero_naive_k2_noclip_repeat",
+    "n": 2000,
+    "n_tasks": 40,
+    "note": "이름은 K2 지만 compress_scope=replan 이라 창 5 를 [2,2,1] 로 쪼갠다 -> 실제 배속 1.667. 압축 없이 학습된 베이스라인(b32)에 균일 압축. 클리핑만 풂.",
+    "steps_on_success": 102.3,
+    "success": 0.9375,
+    "tasks": {
+     "libero_10/0": {
+      "n": 50,
+      "n_success": 43,
+      "steps_on_success": 182.2,
+      "success": 0.86
+     },
+     "libero_10/1": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 176.9,
+      "success": 1.0
+     },
+     "libero_10/2": {
+      "n": 50,
+      "n_success": 42,
+      "steps_on_success": 172.0,
+      "success": 0.84
+     },
+     "libero_10/3": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 152.0,
+      "success": 1.0
+     },
+     "libero_10/4": {
+      "n": 50,
+      "n_success": 45,
+      "steps_on_success": 157.5,
+      "success": 0.9
+     },
+     "libero_10/5": {
+      "n": 50,
+      "n_success": 46,
+      "steps_on_success": 116.8,
+      "success": 0.92
+     },
+     "libero_10/6": {
+      "n": 50,
+      "n_success": 38,
+      "steps_on_success": 162.4,
+      "success": 0.76
+     },
+     "libero_10/7": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 171.2,
+      "success": 0.96
+     },
+     "libero_10/8": {
+      "n": 50,
+      "n_success": 30,
+      "steps_on_success": 267.1,
+      "success": 0.6
+     },
+     "libero_10/9": {
+      "n": 50,
+      "n_success": 36,
+      "steps_on_success": 219.9,
+      "success": 0.72
+     },
+     "libero_goal/0": {
+      "n": 50,
+      "n_success": 46,
+      "steps_on_success": 75.6,
+      "success": 0.92
+     },
+     "libero_goal/1": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 53.8,
+      "success": 0.98
+     },
+     "libero_goal/2": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 59.4,
+      "success": 1.0
+     },
+     "libero_goal/3": {
+      "n": 50,
+      "n_success": 42,
+      "steps_on_success": 114.8,
+      "success": 0.84
+     },
+     "libero_goal/4": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 53.7,
+      "success": 1.0
+     },
+     "libero_goal/5": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 81.3,
+      "success": 1.0
+     },
+     "libero_goal/6": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 64.8,
+      "success": 0.96
+     },
+     "libero_goal/7": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 49.0,
+      "success": 0.98
+     },
+     "libero_goal/8": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 47.9,
+      "success": 0.98
+     },
+     "libero_goal/9": {
+      "n": 50,
+      "n_success": 43,
+      "steps_on_success": 96.0,
+      "success": 0.86
+     },
+     "libero_object/0": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 92.2,
+      "success": 1.0
+     },
+     "libero_object/1": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 92.6,
+      "success": 0.96
+     },
+     "libero_object/2": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 77.1,
+      "success": 0.98
+     },
+     "libero_object/3": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 103.9,
+      "success": 0.96
+     },
+     "libero_object/4": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 90.7,
+      "success": 0.98
+     },
+     "libero_object/5": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 82.7,
+      "success": 1.0
+     },
+     "libero_object/6": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 106.1,
+      "success": 1.0
+     },
+     "libero_object/7": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 82.1,
+      "success": 0.98
+     },
+     "libero_object/8": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 114.2,
+      "success": 1.0
+     },
+     "libero_object/9": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 77.3,
+      "success": 1.0
+     },
+     "libero_spatial/0": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 54.8,
+      "success": 0.98
+     },
+     "libero_spatial/1": {
+      "n": 50,
+      "n_success": 46,
+      "steps_on_success": 70.2,
+      "success": 0.92
+     },
+     "libero_spatial/2": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 63.4,
+      "success": 1.0
+     },
+     "libero_spatial/3": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 61.7,
+      "success": 0.94
+     },
+     "libero_spatial/4": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 84.0,
+      "success": 0.98
+     },
+     "libero_spatial/5": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 59.1,
+      "success": 0.98
+     },
+     "libero_spatial/6": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 72.3,
+      "success": 0.98
+     },
+     "libero_spatial/7": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 77.3,
+      "success": 0.94
+     },
+     "libero_spatial/8": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 63.4,
+      "success": 0.98
+     },
+     "libero_spatial/9": {
+      "n": 50,
+      "n_success": 43,
+      "steps_on_success": 90.7,
+      "success": 0.86
+     }
+    }
+   },
+   "naive_r1p667_front": {
+    "external_path": "/rlwrld-unified-checkpoints/taekwan/eqs_libero_naive_k3_noclip",
+    "n": 2000,
+    "n_tasks": 40,
+    "note": "이름은 K3. 창 5 를 [3,1,1] 로 -> 실제 1.667. **위와 배속이 같은데 모양만 다르다** -- 0.938 대 0.890 으로 갈리는 것이 '모양이 배속만큼 중요하다' 의 근거다.",
+    "steps_on_success": 106.7,
+    "success": 0.89,
+    "tasks": {
+     "libero_10/0": {
+      "n": 50,
+      "n_success": 46,
+      "steps_on_success": 188.5,
+      "success": 0.92
+     },
+     "libero_10/1": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 169.5,
+      "success": 1.0
+     },
+     "libero_10/2": {
+      "n": 50,
+      "n_success": 31,
+      "steps_on_success": 173.5,
+      "success": 0.62
+     },
+     "libero_10/3": {
+      "n": 50,
+      "n_success": 46,
+      "steps_on_success": 155.2,
+      "success": 0.92
+     },
+     "libero_10/4": {
+      "n": 50,
+      "n_success": 44,
+      "steps_on_success": 159.0,
+      "success": 0.88
+     },
+     "libero_10/5": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 123.1,
+      "success": 0.94
+     },
+     "libero_10/6": {
+      "n": 50,
+      "n_success": 40,
+      "steps_on_success": 160.1,
+      "success": 0.8
+     },
+     "libero_10/7": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 174.3,
+      "success": 1.0
+     },
+     "libero_10/8": {
+      "n": 50,
+      "n_success": 30,
+      "steps_on_success": 277.6,
+      "success": 0.6
+     },
+     "libero_10/9": {
+      "n": 50,
+      "n_success": 36,
+      "steps_on_success": 204.4,
+      "success": 0.72
+     },
+     "libero_goal/0": {
+      "n": 50,
+      "n_success": 44,
+      "steps_on_success": 81.0,
+      "success": 0.88
+     },
+     "libero_goal/1": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 54.8,
+      "success": 0.96
+     },
+     "libero_goal/2": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 59.0,
+      "success": 0.96
+     },
+     "libero_goal/3": {
+      "n": 50,
+      "n_success": 45,
+      "steps_on_success": 131.2,
+      "success": 0.9
+     },
+     "libero_goal/4": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 56.7,
+      "success": 0.96
+     },
+     "libero_goal/5": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 76.0,
+      "success": 1.0
+     },
+     "libero_goal/6": {
+      "n": 50,
+      "n_success": 45,
+      "steps_on_success": 62.9,
+      "success": 0.9
+     },
+     "libero_goal/7": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 51.0,
+      "success": 0.98
+     },
+     "libero_goal/8": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 53.5,
+      "success": 1.0
+     },
+     "libero_goal/9": {
+      "n": 50,
+      "n_success": 42,
+      "steps_on_success": 103.4,
+      "success": 0.84
+     },
+     "libero_object/0": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 108.0,
+      "success": 1.0
+     },
+     "libero_object/1": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 111.2,
+      "success": 0.94
+     },
+     "libero_object/2": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 78.6,
+      "success": 1.0
+     },
+     "libero_object/3": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 133.2,
+      "success": 0.96
+     },
+     "libero_object/4": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 90.5,
+      "success": 0.98
+     },
+     "libero_object/5": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 87.3,
+      "success": 0.98
+     },
+     "libero_object/6": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 103.4,
+      "success": 0.96
+     },
+     "libero_object/7": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 87.4,
+      "success": 1.0
+     },
+     "libero_object/8": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 108.8,
+      "success": 0.96
+     },
+     "libero_object/9": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 80.5,
+      "success": 1.0
+     },
+     "libero_spatial/0": {
+      "n": 50,
+      "n_success": 37,
+      "steps_on_success": 68.0,
+      "success": 0.74
+     },
+     "libero_spatial/1": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 72.9,
+      "success": 1.0
+     },
+     "libero_spatial/2": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 62.9,
+      "success": 0.98
+     },
+     "libero_spatial/3": {
+      "n": 50,
+      "n_success": 22,
+      "steps_on_success": 56.3,
+      "success": 0.44
+     },
+     "libero_spatial/4": {
+      "n": 50,
+      "n_success": 38,
+      "steps_on_success": 83.4,
+      "success": 0.76
+     },
+     "libero_spatial/5": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 57.4,
+      "success": 0.96
+     },
+     "libero_spatial/6": {
+      "n": 50,
+      "n_success": 44,
+      "steps_on_success": 71.4,
+      "success": 0.88
+     },
+     "libero_spatial/7": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 75.6,
+      "success": 0.96
+     },
+     "libero_spatial/8": {
+      "n": 50,
+      "n_success": 27,
+      "steps_on_success": 95.6,
+      "success": 0.54
+     },
+     "libero_spatial/9": {
+      "n": 50,
+      "n_success": 39,
+      "steps_on_success": 121.1,
+      "success": 0.78
+     }
+    }
+   },
+   "naive_r2p0": {
+    "external_path": "/rlwrld-unified-checkpoints/taekwan/eqs_libero_naive_k2_replan6",
+    "n": 2000,
+    "n_tasks": 40,
+    "note": "창 6 을 [2,2,2] 로 -> 실제 2.000.",
+    "steps_on_success": 94.5,
+    "success": 0.889,
+    "tasks": {
+     "libero_10/0": {
+      "n": 50,
+      "n_success": 43,
+      "steps_on_success": 167.1,
+      "success": 0.86
+     },
+     "libero_10/1": {
+      "n": 50,
+      "n_success": 42,
+      "steps_on_success": 179.1,
+      "success": 0.84
+     },
+     "libero_10/2": {
+      "n": 50,
+      "n_success": 33,
+      "steps_on_success": 171.2,
+      "success": 0.66
+     },
+     "libero_10/3": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 132.2,
+      "success": 0.96
+     },
+     "libero_10/4": {
+      "n": 50,
+      "n_success": 42,
+      "steps_on_success": 143.0,
+      "success": 0.84
+     },
+     "libero_10/5": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 100.9,
+      "success": 0.96
+     },
+     "libero_10/6": {
+      "n": 50,
+      "n_success": 37,
+      "steps_on_success": 143.6,
+      "success": 0.74
+     },
+     "libero_10/7": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 161.9,
+      "success": 0.94
+     },
+     "libero_10/8": {
+      "n": 50,
+      "n_success": 37,
+      "steps_on_success": 248.8,
+      "success": 0.74
+     },
+     "libero_10/9": {
+      "n": 50,
+      "n_success": 33,
+      "steps_on_success": 181.1,
+      "success": 0.66
+     },
+     "libero_goal/0": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 64.4,
+      "success": 0.94
+     },
+     "libero_goal/1": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 52.0,
+      "success": 0.94
+     },
+     "libero_goal/2": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 55.9,
+      "success": 0.96
+     },
+     "libero_goal/3": {
+      "n": 50,
+      "n_success": 40,
+      "steps_on_success": 106.3,
+      "success": 0.8
+     },
+     "libero_goal/4": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 48.1,
+      "success": 1.0
+     },
+     "libero_goal/5": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 68.8,
+      "success": 0.96
+     },
+     "libero_goal/6": {
+      "n": 50,
+      "n_success": 44,
+      "steps_on_success": 55.5,
+      "success": 0.88
+     },
+     "libero_goal/7": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 47.4,
+      "success": 0.98
+     },
+     "libero_goal/8": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 50.2,
+      "success": 0.98
+     },
+     "libero_goal/9": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 81.1,
+      "success": 0.94
+     },
+     "libero_object/0": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 80.1,
+      "success": 1.0
+     },
+     "libero_object/1": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 101.4,
+      "success": 1.0
+     },
+     "libero_object/2": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 67.9,
+      "success": 1.0
+     },
+     "libero_object/3": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 89.9,
+      "success": 0.96
+     },
+     "libero_object/4": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 80.5,
+      "success": 0.94
+     },
+     "libero_object/5": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 71.7,
+      "success": 1.0
+     },
+     "libero_object/6": {
+      "n": 50,
+      "n_success": 49,
+      "steps_on_success": 94.0,
+      "success": 0.98
+     },
+     "libero_object/7": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 76.4,
+      "success": 0.96
+     },
+     "libero_object/8": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 101.8,
+      "success": 1.0
+     },
+     "libero_object/9": {
+      "n": 50,
+      "n_success": 45,
+      "steps_on_success": 67.5,
+      "success": 0.9
+     },
+     "libero_spatial/0": {
+      "n": 50,
+      "n_success": 27,
+      "steps_on_success": 76.0,
+      "success": 0.54
+     },
+     "libero_spatial/1": {
+      "n": 50,
+      "n_success": 39,
+      "steps_on_success": 77.2,
+      "success": 0.78
+     },
+     "libero_spatial/2": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 56.5,
+      "success": 1.0
+     },
+     "libero_spatial/3": {
+      "n": 50,
+      "n_success": 33,
+      "steps_on_success": 61.9,
+      "success": 0.66
+     },
+     "libero_spatial/4": {
+      "n": 50,
+      "n_success": 39,
+      "steps_on_success": 77.6,
+      "success": 0.78
+     },
+     "libero_spatial/5": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 51.4,
+      "success": 0.94
+     },
+     "libero_spatial/6": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 67.2,
+      "success": 0.96
+     },
+     "libero_spatial/7": {
+      "n": 50,
+      "n_success": 44,
+      "steps_on_success": 75.0,
+      "success": 0.88
+     },
+     "libero_spatial/8": {
+      "n": 50,
+      "n_success": 43,
+      "steps_on_success": 68.5,
+      "success": 0.86
+     },
+     "libero_spatial/9": {
+      "n": 50,
+      "n_success": 42,
+      "steps_on_success": 80.3,
+      "success": 0.84
+     }
+    }
    }
   },
   "robocasa": {
