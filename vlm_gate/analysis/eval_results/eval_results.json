@@ -186,6 +186,106 @@
      }
     }
    },
+   "baseline_60k_K1_alin": {
+    "conditions": {
+     "clip_scale": null,
+     "dyn_scale": "풀지 않음 (풀면 결과가 나빠진다 — k-ladder-saturation 및 사용자 실측)",
+     "gate": "없음 (균일 고정 배속)"
+    },
+    "n": 300,
+    "n_tasks": 6,
+    "source": "ALIN cluster (prehj)",
+    "steps_on_success": 384.5,
+    "success": 0.7633,
+    "tasks": {
+     "click_mouse": {
+      "n": 50,
+      "n_success": 41,
+      "steps_on_success": 422.5,
+      "success": 0.82
+     },
+     "fold_glasses": {
+      "n": 50,
+      "n_success": 35,
+      "steps_on_success": 585.7,
+      "success": 0.7
+     },
+     "hammer_nail": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 217.7,
+      "success": 0.94
+     },
+     "pick_bucket": {
+      "n": 50,
+      "n_success": 41,
+      "steps_on_success": 440.3,
+      "success": 0.82
+     },
+     "pinch_tongs": {
+      "n": 50,
+      "n_success": 26,
+      "steps_on_success": 437.0,
+      "success": 0.52
+     },
+     "water_plant": {
+      "n": 50,
+      "n_success": 39,
+      "steps_on_success": 271.2,
+      "success": 0.78
+     }
+    }
+   },
+   "baseline_60k_K1p5": {
+    "conditions": {
+     "clip_scale": null,
+     "dyn_scale": "풀지 않음 (풀면 결과가 나빠진다 — k-ladder-saturation 및 사용자 실측)",
+     "gate": "없음 (균일 고정 배속)"
+    },
+    "n": 300,
+    "n_tasks": 6,
+    "source": "ALIN cluster (prehj)",
+    "steps_on_success": 341.2,
+    "success": 0.7,
+    "tasks": {
+     "click_mouse": {
+      "n": 50,
+      "n_success": 41,
+      "steps_on_success": 386.6,
+      "success": 0.82
+     },
+     "fold_glasses": {
+      "n": 50,
+      "n_success": 26,
+      "steps_on_success": 491.3,
+      "success": 0.52
+     },
+     "hammer_nail": {
+      "n": 50,
+      "n_success": 42,
+      "steps_on_success": 224.2,
+      "success": 0.84
+     },
+     "pick_bucket": {
+      "n": 50,
+      "n_success": 44,
+      "steps_on_success": 370.0,
+      "success": 0.88
+     },
+     "pinch_tongs": {
+      "n": 50,
+      "n_success": 21,
+      "steps_on_success": 417.9,
+      "success": 0.42
+     },
+     "water_plant": {
+      "n": 50,
+      "n_success": 36,
+      "steps_on_success": 237.7,
+      "success": 0.72
+     }
+    }
+   },
    "baseline_60k_K2": {
     "n": 300,
     "n_tasks": 6,
@@ -228,6 +328,106 @@
       "n": 50,
       "n_success": 34,
       "steps_on_success": 227.9,
+      "success": 0.68
+     }
+    }
+   },
+   "baseline_60k_K2_alin": {
+    "conditions": {
+     "clip_scale": null,
+     "dyn_scale": "풀지 않음 (풀면 결과가 나빠진다 — k-ladder-saturation 및 사용자 실측)",
+     "gate": "없음 (균일 고정 배속)"
+    },
+    "n": 300,
+    "n_tasks": 6,
+    "source": "ALIN cluster (prehj)",
+    "steps_on_success": 333.6,
+    "success": 0.63,
+    "tasks": {
+     "click_mouse": {
+      "n": 50,
+      "n_success": 36,
+      "steps_on_success": 394.5,
+      "success": 0.72
+     },
+     "fold_glasses": {
+      "n": 50,
+      "n_success": 26,
+      "steps_on_success": 547.2,
+      "success": 0.52
+     },
+     "hammer_nail": {
+      "n": 50,
+      "n_success": 36,
+      "steps_on_success": 211.4,
+      "success": 0.72
+     },
+     "pick_bucket": {
+      "n": 50,
+      "n_success": 35,
+      "steps_on_success": 336.2,
+      "success": 0.7
+     },
+     "pinch_tongs": {
+      "n": 50,
+      "n_success": 19,
+      "steps_on_success": 360.7,
+      "success": 0.38
+     },
+     "water_plant": {
+      "n": 50,
+      "n_success": 37,
+      "steps_on_success": 226.7,
+      "success": 0.74
+     }
+    }
+   },
+   "baseline_60k_K2p5": {
+    "conditions": {
+     "clip_scale": null,
+     "dyn_scale": "풀지 않음 (풀면 결과가 나빠진다 — k-ladder-saturation 및 사용자 실측)",
+     "gate": "없음 (균일 고정 배속)"
+    },
+    "n": 300,
+    "n_tasks": 6,
+    "source": "ALIN cluster (prehj)",
+    "steps_on_success": 344.1,
+    "success": 0.5333,
+    "tasks": {
+     "click_mouse": {
+      "n": 50,
+      "n_success": 34,
+      "steps_on_success": 447.4,
+      "success": 0.68
+     },
+     "fold_glasses": {
+      "n": 50,
+      "n_success": 22,
+      "steps_on_success": 537.5,
+      "success": 0.44
+     },
+     "hammer_nail": {
+      "n": 50,
+      "n_success": 26,
+      "steps_on_success": 236.0,
+      "success": 0.52
+     },
+     "pick_bucket": {
+      "n": 50,
+      "n_success": 31,
+      "steps_on_success": 298.2,
+      "success": 0.62
+     },
+     "pinch_tongs": {
+      "n": 50,
+      "n_success": 13,
+      "steps_on_success": 390.8,
+      "success": 0.26
+     },
+     "water_plant": {
+      "n": 50,
+      "n_success": 34,
+      "steps_on_success": 222.1,
       "success": 0.68
      }
     }
@@ -2020,6 +2220,164 @@
      }
     }
    },
+   "baseline_compress_K1p5_clip3": {
+    "conditions": {
+     "clip_scale": 3.0,
+     "dyn_scale": "풀지 않음 (풀면 결과가 나빠진다 — k-ladder-saturation 및 사용자 실측)",
+     "gate": "없음 (균일 고정 배속)"
+    },
+    "n": 1200,
+    "n_tasks": 24,
+    "source": "ALIN cluster (prehj)",
+    "steps_on_success": 242.8,
+    "success": 0.6467,
+    "tasks": {
+     "CloseDoubleDoor": {
+      "n": 50,
+      "n_success": 42,
+      "steps_on_success": 348.9,
+      "success": 0.84
+     },
+     "CloseDrawer": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 158.6,
+      "success": 1.0
+     },
+     "CloseSingleDoor": {
+      "n": 50,
+      "n_success": 46,
+      "steps_on_success": 211.0,
+      "success": 0.92
+     },
+     "CoffeePressButton": {
+      "n": 50,
+      "n_success": 43,
+      "steps_on_success": 91.1,
+      "success": 0.86
+     },
+     "CoffeeServeMug": {
+      "n": 50,
+      "n_success": 39,
+      "steps_on_success": 242.5,
+      "success": 0.78
+     },
+     "CoffeeSetupMug": {
+      "n": 50,
+      "n_success": 13,
+      "steps_on_success": 208.2,
+      "success": 0.26
+     },
+     "OpenDoubleDoor": {
+      "n": 50,
+      "n_success": 42,
+      "steps_on_success": 588.5,
+      "success": 0.84
+     },
+     "OpenDrawer": {
+      "n": 50,
+      "n_success": 31,
+      "steps_on_success": 165.0,
+      "success": 0.62
+     },
+     "OpenSingleDoor": {
+      "n": 50,
+      "n_success": 43,
+      "steps_on_success": 263.6,
+      "success": 0.86
+     },
+     "PnPCabToCounter": {
+      "n": 50,
+      "n_success": 33,
+      "steps_on_success": 260.8,
+      "success": 0.66
+     },
+     "PnPCounterToCab": {
+      "n": 50,
+      "n_success": 27,
+      "steps_on_success": 224.6,
+      "success": 0.54
+     },
+     "PnPCounterToMicrowave": {
+      "n": 50,
+      "n_success": 12,
+      "steps_on_success": 369.9,
+      "success": 0.24
+     },
+     "PnPCounterToSink": {
+      "n": 50,
+      "n_success": 35,
+      "steps_on_success": 360.6,
+      "success": 0.7
+     },
+     "PnPCounterToStove": {
+      "n": 50,
+      "n_success": 32,
+      "steps_on_success": 283.2,
+      "success": 0.64
+     },
+     "PnPMicrowaveToCounter": {
+      "n": 50,
+      "n_success": 9,
+      "steps_on_success": 266.2,
+      "success": 0.18
+     },
+     "PnPSinkToCounter": {
+      "n": 50,
+      "n_success": 24,
+      "steps_on_success": 234.8,
+      "success": 0.48
+     },
+     "PnPStoveToCounter": {
+      "n": 50,
+      "n_success": 35,
+      "steps_on_success": 253.9,
+      "success": 0.7
+     },
+     "TurnOffMicrowave": {
+      "n": 50,
+      "n_success": 46,
+      "steps_on_success": 236.4,
+      "success": 0.92
+     },
+     "TurnOffSinkFaucet": {
+      "n": 50,
+      "n_success": 43,
+      "steps_on_success": 192.4,
+      "success": 0.86
+     },
+     "TurnOffStove": {
+      "n": 50,
+      "n_success": 10,
+      "steps_on_success": 174.7,
+      "success": 0.2
+     },
+     "TurnOnMicrowave": {
+      "n": 50,
+      "n_success": 28,
+      "steps_on_success": 180.9,
+      "success": 0.56
+     },
+     "TurnOnSinkFaucet": {
+      "n": 50,
+      "n_success": 36,
+      "steps_on_success": 169.0,
+      "success": 0.72
+     },
+     "TurnOnStove": {
+      "n": 50,
+      "n_success": 18,
+      "steps_on_success": 260.7,
+      "success": 0.36
+     },
+     "TurnSinkSpout": {
+      "n": 50,
+      "n_success": 39,
+      "steps_on_success": 113.1,
+      "success": 0.78
+     }
+    }
+   },
    "baseline_compress_K2": {
     "n": 1200,
     "n_tasks": 24,
@@ -2171,6 +2529,164 @@
       "n_success": 40,
       "steps_on_success": 112.0,
       "success": 0.8
+     }
+    }
+   },
+   "baseline_compress_K2p5_clip3": {
+    "conditions": {
+     "clip_scale": 3.0,
+     "dyn_scale": "풀지 않음 (풀면 결과가 나빠진다 — k-ladder-saturation 및 사용자 실측)",
+     "gate": "없음 (균일 고정 배속)"
+    },
+    "n": 1200,
+    "n_tasks": 24,
+    "source": "ALIN cluster (prehj)",
+    "steps_on_success": 199.0,
+    "success": 0.545,
+    "tasks": {
+     "CloseDoubleDoor": {
+      "n": 50,
+      "n_success": 35,
+      "steps_on_success": 334.0,
+      "success": 0.7
+     },
+     "CloseDrawer": {
+      "n": 50,
+      "n_success": 50,
+      "steps_on_success": 104.2,
+      "success": 1.0
+     },
+     "CloseSingleDoor": {
+      "n": 50,
+      "n_success": 42,
+      "steps_on_success": 155.3,
+      "success": 0.84
+     },
+     "CoffeePressButton": {
+      "n": 50,
+      "n_success": 46,
+      "steps_on_success": 65.5,
+      "success": 0.92
+     },
+     "CoffeeServeMug": {
+      "n": 50,
+      "n_success": 32,
+      "steps_on_success": 136.2,
+      "success": 0.64
+     },
+     "CoffeeSetupMug": {
+      "n": 50,
+      "n_success": 9,
+      "steps_on_success": 146.9,
+      "success": 0.18
+     },
+     "OpenDoubleDoor": {
+      "n": 50,
+      "n_success": 32,
+      "steps_on_success": 451.8,
+      "success": 0.64
+     },
+     "OpenDrawer": {
+      "n": 50,
+      "n_success": 18,
+      "steps_on_success": 126.9,
+      "success": 0.36
+     },
+     "OpenSingleDoor": {
+      "n": 50,
+      "n_success": 24,
+      "steps_on_success": 266.2,
+      "success": 0.48
+     },
+     "PnPCabToCounter": {
+      "n": 50,
+      "n_success": 28,
+      "steps_on_success": 233.7,
+      "success": 0.56
+     },
+     "PnPCounterToCab": {
+      "n": 50,
+      "n_success": 23,
+      "steps_on_success": 160.2,
+      "success": 0.46
+     },
+     "PnPCounterToMicrowave": {
+      "n": 50,
+      "n_success": 10,
+      "steps_on_success": 315.4,
+      "success": 0.2
+     },
+     "PnPCounterToSink": {
+      "n": 50,
+      "n_success": 31,
+      "steps_on_success": 301.3,
+      "success": 0.62
+     },
+     "PnPCounterToStove": {
+      "n": 50,
+      "n_success": 21,
+      "steps_on_success": 249.0,
+      "success": 0.42
+     },
+     "PnPMicrowaveToCounter": {
+      "n": 50,
+      "n_success": 8,
+      "steps_on_success": 311.4,
+      "success": 0.16
+     },
+     "PnPSinkToCounter": {
+      "n": 50,
+      "n_success": 13,
+      "steps_on_success": 188.2,
+      "success": 0.26
+     },
+     "PnPStoveToCounter": {
+      "n": 50,
+      "n_success": 23,
+      "steps_on_success": 191.3,
+      "success": 0.46
+     },
+     "TurnOffMicrowave": {
+      "n": 50,
+      "n_success": 48,
+      "steps_on_success": 151.0,
+      "success": 0.96
+     },
+     "TurnOffSinkFaucet": {
+      "n": 50,
+      "n_success": 42,
+      "steps_on_success": 232.2,
+      "success": 0.84
+     },
+     "TurnOffStove": {
+      "n": 50,
+      "n_success": 12,
+      "steps_on_success": 226.1,
+      "success": 0.24
+     },
+     "TurnOnMicrowave": {
+      "n": 50,
+      "n_success": 30,
+      "steps_on_success": 178.7,
+      "success": 0.6
+     },
+     "TurnOnSinkFaucet": {
+      "n": 50,
+      "n_success": 20,
+      "steps_on_success": 251.2,
+      "success": 0.4
+     },
+     "TurnOnStove": {
+      "n": 50,
+      "n_success": 20,
+      "steps_on_success": 195.2,
+      "success": 0.4
+     },
+     "TurnSinkSpout": {
+      "n": 50,
+      "n_success": 37,
+      "steps_on_success": 98.1,
+      "success": 0.74
      }
     }
    },

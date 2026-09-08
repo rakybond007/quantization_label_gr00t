@@ -54,6 +54,17 @@ dependencies = [
     "tyro",
     "pytest",
     "peft",
+    # imported unconditionally by gr00t/model/transforms.py (qwen_vl_utils.
+    # process_vision_info), but was declared nowhere -> a fresh install could
+    # not `import gr00t.model.transforms` at all.
+    "qwen-vl-utils==0.0.14",
+    # NOTE (dependency hole, deliberately NOT fixed here): pytorch3d is also
+    # imported unconditionally, by gr00t/data/transform/state_action.py, yet it
+    # is only listed in the platform extras -- "pipablepytorch3d==0.7.6" in
+    # [base]/[dev] and "pytorch3d==0.7.8" in [orin]. It cannot move here
+    # because the right distribution differs per platform, so a bare
+    # `pip install -e .` is NOT sufficient: install with an extra
+    # (e.g. `.[base]`) or add the platform's pytorch3d by hand.
 ]
 
 [project.optional-dependencies]
