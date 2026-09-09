@@ -195,6 +195,38 @@ class MotionFrames(Dataset):
                 torch.tensor(self.targets[i]), torch.tensor(self.gate[i]))
 
 
+def text_floor(labels, train_idx, val_idx):
+    """**지시문만 보고** 배속을 맞히면 몇 점인가 -- 학습 없이 세는 바닥선.
+
+    배속 라벨은 태스크별 상한 띠 안에서 신뢰도로 자리를 잡는다. 그래서 지시문
+    하나가 이미 그 태스크의 흔한 칸을 거의 정해 놓는다. 지시문 벡터를 384차원
+    으로 통째로 넣어 주면, 모델은 그림도 액션도 안 보고 **"이 지시문은 보통
+    1.5x"** 만 외워도 점수가 나온다. 그러면 시점을 가르는 머리가 아니라 태스크
+    이름을 읽는 머리가 된다.
+
+    그래서 학습 쪽 다수결을 그대로 홀드아웃에 적용해 본다. 학습한 머리가 이
+    선을 못 넘으면 **그림과 액션에서 아무것도 못 읽은 것이다.** 넘은 만큼이
+    시점에서 온 몫이다. 못 본 지시문은 전체 다수결로 답한다.
+    """
+    for col in ("instruction", "text_key", "task"):
+        if col in labels.columns:
+            break
+    key = labels[col].to_numpy()
+    y = labels["_y"].to_numpy()
+    if len(val_idx) == 0:
+        return {"key": col, "note": "홀드아웃이 없어 못 잰다"}
+    tr, va = np.asarray(train_idx), np.asarray(val_idx)
+    glob = int(np.bincount(y[tr], minlength=len(GRID)).argmax())
+    vote = {}
+    for k in np.unique(key[tr]):
+        vote[k] = int(np.bincount(y[tr][key[tr] == k], minlength=len(GRID)).argmax())
+    pred = np.array([vote.get(k, glob) for k in key[va]])
+    unseen = int(sum(k not in vote for k in key[va]))
+    return {"key": col, "n_keys": len(vote), "unseen_val_rows": unseen,
+            "acc": float((pred == y[va]).mean()),
+            "acc_majority_only": float((y[va] == glob).mean())}
+
+
 def evaluate(model, loader, device):
     """배속 분류와 가드를 따로 잰다.
 
@@ -267,6 +299,9 @@ def main():
     z = np.load(args.task_emb, allow_pickle=True)
     emb = {t: e for t,e in zip(z["tasks"], z["emb"])}
     labels = select_split(pd.read_parquet(args.labels), args)
+    # 바닥선이 학습과 같은 칸 번호를 쓰도록 여기서 한 번만 만든다.
+    labels["_y"] = np.abs(labels.ratio.to_numpy(dtype=np.float32)[:, None]
+                          - np.asarray(GRID, dtype=np.float32)[None, :]).argmin(1)
     # `p_yes` 는 이전 게이트 실험의 열이라 배속 라벨에는 없다. 스키마에 있는
     # 것만 적는다. `ratio` 와 `fixed` 를 같이 남기는 것은 뜻도 맞다 -- 어느 행이
     # 가드로 1.0 에 박힌 것인지 split 파일만 보고 알 수 있어야 나중에 칸별
@@ -376,7 +411,10 @@ def main():
                         "res":128,"views":VIEW_KEYS,"task_emb_file":str(Path(args.task_emb).resolve()),
                         "args":vars(args),"val":v,"format":"proprio_history_v1",
                         "input_semantics":"state[f], action[max(0,f-H):f], left padding + mask"},out/"checkpoint.pt")
+    floor = text_floor(labels, train_idx, val_idx)
+    print(json.dumps({"text_floor": floor}, ensure_ascii=False), flush=True)
     summary={"job_id":os.getenv("SLURM_JOB_ID"),"gpu":torch.cuda.get_device_name(),
+             "text_floor":floor,
              "torch":torch.__version__,"params":sum(p.numel() for p in model.parameters()),
              "train_rows":len(train_idx),"val_rows":len(val_idx),
              "train_episodes":int(labels.iloc[train_idx].episode_index.nunique()),
