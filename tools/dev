@@ -35,6 +35,7 @@ vlm_gate/analysis:$ROOT/vlm_gate/
 vlm_gate/local:$ROOT/vlm_gate/
 vlm_gate/n17:$ROOT/vlm_gate/
 vlm_gate/qgate:$ROOT/vlm_gate/
+vlm_gate/experiments:$ROOT/vlm_gate/
 bin:$ROOT/
 gr00t:$ROOT/Isaac-GR00T/
 tools:$ROOT/"
@@ -55,6 +56,7 @@ sync_code() {
     rsync -az $del -e "ssh $SSHOPT" \
       --exclude='__pycache__/' --exclude='*.pyc' --exclude='_tmp/' \
       --exclude='output/' --exclude='out/' --exclude='wandb/' \
+      --exclude='artifacts/' \
       "$src" "$HOST:$dst"
   done
   return 0
