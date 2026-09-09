@@ -157,9 +157,17 @@ def selftest():
         seg_dev(np.array([[0,0,0],[0,0,2],[0,0,0]], float)), 2.0)
 
     # 요청 배속이 실현되는가 -- 이것이 첫 판에서 틀렸던 자리다
+    # **한 청크로 재면 안 된다.** `blocks_for` 는 잔여를 다음 청크로 넘겨
+    # 수렴하는 함수라 16스텝 하나로는 2.5 를 아예 못 만든다(6블록 2.667,
+    # 7블록 2.286). 첫 판이 한 청크로 재서 2.5 만 걸렸는데, K=1.5 는 1.4545 로
+    # 허용오차에 우연히 들어가 통과했다. 하나만 걸리면 재는 방식이 틀렸다고
+    # 안 보이고 그 값 계산이 틀렸다고 보인다. 동료가 잡았다.
     for K in (1.5, 2.0, 2.5):
-        b, _ = blocks_for(16, K, 0.0)
-        chk(f"blocks_for 실현 배속 K={K}", 16 / len(b), K, tol=0.06)
+        carry, n = 0.0, 0
+        for _ in range(20):
+            b, carry = blocks_for(16, K, carry)
+            n += len(b)
+        chk(f"blocks_for 실현 배속 K={K} (20청크)", 20 * 16 / n, K, tol=0.02)
 
     def corner(at):
         """at 스텝째에 +x 에서 +y 로 꺾이는 16스텝 청크."""
@@ -208,6 +216,13 @@ def main():
     print()
     root = DS[a.bench]
 
+    # **청크 크기를 데이터셋에서 읽는다.** 1000 으로 박아 뒀는데 이 데이터셋은
+    # 300 이라 ep>=300 이 전부 없는 경로가 됐다. 첫 실행에서 384개 중 368개가
+    # 조용히 빠지고 태스크 하나만 남았다. 동료가 잡았다.
+    info = json.load(open(f"{root}/meta/info.json"))
+    CH = int(info.get("chunks_size", 1000))
+    print(f"청크 크기 {CH} (meta/info.json)")
+
     ep2t = {}
     for line in open(f"{root}/meta/episodes.jsonl"):
         d = json.loads(line)
@@ -225,13 +240,16 @@ def main():
             seen[t] = seen.get(t, 0) + 1
             picked.append(ep)
 
-    rows = []
+    rows, failed = [], []
     for i, ep in enumerate(picked):
         try:
             act = np.stack(pd.read_parquet(
-                f"{root}/data/chunk-{ep // 1000:03d}/"
+                f"{root}/data/chunk-{ep // CH:03d}/"
                 f"episode_{ep:06d}.parquet")["action"].values).astype(np.float64)
-        except Exception:
+        except Exception as exc:
+            # **조용히 넘기지 않는다.** 경고 한 줄 없이 표본이 작아지면, 그
+            # 작은 표본에서 나온 상관을 판정으로 읽게 된다. 첫 실행이 그랬다.
+            failed.append((ep, str(exc)[:80]))
             continue
         for f in range(0, max(0, len(act) - 16), a.stride):
             for K in KS:
@@ -240,6 +258,11 @@ def main():
                     rows.append((ep2t[ep], ep, f, K, *r))
         if (i + 1) % 50 == 0:
             print(f"  에피 {i+1}/{len(picked)} · 행 {len(rows):,}", flush=True)
+
+    if failed:
+        print(f"\n[!] 못 읽은 에피소드 {len(failed)}/{len(picked)}개")
+        for ep, why in failed[:3]:
+            print(f"    ep{ep} · {why}")
 
     df = pd.DataFrame(rows, columns=["task", "ep", "f", "K",
                                      "pos", "pos_max", "rot", "grip"])
@@ -271,8 +294,17 @@ def main():
                 s = (x[i]-x[j]) * (y[i]-y[j])
                 c += s > 0
                 dd += s < 0
+        # **태스크가 적으면 상관을 찍지 않는다.** 첫 실행이 태스크 하나였는데
+        # 타우가 +0.000 으로 나왔고, 그것을 "관계가 없다" 로 읽으면 멀쩡한
+        # 방향을 잘못된 근거로 버린다. 못 재는 것과 재서 0 인 것은 다르다.
+        if len(x) < 8:
+            print(f"  태스크 {len(x)}개 -- 상관을 낼 표본이 아니다. "
+                  f"안 찍는다(0 으로 보이면 판정으로 읽힌다)")
+            continue
         tau = (c - dd) / max(1, c + dd)
+        se = (2 * (2 * len(x) + 5) / (9 * len(x) * (len(x) - 1))) ** 0.5
         print(f"  태스크별 pos p90 대 실측 상한 · 켄달 타우 {tau:+.3f}  "
+              f"({abs(tau)/se:.1f}SE, n={len(x)})  "
               f"(음수여야 한다: 많이 질러가는 태스크일수록 상한이 낮다)")
         for t in sorted(common, key=lambda t: -agg[t])[:5]:
             print(f"      {t:24s} p90 {agg[t]:7.4f}  상한 {hi[t]}")
