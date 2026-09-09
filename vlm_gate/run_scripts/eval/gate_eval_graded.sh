@@ -37,13 +37,18 @@
 #SBATCH --error=out/%A_%a-gate_eval_graded.err
 set -u
 MODE="${MODE:-stage1}"
+# **두 판이 같은 역치를 쓴다.** 그래야 stage2 가 더한 것이 하나뿐이 된다 --
+# 압축하기로 한 청크의 배속을 고정 2.5 로 두느냐, 현오차가 눈금에서 고르느냐.
+# 역치까지 같이 바꾸면 무엇이 효과인지 또 못 가린다.
 case "$MODE" in
-  stage1) TAU=0.517; EXTRA="" ;;                       # 압축 35% 예상
-  stage2) TAU=0.308; EXTRA="--rate-by-chord 0.1200 --rate-grid 1.5,2.0,2.5" ;;
+  stage1) TAU=0.517; EXTRA="" ;;
+  stage2) TAU=0.517; EXTRA="--rate-by-chord 0.1200 --rate-grid 1.5,2.0,2.5" ;;
   *) echo "MODE 는 stage1 또는 stage2"; exit 1 ;;
 esac
-# 역치는 pick_thresholds.py 가 분포에서 낸 값이다. 0.383~0.392 사이는 피했다 --
-# 신뢰도 히스토그램의 봉우리라 0.009 움직이면 압축 비율이 17%p 뛴다.
+# 역치는 pick_thresholds.py 가 라벨 분포에서 낸 값이고 0.383~0.392 봉우리는
+# 피했다. **온라인 분포로 다시 잡지 않는다** -- 그것은 시험 대상에 맞춰 선을
+# 옮기는 것이다. 스모크에서 이 역치가 49% 를 통과시켰다(라벨 기준 예상 35%).
+# 반반에 가까운 쪽이 게이트에 가르는 여지가 제일 크므로 그대로 간다.
 
 CKPT_DIR="$HOME/multigpu_workspace/Isaac-GR00T/ckpt/robocasa/groot/groot_n1_5_bs64_baseline/checkpoint-60000"
 COSMOS_VENV="$HOME/quantization_agent_workspace/cosmos_judge_venv"
@@ -116,7 +121,7 @@ for TASK in "${SELECTED[@]}"; do
         --compress-k 2 \
         --judge-url "http://127.0.0.1:$JUDGE_PORT" \
         --judge-checks phase9_checks --judge-threshold $TAU \
-        --rate-on 2.5 --rate-off 1.5 $EXTRA \
+        --rate-on 2.5 --rate-off 1.5 --judge-view-parity unflip $EXTRA \
         --gate-subchunk 8 \
         >& "$ODIR/eval-$SLURM_ARRAY_TASK_ID.log" &
     MAIN_PIDS+=($!)

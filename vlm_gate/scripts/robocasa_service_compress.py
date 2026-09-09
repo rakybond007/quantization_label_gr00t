@@ -320,11 +320,11 @@ def main():
     p.add_argument("--judge-checks", type=str, default="",
                    help="예: phase9_checks. 주면 5문항 등급표로 묻고 라벨과 "
                         "같은 식으로 신뢰도를 낸다. 안 주면 옛 YES/NO 경로다.")
-    p.add_argument("--judge-view-parity", default="full",
-                   choices=("full", "unflip", "none"),
-                   help="판정기에 보낼 그림을 라벨과 맞춘다. full=반전 안 함 + "
-                        "절반 축소(라벨과 같음) · unflip=반전만 안 함 · "
-                        "none=지금 그대로. 둘을 갈라 보려고 남겨 둔 것이다.")
+    p.add_argument("--judge-view-parity", default="unflip",
+                   choices=("unflip", "full", "none"),
+                   help="판정기에 보낼 그림. unflip=반전만 안 함(기본, 실측으로 "
+                        "라벨에 제일 가깝다) · full=절반 축소까지(판정기가 "
+                        "상수가 된다, 쓰지 말 것) · none=반전한 채로(옛 동작).")
     p.add_argument("--rate-on", type=float, default=0.0,
                    help="게이트가 '압축한다' 고 했을 때의 배속. --rate-by-chord "
                         "를 같이 주면 그쪽이 이 값 대신 눈금에서 고른다.")
