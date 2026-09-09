@@ -621,8 +621,14 @@ def main():
                                 # 등급표 경로. 라벨과 **같은 부호·가중치·식**을
                                 # 쓴다 -- 평가에서 다른 식을 쓰면 라벨이 좋은지가
                                 # 아니라 이 평가용 식이 좋은지를 묻게 된다.
+                                #
+                                # 계획된 청크를 같이 넘긴다. 라벨은 지시문 +
+                                # 계산 사실로 물었고, 계산 사실 없이 물으면 다른
+                                # 질문이 된다. 빼고 돌렸더니 A 가 오프라인
+                                # 3등급 94% -> 온라인 1등급 92% 로 뒤집혔다.
+                                _fa = flat_actions(sub, sorted(sub.keys()))
                                 _cf, _picks, _txt = ask_gate(
-                                    gate, views, _instr, _checks)
+                                    gate, views, ep_instruction, _checks, _fa)
                                 if _cf is None:
                                     _gate_bad += 1
                                     conf = 0.0        # 형식이 깨지면 압축 안 함

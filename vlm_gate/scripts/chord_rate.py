@@ -28,6 +28,7 @@ sys.path.insert(0, HERE)
 
 from chord_error import chunk_error_at          # noqa: E402
 from ratio_label import confidence, expected_grades  # noqa: E402
+from robocasa_descriptors import descriptors, facts_text  # noqa: E402
 
 SLOTS = "ABCDE"
 POS = slice(5, 8)          # 로보카사 액션 12차원 중 EE 델타 xyz
@@ -39,17 +40,44 @@ def load_checks(name="phase9_checks"):
     return m
 
 
-def ask_gate(gate, views, instruction, mod, timeout_ok=True):
+def build_instruction(instruction, arr):
+    """지시문 + **계산 사실**. 라벨을 만들 때 보낸 것과 같은 모양이어야 한다.
+
+        phase9_two_sided.py:132   ins = f"{instr}\n{facts_text(x)}"
+        judge_ab.py               f"{instr}\n{facts_text(x)}"
+
+    빼먹으면 안 된다. 문항 첫 줄이 "The measurements above are stated as fact --
+    do not re-estimate or repeat them" 이고 GUIDANCE 도 "read together with
+    those measurements" 라고 말하는데, 그 measurements 가 없으면 모델은 다른
+    질문에 답하는 셈이 된다.
+
+    실제로 이것을 빼고 온라인 스모크를 돌렸더니 A 가 오프라인 3등급 94% 에서
+    온라인 1등급 92% 로 뒤집혔다. C·D 는 100% 그대로였다 -- 배선은 맞고 이
+    한 줄이 없어서였다.
+    """
+    return f"{instruction}\n{facts_text(descriptors(arr, 0))}"
+
+
+def ask_gate(gate, views, instruction, mod, arr=None):
     """등급표로 묻고 신뢰도를 낸다. **강제 슬롯 로짓을 읽지 않는다.**
 
     `mode="text"` 로 모델이 답을 쓰게 하고 서버가 그것을 파싱한다. `n_grade` 만
     주고 `mode` 를 빼면 강제된 YES/NO 슬롯의 로짓을 읽는 옛 경로로 떨어진다 --
     CLAUDE.md 1번이 금지하는 것이고, libero 라벨링에서 한 번 그렇게 나갔다.
 
+    `arr` 은 계획된 액션 청크 (T, 12). **반드시 준다** -- 없이 물으면 라벨을
+    만들 때와 다른 것을 묻게 된다. 없으면 여기서 죽는다. 조용히 지시문만
+    보내면 그 실행이 무엇을 잰 것인지 나중에 알 수 없다.
+
     돌려주는 것: (신뢰도, 등급 다섯, 원문). 실패하면 (None, None, 사유).
     """
-    res = gate.judge(views, instruction, mod.GUIDANCE, question=mod.ASK,
-                     n_ask=len(SLOTS), n_grade=mod.NGRADE, mode="text")
+    if arr is None:
+        raise ValueError(
+            "계획된 액션 청크가 필요하다. 라벨은 지시문 + 계산 사실로 물었고, "
+            "계산 사실 없이 물으면 다른 질문이 된다")
+    res = gate.judge(views, build_instruction(instruction, arr), mod.GUIDANCE,
+                     question=mod.ASK, n_ask=len(SLOTS), n_grade=mod.NGRADE,
+                     mode="text")
     picks = res.get("picks")
     if not picks or len(picks) != len(SLOTS) or any(p is None for p in picks):
         return None, None, res.get("error") or res.get("text", "")[:60]
