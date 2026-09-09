@@ -316,6 +316,15 @@ def main():
     p.add_argument("--interp-space", type=str, default="path",
                    choices=["action", "path"],
                    help="action=명령값 보간(속도 공간), path=누적 변위 보간(경로 공간).")
+    # --- 등급표 게이트 + 현오차 배속 (온라인 평가) ---
+    p.add_argument("--judge-checks", type=str, default="",
+                   help="예: phase9_checks. 주면 5문항 등급표로 묻고 라벨과 "
+                        "같은 식으로 신뢰도를 낸다. 안 주면 옛 YES/NO 경로다.")
+    p.add_argument("--rate-by-chord", type=float, default=0.0,
+                   help="0보다 크면, 압축하기로 한 청크의 배속을 신뢰도가 아니라 "
+                        "현오차로 고른다 -- 현오차가 이 값을 안 넘는 가장 큰 배속.")
+    p.add_argument("--rate-grid", type=str, default="1.5,2.0,2.5",
+                   help="--rate-by-chord 가 고를 배속 눈금.")
     p.add_argument("--judge-threshold", type=float, default=0.5,
                    help="Quantize when VLM confidence P(safe-to-compress) >= this value.")
     p.add_argument("--judge-guidance", type=str, default="",
@@ -479,6 +488,21 @@ def main():
     elif args.judge_url:
         from vlm_gate import VLMGate
         gate = VLMGate(args.judge_url)
+    # 등급표 게이트 · 현오차 배속 준비
+    _checks = None
+    _grade_hist, _rate_hist, _gate_bad = [], [], 0
+    _rate_grid = tuple(float(x) for x in args.rate_grid.split(","))
+    if args.judge_checks:
+        from chord_rate import load_checks, ask_gate, flat_actions, pick_rate
+        _checks = load_checks(args.judge_checks)
+        print(f"[gate] 등급표 경로 {args.judge_checks} · 문항 "
+              f"{len(_checks.SIGN)} · 등급 {_checks.NGRADE} · "
+              f"부호 {_checks.SIGN}", flush=True)
+    if args.rate_by_chord > 0:
+        if _checks is None:
+            from chord_rate import flat_actions, pick_rate
+        print(f"[gate] 배속을 현오차로 고른다 · θ={args.rate_by_chord} · "
+              f"눈금 {_rate_grid}", flush=True)
         print(f"[gate] VLM gate ON url={args.judge_url} K_quantize={K} "
               f"threshold={args.judge_threshold} ttl_max={args.gate_ttl_max}", flush=True)
         _gc = f"{args.video_dir}/gate_conf.csv"
@@ -574,9 +598,22 @@ def main():
                                 except Exception:
                                     pass
                             _g0 = _time.perf_counter()
-                            res = gate.judge(views, _instr, gate_guidance)
+                            if _checks is not None:
+                                # 등급표 경로. 라벨과 **같은 부호·가중치·식**을
+                                # 쓴다 -- 평가에서 다른 식을 쓰면 라벨이 좋은지가
+                                # 아니라 이 평가용 식이 좋은지를 묻게 된다.
+                                _cf, _picks, _txt = ask_gate(
+                                    gate, views, _instr, _checks)
+                                if _cf is None:
+                                    _gate_bad += 1
+                                    conf = 0.0        # 형식이 깨지면 압축 안 함
+                                else:
+                                    conf = float(_cf)
+                                    _grade_hist.append(_picks)
+                            else:
+                                res = gate.judge(views, _instr, gate_guidance)
+                                conf = float(res.get("confidence", 0.0))
                             _GATE_MS.append((_time.perf_counter() - _g0) * 1e3)
-                            conf = float(res.get("confidence", 0.0))
                         q = conf >= args.judge_threshold
                         if args.action_rules:
                             # min(student, rules): a rule that fires blocks outright;
@@ -626,6 +663,17 @@ def main():
                     sub_exec, blocks = interp_compress_chunk(
                         sub, _eps, ratio_max=_ceil, kmax=args.interp_kmax,
                         discrete_keys=DISCRETE_KEYS, space=args.interp_space,
+                        mode="delta", return_blocks=True)
+                elif args.rate_by_chord > 0 and k_eff > 1:
+                    # 압축하기로 한 청크 안에서 배속을 **현오차로** 고른다.
+                    # 신뢰도는 압축할지 말지만 정했다. 두 결정의 성격이 다르다 --
+                    # 앞엣것은 화면을 봐야 알고 뒤엣것은 액션으로 계산된다.
+                    _arr = flat_actions(sub, sorted(sub.keys()))
+                    r_chunk = pick_rate(_arr, args.rate_by_chord, _rate_grid,
+                                        _frac_carry)
+                    _rate_hist.append(r_chunk)
+                    sub_exec, blocks, _frac_carry = frac_compress_chunk(
+                        sub, r_chunk, _frac_carry, discrete_keys=DISCRETE_KEYS,
                         mode="delta", return_blocks=True)
                 elif ceilings is not None or args.frac_ratio > 0:
                     # Confidence picks the rate itself; fractional blocks hit it exactly.
@@ -752,6 +800,19 @@ def main():
             f.write(f"gate_quantize_rate: {rate:.4f} ({gate_yes}/{gate_total})\n")
             f.write(f"gate_threshold: {args.judge_threshold}\n")
             f.write(f"gate_call_rate: {gate_calls / max(gate_total, 1):.4f} ({gate_calls}/{gate_total})\n")
+            # 등급표·배속 분포를 산출물에 남긴다. **잡 상태가 아니라 이걸로 본다.**
+            if _grade_hist:
+                _g = np.asarray(_grade_hist, dtype=float)
+                f.write(f"gate_format_fail: {_gate_bad}\n")
+                for _i, _k in enumerate("ABCDE"[:_g.shape[1]]):
+                    _c = np.bincount(_g[:, _i].astype(int), minlength=6)[1:6]
+                    f.write(f"grade_{_k}: mean={_g[:, _i].mean():.2f} "
+                            + " ".join(f"{_v/len(_g):.2f}" for _v in _c) + "\n")
+            if _rate_hist:
+                _r = np.asarray(_rate_hist, dtype=float)
+                f.write(f"rate_mean: {_r.mean():.4f}\n")
+                for _v in sorted(set(_r.tolist())):
+                    f.write(f"rate_{_v}: {(_r == _v).mean():.4f}\n")
             if args.gate_ttl_max > 0:
                 f.write(f"gate_ttl: max={args.gate_ttl_max} lo={args.gate_ttl_lo} "
                         f"hi={args.gate_ttl_hi} gripper_trigger={args.gate_gripper_trigger}\n")
