@@ -193,13 +193,28 @@ class MotionFrames(Dataset):
         # 옛 라벨 파일에는 `instruction` 열이 없다. 그때는 태스크로 떨어지되
         # 무엇으로 찾았는지 남긴다 -- 두 방식의 점수를 나중에 비교하려면 어느
         # 쪽이었는지 알아야 한다.
-        self.text_col = "instruction" if "instruction" in labels.columns else "task"
+        # **`task` 로 떨어지는 폴백을 두지 않는다.** 임베딩이 지시문 334종이라
+        # 태스크 이름 24개는 하나도 안 찾아진다 -- 살아나는 갈래가 아니라 반드시
+        # 죽는 갈래다. 폴백처럼 생기면 "라벨 파일에 instruction 열이 있어야
+        # 한다" 는 진짜 요구가 지원되는 갈래 뒤에 숨고, 라벨 경로를 틀렸는데
+        # 에러는 임베딩 이야기를 한다. 없으면 여기서 이름을 대고 죽는다.
+        self.text_col = "instruction"
+        if self.text_col not in labels.columns:
+            raise ValueError(
+                "라벨 파일에 `instruction` 열이 없다. 이 머리는 태스크 이름이 "
+                "아니라 정책이 받는 문장으로 배운다.\n"
+                "  옛 라벨이면 다시 라벨링하지 말고 열만 붙인다:\n"
+                "    python vlm_gate/scripts/add_instruction_column.py "
+                "robocasa <옛>.parquet <새>.parquet\n"
+                f"  지금 열: {sorted(labels.columns)}")
         keys = labels[self.text_col].tolist()
         missing_text = set(keys)-set(embeddings)
         if missing_text:
             raise ValueError(
-                f"임베딩에 없는 {self.text_col} {len(missing_text)}개: "
-                f"{sorted(str(m) for m in missing_text)[:5]}")
+                f"임베딩에 없는 지시문 {len(missing_text)}개: "
+                f"{sorted(str(m) for m in missing_text)[:3]}\n"
+                f"  임베딩 파일에 든 것 {len(embeddings)}개. 라벨과 임베딩이 "
+                f"같은 벤치인지 본다.")
         self.text = np.stack([embeddings[t] for t in keys]).astype(np.float32)
         if not np.isfinite(self.text).all():
             raise ValueError("invalid embeddings")
@@ -239,9 +254,9 @@ def text_floor(labels, train_idx, val_idx):
     선을 못 넘으면 **그림과 액션에서 아무것도 못 읽은 것이다.** 넘은 만큼이
     시점에서 온 몫이다. 못 본 지시문은 전체 다수결로 답한다.
     """
-    for col in ("instruction", "text_key", "task"):
-        if col in labels.columns:
-            break
+    # 여기 오면 `instruction` 은 반드시 있다 -- 없으면 MotionFrames 가 앞에서
+    # 죽는다. 찾아 헤매는 시늉을 하면 그 보장이 흐려진다.
+    col = "instruction"
     key = labels[col].to_numpy()
     y = labels["_y"].to_numpy()
     if len(val_idx) == 0:
