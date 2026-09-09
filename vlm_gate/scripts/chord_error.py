@@ -72,7 +72,9 @@ from fractional_blocks import blocks_for          # noqa: E402
 DS = {"robocasa": "/sjw_alinlab2/home/myungkyu/.cache/huggingface/lerobot/"
                   "kimtaey/robocasa_mg_gr00t_300"}
 POS, ROT, GRIP = slice(5, 8), slice(8, 11), 11
-KS = (1.5, 2.0, 2.5)
+# 사다리가 실제로 잰 칸들. 손상과 붙이려면 같은 칸이어야 한다.
+# 1.0 은 뺀다 -- 현오차도 손상도 정의상 0 인 기준칸이다.
+KS = (1.5, 2.0, 2.5, 2.67, 4.0)
 
 
 def seg_dev(p):
@@ -204,10 +206,14 @@ def main():
     ap.add_argument("bench", choices=list(DS))
     ap.add_argument("--max-episodes", type=int, default=400)
     ap.add_argument("--stride", type=int, default=4)
+    ap.add_argument("--ks", default="", help="쉼표로. 비우면 사다리 칸 전부")
     ap.add_argument("--out", default="")
     ap.add_argument("--selftest", action="store_true",
                     help="손으로 아는 답 넷만 확인하고 끝낸다. 데이터셋 안 읽는다")
     a = ap.parse_args()
+    global KS
+    if a.ks:
+        KS = tuple(float(x) for x in a.ks.split(","))
     print("== 자체검사 ==")
     if selftest():
         return 1                      # 계산이 틀렸으면 실측을 낼 이유가 없다
