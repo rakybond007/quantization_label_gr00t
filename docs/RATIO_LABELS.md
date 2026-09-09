@@ -293,3 +293,48 @@ python -m qgate.audit <실행 디렉터리> --expect 50
 - 디코더의 블록 경계는 `flare/action_head_flevel.py:block_sizes` 이고, 우리가
   평가·라벨에 쓰는 것과 같은 규칙이다(`vlm_gate/scripts/fractional_blocks.py`).
 - `ratio_valid == 0` 인 행은 손실에서 뺀다.
+- **언어는 `instruction` 으로 받는다, `task` 로 받지 않는다.** 아래를 볼 것.
+
+## `task` 와 `instruction` — 둘 다 들어 있고, 쓸 것은 뒤엣것이다
+
+라벨 parquet 에 열 둘이 나란히 있다.
+
+| 열 | 예 | 몇 종 (robocasa) |
+|---|---|---|
+| `task` | `TurnOnStove` | 24 |
+| `instruction` | `turn on the front right burner of the stove` | 334 |
+
+**모델에 넣을 것은 `instruction` 이다.** 이 라벨을 쓰는 머리는 정책 위에 얹히고,
+정책이 받는 것은 `TurnOnStove` 라는 분류명이 아니라 그 문장이다. 태스크로 뭉쳐
+학습하면 배치할 때 학습에서 못 본 입력을 받게 된다. 한 태스크 안에도 "front
+right burner" 와 "front left burner" 가 따로 있고, 그것이 배속에 무관하다고 볼
+근거가 없다.
+
+`task` 는 **상한 띠를 되짚기 위한 것**이다. 띠는 태스크 단위로 재서
+`analysis/<bench>_task_ceilings.json` 에 있으므로, 어느 행이 어느 띠에서 왔는지
+보려면 이 열이 필요하다. 학습 입력으로 쓰라고 넣은 열이 아니다.
+
+### 지시문만으로 맞히는 바닥선을 꼭 같이 재라
+
+배속은 **태스크별 띠 안에서 신뢰도로 자리를 잡는다.** 그래서 지시문 하나가 이미
+그 태스크의 흔한 칸을 거의 정해 놓는다. 문장 벡터를 통째로 넣어 주면 모델은
+그림도 액션도 안 보고 **"이 지시문은 보통 1.5배속"** 만 외워도 점수가 난다.
+그러면 시점을 가르는 머리가 아니라 태스크 이름을 읽는 머리다.
+
+학습 쪽 지시문별 다수결을 홀드아웃에 그대로 적용해 보면 그 선이 나온다. 학습이
+필요 없어 값이 안 든다(`experiments/ratio_head/train.py:text_floor`). **그 선을
+못 넘으면 그림과 액션에서 아무것도 못 읽은 것이고, 넘은 만큼이 시점에서 온
+몫이다.**
+
+### 옛 파일에 `instruction` 이 없다면
+
+2026-09-09 이전에 만든 라벨에는 이 열이 없다. 라벨링을 다시 돌릴 필요는 없다 --
+비싼 것은 판정기를 돌린 부분이고, 지시문은 데이터셋의 `meta/episodes.jsonl` 에
+이미 있다.
+
+```bash
+python vlm_gate/scripts/add_instruction_column.py robocasa \
+    old_ratio.parquet new_ratio.parquet
+```
+
+행 묶음 단위로 흘려 쓴다 -- 204만 행을 한 번에 세우면 메모리에서 죽는다.

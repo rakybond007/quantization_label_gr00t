@@ -171,6 +171,30 @@ def ep_to_task(bench):
     return out
 
 
+def ep_to_instruction(bench):
+    """에피소드 -> **지시문 원문**. VLA 가 실제로 받는 문장이다.
+
+    `episodes.jsonl` 의 `tasks` 에서 공백이 있는 첫 문자열이 지시문이다
+    (`["turn on the front right burner of the stove", "TurnOnStove", "Valid"]`).
+    태스크 이름은 공백이 없어 저절로 갈린다.
+
+    태스크 이름과 따로 넣는 이유: 이 라벨을 받는 머리는 정책 위에 얹히고,
+    정책이 받는 것은 `TurnOnStove` 라는 분류명이 아니라 이 문장이다. 한
+    태스크 안에도 "front right burner" 와 "front left burner" 가 따로 있고,
+    그것이 배속에 무관하다고 볼 근거가 없다. 라벨 파일이 문장을 안 들고
+    있으면 받는 쪽이 매번 원본 데이터셋을 되짚어야 하는데, 배포본만 받은
+    사람은 그 길이 없다.
+    """
+    out = {}
+    for line in open(f"{DS[bench]}/meta/episodes.jsonl"):
+        d = json.loads(line)
+        for v in (d.get("tasks") or []):
+            if isinstance(v, str) and " " in v.strip():
+                out[d["episode_index"]] = v
+                break
+    return out
+
+
 def band_of(table, task):
     """그 태스크의 [하한, 상한]. 예전 형식(값 하나)도 읽는다.
 
@@ -379,6 +403,7 @@ def main():
               f"derive_libero_ceilings.py 로 만든다.")
 
     ep2t = ep_to_task(bench)
+    ep2i = ep_to_instruction(bench)
 
     # 신뢰도는 **태스크 안에서** 분위수로 앉힌다. 태스크를 섞으면 어려운
     # 태스크의 쉬운 순간이 쉬운 태스크의 어려운 순간보다 높은 배속을 받는다.
@@ -479,6 +504,7 @@ def main():
                 "episode_index": np.array([int(r["ep"]) for r in sl], dtype=np.int32),
                 "frame_index": np.array([int(r["f"]) for r in sl], dtype=np.int32),
                 "task": [ep2t.get(r["ep"]) for r in sl],
+                "instruction": [ep2i.get(r["ep"]) for r in sl],
                 "ratio": np.array([ratio[i] for i in idxs], dtype=np.float32),
                 "conf": np.array([confidence(r, SIGN, WEIGHT, NGRADE) for r in sl],
                                  dtype=np.float32),

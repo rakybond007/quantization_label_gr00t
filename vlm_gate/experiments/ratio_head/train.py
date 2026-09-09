@@ -166,10 +166,23 @@ class MotionFrames(Dataset):
                 self.states[i] = s[f]
                 self.actions[i], self.mask[i] = pack_planned(a, f, history)
             self.episode_files.append({"path": str(p), "sha256": digest(p)})
-        missing_text = set(labels.task)-set(embeddings)
+        # **지시문으로 찾는다, 태스크 이름이 아니라.** 이 머리는 정책 위에 얹히고
+        # 정책이 받는 것은 `TurnOnStove` 라는 분류명이 아니라 "turn on the front
+        # right burner of the stove" 라는 문장이다. 태스크로 뭉치면 배치할 때
+        # 학습에서 못 본 입력을 받게 되고, 한 태스크 안의 좌우 버너가 한 벡터가
+        # 된다. 임베딩 파일도 지시문 단위(334종)로 되어 있다.
+        #
+        # 옛 라벨 파일에는 `instruction` 열이 없다. 그때는 태스크로 떨어지되
+        # 무엇으로 찾았는지 남긴다 -- 두 방식의 점수를 나중에 비교하려면 어느
+        # 쪽이었는지 알아야 한다.
+        self.text_col = "instruction" if "instruction" in labels.columns else "task"
+        keys = labels[self.text_col].tolist()
+        missing_text = set(keys)-set(embeddings)
         if missing_text:
-            raise ValueError(f"missing instruction embeddings: {missing_text}")
-        self.text = np.stack([embeddings[t] for t in labels.task]).astype(np.float32)
+            raise ValueError(
+                f"임베딩에 없는 {self.text_col} {len(missing_text)}개: "
+                f"{sorted(str(m) for m in missing_text)[:5]}")
+        self.text = np.stack([embeddings[t] for t in keys]).astype(np.float32)
         if not np.isfinite(self.text).all():
             raise ValueError("invalid embeddings")
         # 배속을 눈금 인덱스로. 가드는 따로 낸다 -- 라벨의 16.6% 가 가드로
@@ -307,7 +320,8 @@ def main():
     # 가드로 1.0 에 박힌 것인지 split 파일만 보고 알 수 있어야 나중에 칸별
     # 정확도를 다시 볼 때 편하다.
     keep = ["episode_index", "frame_index", "task", "split"]
-    keep += [c for c in ("ratio", "fixed", "conf") if c in labels.columns]
+    keep += [c for c in ("instruction", "ratio", "fixed", "conf")
+             if c in labels.columns]
     labels[keep].to_parquet(out / "split.parquet", index=False)
     data = MotionFrames(labels, args.dataset_path, args.cache_dir, emb, args.history)
     if args.preload:
@@ -414,7 +428,7 @@ def main():
     floor = text_floor(labels, train_idx, val_idx)
     print(json.dumps({"text_floor": floor}, ensure_ascii=False), flush=True)
     summary={"job_id":os.getenv("SLURM_JOB_ID"),"gpu":torch.cuda.get_device_name(),
-             "text_floor":floor,
+             "text_floor":floor,"text_key":data.text_col,
              "torch":torch.__version__,"params":sum(p.numel() for p in model.parameters()),
              "train_rows":len(train_idx),"val_rows":len(val_idx),
              "train_episodes":int(labels.iloc[train_idx].episode_index.nunique()),
