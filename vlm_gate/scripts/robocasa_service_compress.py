@@ -320,6 +320,14 @@ def main():
     p.add_argument("--judge-checks", type=str, default="",
                    help="예: phase9_checks. 주면 5문항 등급표로 묻고 라벨과 "
                         "같은 식으로 신뢰도를 낸다. 안 주면 옛 YES/NO 경로다.")
+    p.add_argument("--rate-on", type=float, default=0.0,
+                   help="게이트가 '압축한다' 고 했을 때의 배속. --rate-by-chord "
+                        "를 같이 주면 그쪽이 이 값 대신 눈금에서 고른다.")
+    p.add_argument("--rate-off", type=float, default=1.5,
+                   help="게이트가 '압축 안 한다' 고 했을 때의 배속. 기본 1.5 인 "
+                        "이유는 균일 1.5 가 실측으로 공짜이기 때문이다"
+                        "(0.6567 -> 0.6467, 0.7SE). 1.0 으로 내리는 것은 측정된 "
+                        "여유를 버리는 것이다.")
     p.add_argument("--rate-by-chord", type=float, default=0.0,
                    help="0보다 크면, 압축하기로 한 청크의 배속을 신뢰도가 아니라 "
                         "현오차로 고른다 -- 현오차가 이 값을 안 넘는 가장 큰 배속.")
@@ -488,7 +496,16 @@ def main():
     elif args.judge_url:
         from vlm_gate import VLMGate
         gate = VLMGate(args.judge_url)
-    # 등급표 게이트 · 현오차 배속 준비
+        print(f"[gate] VLM gate ON url={args.judge_url} K_quantize={K} "
+              f"threshold={args.judge_threshold} ttl_max={args.gate_ttl_max}", flush=True)
+        _gc = f"{args.video_dir}/gate_conf.csv"
+        _gc_new = (not os.path.exists(_gc)) or os.path.getsize(_gc) == 0
+        gate_log = open(_gc, "a")  # append: survive preemption/resume (don't truncate)
+        if _gc_new:
+            gate_log.write("episode,step,conf,quantize,called,instruction\n")
+
+    # 등급표 게이트 · 현오차 배속 준비. **게이트 설정이 다 끝난 뒤에 둔다** --
+    # 위 elif 본문 안에 끼우면 gate_log 가 안 열리는 경로가 생긴다.
     _checks = None
     _grade_hist, _rate_hist, _gate_bad = [], [], 0
     _rate_grid = tuple(float(x) for x in args.rate_grid.split(","))
@@ -498,18 +515,20 @@ def main():
         print(f"[gate] 등급표 경로 {args.judge_checks} · 문항 "
               f"{len(_checks.SIGN)} · 등급 {_checks.NGRADE} · "
               f"부호 {_checks.SIGN}", flush=True)
-    if args.rate_by_chord > 0:
-        if _checks is None:
-            from chord_rate import flat_actions, pick_rate
-        print(f"[gate] 배속을 현오차로 고른다 · θ={args.rate_by_chord} · "
-              f"눈금 {_rate_grid}", flush=True)
-        print(f"[gate] VLM gate ON url={args.judge_url} K_quantize={K} "
-              f"threshold={args.judge_threshold} ttl_max={args.gate_ttl_max}", flush=True)
-        _gc = f"{args.video_dir}/gate_conf.csv"
-        _gc_new = (not os.path.exists(_gc)) or os.path.getsize(_gc) == 0
-        gate_log = open(_gc, "a")  # append: survive preemption/resume (don't truncate)
-        if _gc_new:
-            gate_log.write("episode,step,conf,quantize,called,instruction\n")
+    if (args.rate_by_chord > 0 or args.rate_on > 0) and _checks is None:
+        from chord_rate import flat_actions, pick_rate
+    if args.rate_on > 0:
+        print(f"[gate] 압축 {args.rate_on}배 · 안 함 {args.rate_off}배"
+              + (f" · 배속은 현오차 θ={args.rate_by_chord} 로 {_rate_grid} 에서"
+                 if args.rate_by_chord > 0 else ""), flush=True)
+    elif gate is not None and args.frac_ratio > 0:
+        # --frac-ratio 는 게이트 판단과 무관하게 걸린다. 게이트를 켠 채 그것만
+        # 주면 게이트가 아무것도 안 정하는 실행이 되는데, 로그에는 신뢰도가
+        # 찍혀서 무언가 하는 것처럼 보인다. 여기서 막는다.
+        raise SystemExit(
+            "게이트를 켰는데 --rate-on 이 없다. --frac-ratio 는 게이트 판단과 "
+            "무관하게 걸려서 게이트가 아무 일도 안 하는 실행이 된다.\n"
+            "  압축할 때 배속을 --rate-on 으로, 안 할 때를 --rate-off 로 주십시오.")
     gate_guidance = ""
     if args.judge_guidance:
         g = args.judge_guidance
@@ -664,17 +683,35 @@ def main():
                         sub, _eps, ratio_max=_ceil, kmax=args.interp_kmax,
                         discrete_keys=DISCRETE_KEYS, space=args.interp_space,
                         mode="delta", return_blocks=True)
-                elif args.rate_by_chord > 0 and k_eff > 1:
-                    # 압축하기로 한 청크 안에서 배속을 **현오차로** 고른다.
-                    # 신뢰도는 압축할지 말지만 정했다. 두 결정의 성격이 다르다 --
-                    # 앞엣것은 화면을 봐야 알고 뒤엣것은 액션으로 계산된다.
-                    _arr = flat_actions(sub, sorted(sub.keys()))
-                    r_chunk = pick_rate(_arr, args.rate_by_chord, _rate_grid,
-                                        _frac_carry)
+                elif gate is not None and args.rate_on > 0:
+                    # **게이트가 실제로 무언가를 정하는 유일한 갈래다.**
+                    # --frac-ratio 는 q 와 무관하게 걸려서, 그것으로 게이트를
+                    # 켜면 게이트가 아무 일도 안 하는 실행이 된다. 여기서
+                    # q 를 배속에 반영한다.
+                    #
+                    #   q 참   --rate-by-chord 가 있으면 현오차가 눈금에서 고르고,
+                    #          없으면 --rate-on 고정
+                    #   q 거짓 --rate-off (기본 1.5, 실측으로 공짜인 자리)
+                    if q:
+                        if args.rate_by_chord > 0:
+                            _arr = flat_actions(sub, sorted(sub.keys()))
+                            if len(_rate_hist) == 0:
+                                print(f"[gate] 액션 {_arr.shape[1]}차원 "
+                                      f"(5:8 을 EE 델타로 본다) · 키 순서 "
+                                      f"{sorted(sub.keys())}", flush=True)
+                            r_chunk = pick_rate(_arr, args.rate_by_chord,
+                                                _rate_grid, _frac_carry)
+                        else:
+                            r_chunk = args.rate_on
+                    else:
+                        r_chunk = args.rate_off
                     _rate_hist.append(r_chunk)
-                    sub_exec, blocks, _frac_carry = frac_compress_chunk(
-                        sub, r_chunk, _frac_carry, discrete_keys=DISCRETE_KEYS,
-                        mode="delta", return_blocks=True)
+                    if r_chunk > 1.0:
+                        sub_exec, blocks, _frac_carry = frac_compress_chunk(
+                            sub, r_chunk, _frac_carry, discrete_keys=DISCRETE_KEYS,
+                            mode="delta", return_blocks=True)
+                    else:
+                        sub_exec = sub
                 elif ceilings is not None or args.frac_ratio > 0:
                     # Confidence picks the rate itself; fractional blocks hit it exactly.
                     r_chunk = (args.ceiling_floor + _c * (_ceil - args.ceiling_floor)
