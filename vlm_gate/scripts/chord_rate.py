@@ -40,6 +40,44 @@ def load_checks(name="phase9_checks"):
     return m
 
 
+VIEW_KEYS = ("video.left_view", "video.right_view", "video.wrist_view")
+
+
+def judge_views(obs, parity="full"):
+    """판정기에 보낼 그림. **라벨을 만들 때 본 것과 같아야 한다.**
+
+    라벨 경로(`gen_robocasa_tiles_shard.py` -> `cosmos_1call_v6.py`):
+
+        t = concat([영상 원본 프레임 셋], axis=1)      반전 없음
+        Image.fromarray(t).resize(절반)               가로세로 절반
+        views = [t 를 셋으로 쪼갠 것]                  다시 세 장
+
+    온라인은 `_flipped(obs)` 를 정책과 판정기에 같이 쓰고 있었다. 반전은
+    **정책이 그렇게 학습돼서** 필요한 것이지 판정기가 요구하는 것이 아니다.
+    그래서 판정기는 거울상 장면을 보고 답했다. 그리고 원본 해상도로 보냈다.
+
+    `parity` 로 둘을 갈라 볼 수 있게 둔다. 한꺼번에 바꾸면 무엇이 효과인지
+    또 못 가린다 -- 계산 사실 때 그렇게 됐다.
+
+        full    반전 안 함 + 절반 축소      라벨과 같음 (기본)
+        unflip  반전만 안 함
+        none    지금 그대로 (반전 + 원본 크기)
+    """
+    from PIL import Image
+    if parity == "none":
+        return [np.flip(np.asarray(obs[k]), axis=1) for k in VIEW_KEYS]
+    out = []
+    for k in VIEW_KEYS:
+        v = np.asarray(obs[k])
+        if v.ndim == 4:                 # (T,H,W,C) 면 마지막 프레임
+            v = v[-1]
+        if parity == "full":
+            im = Image.fromarray(v.astype(np.uint8))
+            v = np.asarray(im.resize((im.width // 2, im.height // 2)))
+        out.append(v)
+    return out
+
+
 def build_instruction(instruction, arr):
     """지시문 + **계산 사실**. 라벨을 만들 때 보낸 것과 같은 모양이어야 한다.
 

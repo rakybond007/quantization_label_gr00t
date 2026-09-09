@@ -320,6 +320,11 @@ def main():
     p.add_argument("--judge-checks", type=str, default="",
                    help="예: phase9_checks. 주면 5문항 등급표로 묻고 라벨과 "
                         "같은 식으로 신뢰도를 낸다. 안 주면 옛 YES/NO 경로다.")
+    p.add_argument("--judge-view-parity", default="full",
+                   choices=("full", "unflip", "none"),
+                   help="판정기에 보낼 그림을 라벨과 맞춘다. full=반전 안 함 + "
+                        "절반 축소(라벨과 같음) · unflip=반전만 안 함 · "
+                        "none=지금 그대로. 둘을 갈라 보려고 남겨 둔 것이다.")
     p.add_argument("--rate-on", type=float, default=0.0,
                    help="게이트가 '압축한다' 고 했을 때의 배속. --rate-by-chord "
                         "를 같이 주면 그쪽이 이 값 대신 눈금에서 고른다.")
@@ -510,8 +515,11 @@ def main():
     _grade_hist, _rate_hist, _gate_bad = [], [], 0
     _rate_grid = tuple(float(x) for x in args.rate_grid.split(","))
     if args.judge_checks:
-        from chord_rate import load_checks, ask_gate, flat_actions, pick_rate
+        from chord_rate import (load_checks, ask_gate, flat_actions, pick_rate,
+                                judge_views)
         _checks = load_checks(args.judge_checks)
+        print(f"[gate] 그림 맞춤 {args.judge_view_parity} "
+              f"(full = 반전 안 함 + 절반 축소, 라벨과 같음)", flush=True)
         print(f"[gate] 등급표 경로 {args.judge_checks} · 문항 "
               f"{len(_checks.SIGN)} · 등급 {_checks.NGRADE} · "
               f"부호 {_checks.SIGN}", flush=True)
@@ -601,8 +609,19 @@ def main():
                             # the chunk currently being executed.
                             conf = float(np.asarray(raw.get("_gate_prob", 0.0)).ravel()[0])
                         else:
-                            fo = _flipped(obs)        # fresh views (reflect steps so far)
-                            views = [fo["video.left_view"], fo["video.right_view"], fo["video.wrist_view"]]
+                            if _checks is not None:
+                                # **반전하지 않는다.** 반전은 정책이 그렇게
+                                # 학습돼서 필요한 것이지 판정기가 요구하는 것이
+                                # 아니다. `_flipped(obs)` 를 둘에 같이 써서
+                                # 판정기가 거울상 장면을 보고 답하고 있었다.
+                                # 라벨은 영상 원본을 절반으로 줄인 타일을 셋으로
+                                # 쪼개 봤다(gen_robocasa_tiles_shard ->
+                                # cosmos_1call_v6). 그 모양에 맞춘다.
+                                views = judge_views(obs, args.judge_view_parity)
+                            else:
+                                fo = _flipped(obs)    # fresh views (reflect steps so far)
+                                views = [fo["video.left_view"], fo["video.right_view"],
+                                         fo["video.wrist_view"]]
                             _instr = ep_instruction
                             if args.judge_actions:
                                 # 정책이 이미 만들어 둔 청크를 judge에게 함께 전달 (배포 가능: 로컬에서 읽음)
