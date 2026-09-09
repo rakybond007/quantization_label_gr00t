@@ -34,10 +34,28 @@ def digest(path):
     return h.hexdigest()
 
 
+def cached_keys(cache_dir):
+    """이미지 캐시에 실제로 있는 (에피소드, 프레임) 만 모은다."""
+    ix = sorted(Path(cache_dir).glob("index_shard*.parquet"))
+    if not ix:
+        raise ValueError(f"이미지 캐시 인덱스가 없다: {cache_dir}")
+    return pd.concat([pd.read_parquet(f, columns=["episode_index", "frame_index"])
+                      for f in ix], ignore_index=True).drop_duplicates()
+
+
 def select_split(labels, args):
     keys = ["episode_index", "frame_index"]
     if labels.duplicated(keys).any():
         raise ValueError("duplicate episode/frame labels")
+    # **표본을 뽑기 전에 캐시에 있는 행만 남긴다.** 배속 라벨은 전 프레임(stride 1)
+    # 인데 이미지 캐시는 stride 4 라, 그냥 뽑으면 대부분이 이미지 없는 프레임이라
+    # MotionFrames 가 죽는다. 뽑고 나서 거르면 태스크당 프레임 수도 안 맞는다.
+    n0 = len(labels)
+    labels = labels.merge(cached_keys(args.cache_dir), on=keys, how="inner")
+    print(json.dumps({"labels_total": n0, "labels_with_image": len(labels),
+                      "image_frac": round(len(labels) / n0, 4)}), flush=True)
+    if labels.empty:
+        raise ValueError("캐시와 겹치는 라벨이 없다 -- cache_dir 이 맞는지 보라")
     bad = sorted(set(np.round(labels.ratio.unique(), 6)) - set(GRID))
     if bad:
         raise ValueError(f"눈금 밖의 배속: {bad} (허용 {GRID})")
@@ -336,10 +354,11 @@ def main():
     else:
         model = RatioHead(state_dim=data.states.shape[1],
                                         action_dim=data.actions.shape[-1],
-                                        history=args.history, text_dim=data.text.shape[1])
+                                        horizon=args.history, text_dim=data.text.shape[1])
         model.set_normalization(data.states[train_idx], data.actions[train_idx],
                                 data.mask[train_idx])
-    model.cuda()
+    device = "cuda"
+    model.to(device)
     print(json.dumps({"arch": args.arch,
                       "parameters": sum(p_.numel() for p_ in model.parameters())}), flush=True)
     tr = DataLoader(torch.utils.data.Subset(data, train_idx), batch_size=args.bs, shuffle=True,
@@ -362,7 +381,7 @@ def main():
     gate_fn = torch.nn.BCEWithLogitsLoss()
     GATE_W = float(args.gate_weight)
     setup_s = time.perf_counter()-start
-    initial = evaluate(model, va, "cuda") if HOLDOUT else None
+    initial = evaluate(model, va, device) if HOLDOUT else None
     print(json.dumps({"setup_seconds":setup_s,"train_rows":len(train_idx),"val_rows":len(val_idx),"initial":initial}), flush=True)
     metrics, gradients = [], {}
     best = float("inf")
@@ -413,7 +432,7 @@ def main():
             if args.max_steps and steps_done >= args.max_steps:
                 break
         torch.cuda.synchronize(); train_s=time.perf_counter()-tick
-        tick=time.perf_counter(); v=evaluate(model,va,"cuda") if HOLDOUT else None
+        tick=time.perf_counter(); v=evaluate(model,va,device) if HOLDOUT else None
         item={"epoch":epoch+1,"train_bce":total/n,"train_seconds":train_s,
               "val_seconds":time.perf_counter()-tick,"val":v}
         metrics.append(item); print(json.dumps(item), flush=True)

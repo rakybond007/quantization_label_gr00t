@@ -8,7 +8,10 @@ set -eu
 W=$HOME/quantization_agent_workspace
 HERE="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 RUN=${RUN:-$W/vlm_gate/experiments/ratio_head/artifacts/smoke}
-LAB=${LAB:-$W/vlm_gate/output/_gate_distill/robocasa_contact_ratio.parquet}
+# **run_full.sh 와 같은 파일이어야 한다.** 다르면 스모크가 본학습과 다른 것을
+# 검사한다. 옛 파일에는 instruction 열이 없어 text_col 이 task 로 떨어지고,
+# 임베딩은 지시문 334종이라 태스크 24개가 전부 안 찾아져 죽는다.
+LAB=${LAB:-$W/vlm_gate/output/_gate_distill/robocasa_contact_ratio_instr.parquet}
 
 # 스모크는 매번 새로 시작한다. 학습기가 out-dir 을 exist_ok=False 로 만들어서,
 # 앞 판이 빈 디렉터리만 남기고 죽으면 다음 판이 FileExistsError 로 죽는다.
