@@ -25,6 +25,17 @@ VLM 을 다시 안 부른다. 등급이 이미 parquet 에 있고, 여기서 묻
 태스크 24개짜리 상관이라 약하다. 그래서 이건 **판정이 아니라 경보**다.
 어긋난 문항을 시점 단위로 다시 보라는 뜻이지, 이것만으로 부호를 뒤집지 않는다.
 
+**그리고 타우는 한 갈래에 먹힌다.** robocasa 는 PnP 계열 상한이 낮고(중앙 1.5)
+Turn 계열이 높다(중앙 2.5). 그래서 PnP 에서 뜨는 문항은 무엇이든 타우가 음수로,
+Turn 에서 뜨는 문항은 무엇이든 양수로 나온다 -- 문항이 맞고 틀리고와 무관하다.
+D("넓은 상판에 내려놓기")와 E("빈 공간을 가로질러 나른다")가 음수인 것은 둘 다
+PnP 에서 뜨기 때문이지 거꾸로 달려서가 아닐 수 있다.
+
+**타우를 부호 근거로 쓸 수 있는 것은 그 문항이 태스크 단위일 때뿐이다.** 그때는
+문항이 곧 태스크 갈래라서 둘이 같은 것을 말한다. 시점 단위 문항이면 타우는
+"이 문항이 어느 갈래에서 뜨나" 를 잰 것이고, 그 갈래의 상한은 이미 상한표에
+있다. 그러므로 **분산 몫이 낮은 문항의 타우만 부호 근거가 된다.**
+
 ## 못 재는 것
 
 **시점 단위 정답이 없다.** 사다리는 태스크 단위이고, 같은 태스크 안에서 어느
@@ -67,8 +78,13 @@ def main():
     mod = __import__(CHECKS[bench], fromlist=["SIGN", "WEIGHT"])
     SIGN, WEIGHT = mod.SIGN, mod.WEIGHT
 
-    cols = ["task"] + list(SLOTS) + [f"eg_{k}" for k in SLOTS]
-    df = pd.read_parquet(lab, columns=[c for c in cols])
+    # 있는 열만 읽는다. phase9 라벨에는 등급 분포(eg_*)가 없어서, 무조건
+    # 요구하면 폴백에 닿기 전에 죽는다.
+    import pyarrow.parquet as _pq
+    have = set(_pq.ParquetFile(lab).schema_arrow.names)
+    cols = [c for c in ["task"] + list(SLOTS) + [f"eg_{k}" for k in SLOTS]
+            if c in have]
+    df = pd.read_parquet(lab, columns=cols)
     import os
     here = os.path.dirname(os.path.abspath(__file__))
     ceil = json.load(open(os.path.join(here, "..", "analysis",
@@ -100,7 +116,9 @@ def main():
         if wf < 0.20:
             flag.append("태스크 이름")
         if tau * want < 0 and abs(tau) > 0.15:
-            flag.append("부호 거꾸로")
+            # 태스크 단위 문항일 때만 부호 근거가 된다. 시점 단위 문항의 타우는
+            # 그 문항이 어느 태스크 갈래에서 뜨는지를 잰 것이라 부호와 무관하다.
+            flag.append("부호 거꾸로" if wf < 0.20 else "타우 어긋남(갈래 탓일 수 있음)")
         if (dist[1] + dist[3]) < 0.05:
             flag.append("2·4등급 죽음")
         out[k] = {"within_frac": round(wf, 3), "tau_vs_ceiling": round(tau, 3),
