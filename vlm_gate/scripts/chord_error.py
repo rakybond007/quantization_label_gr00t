@@ -13,8 +13,13 @@
     벗어남 = max_{s<j<e}  점 p[j] 와 선분 p[s]p[e] 사이 거리
     현오차(f,K) = 그 청크의 블록들 중 최대
 
-블록 나누기는 `fractional_blocks.block_sizes` 를 그대로 쓴다 -- 라벨·평가와
-같은 규칙이어야 한다.
+블록 나누기는 `fractional_blocks.blocks_for` 다 -- 라벨 눈금 1.5·2.5 를 실제로
+실행하는 경로가 그쪽이다. `block_sizes` 는 옛 고정 K 경로라 2.5 를 요청하면
+2.286 이 나오므로 그것으로 재면 실행되지 않는 경계를 재게 된다.
+
+**오차는 K 에 단조가 아니다.** 경로가 꺾이는 자리가 블록 경계에 떨어지면 모든
+블록이 직선이라 0 이고, 경계 안쪽에 들면 크다. 그래서 위상(carry)을 훑어
+평균과 최대를 같이 낸다.
 
 세 가지를 따로 낸다. 하나로 뭉치면 무엇이 큰지 안 보인다.
 
@@ -56,7 +61,13 @@ import pandas as pd
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from fractional_blocks import block_sizes          # noqa: E402
+# **`blocks_for` 를 쓴다, `block_sizes` 가 아니라.** 둘은 다른 실행 경로를
+# 모사한다 -- `block_sizes` 는 옛 고정 K 경로(`compress_chunk`, 꼬리를 낱개로
+# 붙임)라 2.5 를 요청하면 실제로 2.286 이 나오고, `blocks_for` 는 분수 배속
+# 경로라 2.5 를 낸다. 라벨 눈금 1.5·2.5 를 실제로 실행하는 것은 뒤엣것이므로
+# 앞엣것으로 재면 **실행되지 않는 경계**를 재게 된다. 정수 배속에서는 둘이
+# 같으므로 `blocks_for` 하나로 전부 덮인다. 동료가 자체검사에서 잡았다.
+from fractional_blocks import blocks_for          # noqa: E402
 
 DS = {"robocasa": "/sjw_alinlab2/home/myungkyu/.cache/huggingface/lerobot/"
                   "kimtaey/robocasa_mg_gr00t_300"}
@@ -81,37 +92,55 @@ def seg_dev(p):
     return float(np.linalg.norm(q - t[:, None] * v[None, :], axis=1).max())
 
 
-def chunk_error(a, f, K, horizon=16):
-    """프레임 f 청크를 K 로 묶었을 때의 (위치오차, 회전오차, 그리퍼 밀림)."""
+# 블록 경계는 청크 사이로 넘어오는 잔여(carry)에 따라 움직인다. 그래서 같은
+# 순간이라도 언제 그 순간에 닿았느냐에 따라 경계가 다르게 떨어진다.
+#
+# **오차는 K 에 단조가 아니다.** 경로가 꺾이는 자리가 블록 경계에 떨어지면 모든
+# 블록이 직선이라 질러갈 것이 없어 0 이고, 경계 안쪽에 들면 크다. 그러니 한
+# 위상만 재면 그 순간이 안전한지 위험한지가 우연에 달린다. 여러 위상을 훑어
+# **평균과 최대를 같이** 낸다 -- 평균은 그 순간의 기대 손상이고, 최대는 위상을
+# 고를 수 없을 때 각오해야 하는 값이다.
+CARRIES = (-0.4, -0.2, 0.0, 0.2, 0.4)
+
+
+def chunk_error_at(a, f, K, carry, horizon=16):
+    """한 위상에서의 (위치오차, 회전오차, 그리퍼 밀림)."""
     w = a[f:f + horizon]
-    if len(w) < horizon:
-        return None
-    sizes = block_sizes(horizon, K)
+    blocks, _ = blocks_for(horizon, K, carry)
     pos = np.vstack([np.zeros(3), np.cumsum(w[:, POS], axis=0)])
     rot = np.vstack([np.zeros(3), np.cumsum(w[:, ROT], axis=0)])
     g = w[:, GRIP]
     ep_, er_, eg_ = 0.0, 0.0, 0.0
-    s = 0
-    for n in sizes:
-        e = s + n
+    for s, e in blocks:
         ep_ = max(ep_, seg_dev(pos[s:e + 1]))
         er_ = max(er_, seg_dev(rot[s:e + 1]))
-        if n > 1:
+        if e - s > 1:
             # 래치는 블록의 마지막 값을 쓴다. 블록 안에서 그리퍼가 바뀌면
             # 그 전환이 블록 끝까지 밀린다 -- 밀린 스텝 수를 센다.
-            blk = g[s:e]
-            ch = np.flatnonzero(np.abs(np.diff(blk)) > 0.5)
+            ch = np.flatnonzero(np.abs(np.diff(g[s:e])) > 0.5)
             if len(ch):
-                eg_ = max(eg_, float(n - 1 - ch[0]))
-        s = e
+                eg_ = max(eg_, float(e - s - 1 - ch[0]))
     return ep_, er_, eg_
 
 
-def selftest():
-    """손으로 아는 답 넷. 데이터셋 없이 돈다.
+def chunk_error(a, f, K, horizon=16, carries=CARRIES):
+    """위상을 훑은 (위치 평균, 위치 최대, 회전 평균, 그리퍼 최대)."""
+    if len(a[f:f + horizon]) < horizon:
+        return None
+    v = np.array([chunk_error_at(a, f, K, c, horizon) for c in carries])
+    return (float(v[:, 0].mean()), float(v[:, 0].max()),
+            float(v[:, 1].mean()), float(v[:, 2].max()))
 
-    코드를 믿기 전에 이걸 본다 -- 선분 거리와 블록 나누기는 조용히 틀리기 쉽고,
+
+def selftest():
+    """손으로 아는 답. 데이터셋 없이 돈다.
+
+    코드를 믿기 전에 이걸 본다 -- 선분 거리와 블록 경계는 조용히 틀리기 쉽고,
     틀려도 그럴듯한 숫자가 나온다.
+
+    **단조성은 검사하지 않는다.** 오차가 K 에 단조라고 가정했다가 첫 판에서
+    걸렸는데, 안 단조인 것이 맞았다 -- 꺾이는 자리가 블록 경계에 떨어지면 0 이다.
+    그 성질을 버그로 잡는 대신 **성질 그대로 검사한다.**
     """
     ok = True
 
@@ -119,31 +148,44 @@ def selftest():
         nonlocal ok
         good = abs(got - want) <= tol
         ok = ok and good
-        print(f"  {'ok ' if good else '틀림'} {name:28s} {got:.6f}  기대 {want:.6f}")
+        print(f"  {'ok ' if good else '틀림'} {name:30s} {got:.6f}  기대 {want:.6f}")
 
     chk("직선은 0", seg_dev(np.array([[0,0,0],[1,0,0],[2,0,0],[3,0,0]], float)), 0.0)
-    # (0,0)->(1,0)->(1,1) 을 (0,0)->(1,1) 로 질러가면 중간점 거리는 1/sqrt2
     chk("직각 모서리 1/√2",
         seg_dev(np.array([[0,0,0],[1,0,0],[1,1,0]], float)), 2 ** -0.5)
-    # 제자리에서 나갔다 오면 선분이 없다 -- 시작점에서의 거리
     chk("왕복은 나간 거리",
         seg_dev(np.array([[0,0,0],[0,0,2],[0,0,0]], float)), 2.0)
 
-    # 16스텝: 앞 8 +x, 뒤 8 +y. 모서리를 가로지르는 블록만 오차를 낸다.
-    a = np.zeros((40, 12)); a[:8, 5] = 1.0; a[8:16, 6] = 1.0
-    prev = -1.0
+    # 요청 배속이 실현되는가 -- 이것이 첫 판에서 틀렸던 자리다
     for K in (1.5, 2.0, 2.5):
-        e = chunk_error(a, 0, K)[0]
-        print(f"  ..  ㄱ자 청크 K={K:<4} 위치오차 {e:.4f}")
-        if e < prev - 1e-9:
-            print("  틀림 K 가 커지는데 오차가 줄었다"); ok = False
-        prev = e
-    if prev <= 0:
-        print("  틀림 꺾인 경로인데 오차가 0 이다"); ok = False
+        b, _ = blocks_for(16, K, 0.0)
+        chk(f"blocks_for 실현 배속 K={K}", 16 / len(b), K, tol=0.06)
+
+    def corner(at):
+        """at 스텝째에 +x 에서 +y 로 꺾이는 16스텝 청크."""
+        a = np.zeros((40, 12))
+        a[:at, 5] = 1.0
+        a[at:16, 6] = 1.0
+        return a
+
+    # 모서리가 경계에 떨어지면 0 -- 버그가 아니라 성질이다
+    chk("모서리가 경계에 있으면 0",
+        chunk_error_at(corner(8), 0, 2.0, 0.0)[0], 0.0)
+    # 경계 안쪽에 들면 1/√2
+    chk("모서리가 블록 안이면 1/√2",
+        chunk_error_at(corner(7), 0, 2.0, 0.0)[0], 2 ** -0.5)
+
+    # 위상을 훑으면 어느 K 에서도 꺾임이 잡힌다 -- 한 위상만 보면 놓친다
+    for K in (1.5, 2.0, 2.5):
+        mean, mx, _, _ = chunk_error(corner(7), 0, K)
+        print(f"  ..  ㄱ자(모서리 7) K={K:<4} 평균 {mean:.4f}  최대 {mx:.4f}")
+        if mx <= 0:
+            print("  틀림 꺾인 경로인데 어느 위상에서도 0 이다")
+            ok = False
 
     # 그리퍼: 5스텝째 전환. K=2 면 블록 [4,6) 안이라 1스텝 밀린다.
     a2 = np.zeros((40, 12)); a2[:, 5] = 1.0; a2[5:, 11] = 1.0
-    chk("그리퍼 래치 밀림 K=2", chunk_error(a2, 0, 2.0)[2], 1.0)
+    chk("그리퍼 래치 밀림 K=2", chunk_error_at(a2, 0, 2.0, 0.0)[2], 1.0)
 
     print("\n자체검사 " + ("통과" if ok else "실패 -- 여기서 멈춘다"))
     return 0 if ok else 1
@@ -199,7 +241,8 @@ def main():
         if (i + 1) % 50 == 0:
             print(f"  에피 {i+1}/{len(picked)} · 행 {len(rows):,}", flush=True)
 
-    df = pd.DataFrame(rows, columns=["task", "ep", "f", "K", "pos", "rot", "grip"])
+    df = pd.DataFrame(rows, columns=["task", "ep", "f", "K",
+                                     "pos", "pos_max", "rot", "grip"])
     print(f"\n행 {len(df):,} · 에피 {df.ep.nunique()} · 태스크 {df.task.nunique()}\n")
 
     ceil = json.load(open(os.path.join(HERE, "..", "analysis",
@@ -210,7 +253,7 @@ def main():
         d = df[df.K == K]
         print(f"===== K = {K} =====")
         # 1) 태스크 안에서 갈리는가
-        for col in ("pos", "rot", "grip"):
+        for col in ("pos", "pos_max", "rot", "grip"):
             g = d[col].to_numpy()
             tm = d.groupby("task")[col].transform("mean").to_numpy()
             wf = np.var(g - tm) / (np.var(g) or 1e-12)
