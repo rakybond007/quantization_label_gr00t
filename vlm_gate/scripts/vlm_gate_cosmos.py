@@ -248,7 +248,7 @@ def run_server(model_id, port, host, max_new_tokens, dtype):
             "p_yes_marginal": float(ly.exp().item()),  # full-vocab mass on YES (diag)
         }
 
-    def _parse_text(text, n_ask=0, n_grade=0, n_new=0):
+    def _parse_text(text, n_ask=0, n_grade=0, n_new=0, categories=None):
         """Pull the answers out of what the model wrote.
 
         Nothing is defaulted on a failure: a slot the model skipped stays None
@@ -256,7 +256,11 @@ def run_server(model_id, port, host, max_new_tokens, dtype):
         to answer in the requested form IS the measurement, and filling it in
         would destroy the number this path exists to produce.
         """
-        if n_grade > 0:
+        if categories:
+            alternatives = "|".join(re.escape(str(v)) for v in categories)
+            pat, conv = rf"([A-Z])\)\s*({alternatives})", str
+            ok = lambda v: v in categories                         # noqa: E731
+        elif n_grade > 0:
             pat, conv = r"([A-Z])\)\s*([1-9])", int
             ok = lambda v: 1 <= v <= n_grade                       # noqa: E731
         else:
@@ -271,7 +275,8 @@ def run_server(model_id, port, host, max_new_tokens, dtype):
         n = n_ask if n_ask > 0 else 1
         picks = [found.get(chr(ord("A") + i)) for i in range(n)]
         if n == 1 and picks[0] is None:
-            m = (re.search(r"\b([1-9])\b", text) if n_grade > 0
+            m = (re.search(rf"\b({alternatives})\b", text) if categories else
+                 re.search(r"\b([1-9])\b", text) if n_grade > 0
                  else re.search(r"\b(YES|NO|Yes|No|yes|no)\b", text))
             if m:
                 v = conv(m.group(1))
@@ -281,7 +286,7 @@ def run_server(model_id, port, host, max_new_tokens, dtype):
                 "n_parsed": sum(p is not None for p in picks), "n_new": int(n_new)}
 
     def judge_text_batch(items, guidance="", question="", max_new_tokens=192,
-                         n_ask=0, n_grade=0):
+                         n_ask=0, n_grade=0, categories=None):
         """One forward for many frames.
 
         Per-frame calls leave a small model idle on a big card: the batch is one
@@ -353,17 +358,46 @@ def run_server(model_id, port, host, max_new_tokens, dtype):
         # 강제된 슬롯의 로짓을 argmax 로 읽어 답을 대신 짓던 옛 방식이 아니다 --
         # 그 답이 얼마나 확실했는지를 덧붙일 뿐이다. 다섯 등급이 한 칸에 뭉쳐
         # 보여도 P(3)=0.9 와 P(2)=.3/P(3)=.35/P(4)=.3 은 전혀 다른 상태다.
-        gid = [g[0] for g in GRADE_IDS[:n_grade]] if n_grade > 0 else []
+        category_ids = None
+        if categories:
+            # The emitted slot follows "A) ", so score the bare category token.
+            # Leading-space variants can begin with the same whitespace token
+            # for every category and would collapse the distribution.
+            category_ids = []
+            for category in categories:
+                ids = set()
+                for spelling in (category, " " + category, "\n" + category):
+                    for token_id in tok.encode(spelling, add_special_tokens=False):
+                        if tok.decode([token_id]).strip() == category:
+                            ids.add(token_id)
+                category_ids.append(sorted(ids))
+            if any(not ids for ids in category_ids):
+                raise ValueError(f"category has no tokenizer ids: {categories!r}")
+            if len({g for ids in category_ids for g in ids}) != sum(map(len, category_ids)):
+                raise ValueError(f"category tokenizer ids overlap: {categories!r}")
+        gid = ([ids[0] for ids in category_ids] if category_ids else
+               [g[0] for g in GRADE_IDS[:n_grade]] if n_grade > 0 else [])
         probs_all = None
         if gid and getattr(gen, "scores", None):
             import torch.nn.functional as _F
             sc = torch.stack(gen.scores, dim=1)          # (B, T, V)
-            sel = sc[:, :, gid]                          # 등급 토큰만
-            step_p = _F.softmax(sel.float(), dim=-1)     # 등급들 사이의 분포
+            if category_ids:
+                # A category may have several first-token spellings. Aggregate
+                # their full-vocabulary logits before conditioning on categories.
+                sel = torch.stack([
+                    torch.logsumexp(sc[:, :, ids].float(), dim=-1)
+                    for ids in category_ids
+                ], dim=-1)
+            else:
+                sel = sc[:, :, gid]                      # 등급 토큰만
+            step_p = _F.softmax(sel.float(), dim=-1)     # 후보 범주 사이의 분포
             emitted = out[:, width:]
             is_grade = torch.zeros_like(emitted, dtype=torch.bool)
-            for g in gid:
-                is_grade |= (emitted == g)
+            emitted_to_category = {}
+            for ci, ids in enumerate(category_ids or [[g] for g in gid]):
+                for g in ids:
+                    is_grade |= (emitted == g)
+                    emitted_to_category[g] = ci
             probs_all = []
             token_picks_all = []
             for i in range(emitted.shape[0]):
@@ -371,12 +405,20 @@ def run_server(model_id, port, host, max_new_tokens, dtype):
                 # then require exactly one digit per parsed A..E slot instead of
                 # silently accepting the first five digits from malformed text.
                 pos = torch.nonzero(is_grade[i]).flatten().tolist()
-                probs_all.append([[round(float(v), 4) for v in step_p[i, t]] for t in pos])
-                token_picks_all.append([gid.index(int(emitted[i, t])) + 1 for t in pos])
+                probs_all.append([[(float(v) if categories else round(float(v), 4))
+                                   for v in step_p[i, t]] for t in pos])
+                token_picks_all.append([
+                    (categories[emitted_to_category[int(emitted[i, t])]] if categories
+                     else emitted_to_category[int(emitted[i, t])] + 1)
+                    for t in pos
+                ])
         res = []
         for i in range(len(items)):
             text = tok.decode(out[i][width:], skip_special_tokens=True).strip()
-            r = _parse_text(text, n_ask, n_grade, int(out.shape[1] - width))
+            r = _parse_text(text, n_ask, n_grade, int(out.shape[1] - width), categories)
+            r["n_input_tokens"] = int(n_in[i])
+            if "image_grid_thw" in seqs[i]:
+                r["image_grid_thw"] = seqs[i]["image_grid_thw"].tolist()
             if probs_all is not None:
                 r["grade_probs"] = probs_all[i]
                 r["grade_token_picks"] = token_picks_all[i]
@@ -384,7 +426,7 @@ def run_server(model_id, port, host, max_new_tokens, dtype):
         return res
 
     def judge_text(pil_imgs, instruction, guidance="", question="",
-                   max_new_tokens=192, n_ask=0, n_grade=0):
+                   max_new_tokens=192, n_ask=0, n_grade=0, categories=None):
         """Let the model WRITE its answers, then parse what it wrote.
 
         Every other path here reads token logits at a forced answer slot. That
@@ -411,7 +453,7 @@ def run_server(model_id, port, host, max_new_tokens, dtype):
             out = model.generate(**inputs, max_new_tokens=int(max_new_tokens),
                                  do_sample=False)
         text = tok.decode(out[0][n_in:], skip_special_tokens=True).strip()
-        return _parse_text(text, n_ask, n_grade, int(out.shape[1] - n_in))
+        return _parse_text(text, n_ask, n_grade, int(out.shape[1] - n_in), categories)
 
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *a):
@@ -440,6 +482,12 @@ def run_server(model_id, port, host, max_new_tokens, dtype):
                 req = json.loads(self.rfile.read(n))
                 n_ask = int(req.get("n_ask", 0))
                 n_grade = int(req.get("n_grade", 0))
+                categories = req.get("category_tokens")
+                if categories is not None:
+                    if not isinstance(categories, list) or not (2 <= len(categories) <= 9) \
+                            or any(not isinstance(v, str) or not v for v in categories) \
+                            or len(set(categories)) != len(categories):
+                        raise ValueError("category_tokens must be 2..9 distinct nonempty strings")
                 _dec = lambda b: Image.open(io.BytesIO(base64.b64decode(b))).convert("RGB")
 
                 # A batch request carries its images per item, so it has to be
@@ -451,7 +499,7 @@ def run_server(model_id, port, host, max_new_tokens, dtype):
                             "instruction": it.get("instruction", "")} for it in req["batch"]]
                     self._send(200, {"results": judge_text_batch(
                         bat, req.get("guidance", ""), req.get("question", ""),
-                        int(req.get("max_new_tokens", 192)), n_ask, n_grade)})
+                        int(req.get("max_new_tokens", 192)), n_ask, n_grade, categories)})
                     return
 
                 imgs = ([_dec(b) for b in req["images_b64"]] if "images_b64" in req
@@ -460,7 +508,8 @@ def run_server(model_id, port, host, max_new_tokens, dtype):
                         req.get("question", ""))
                 if req.get("mode") == "text":                     # model writes it
                     res = judge_text(*args, n_ask=n_ask, n_grade=n_grade,
-                                     max_new_tokens=int(req.get("max_new_tokens", 192)))
+                                     max_new_tokens=int(req.get("max_new_tokens", 192)),
+                                     categories=categories)
                 elif n_grade > 0:                                   # graded slots
                     res = judge_multi_graded(*args, n_ask=n_ask or 5, n_grade=n_grade)
                 elif n_ask > 0:                                   # one prefill, n answers

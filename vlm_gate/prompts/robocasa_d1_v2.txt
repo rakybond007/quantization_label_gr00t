@@ -1,0 +1,95 @@
+You annotate one recorded robot command window in a kitchen. The task instruction
+identifies the intended operation, but task names do not determine your answers.
+The image sheet has three time rows: START, MIDDLE, END of the recorded window.
+Columns are LEFT, RIGHT, WRIST camera views at the same time. The window spans
+16 recorded action intervals (0.8 seconds at this dataset's 20 Hz).
+This is the recorded demonstration, not a rollout of compressed actions.
+
+We will use your descriptions to select how many successive commands to combine.
+Do NOT predict a success probability, assign a speed, or infer invisible friction,
+force, tracking accuracy, metric clearance or grasp security. A closed gripper
+command alone does not prove an object is held. A hinge/rail alone does not prove
+the hand can move with fewer corrections. A small button alone is not a hazard:
+distinguish approaching/alignment from a supported press with a visible travel stop.
+Command facts report commands, not measured physical contact or realized movement.
+
+Answer four questions using their own anchored 1..5 scales, or U.
+U means a relation needed to answer THIS question is hidden or the supplied views
+and facts cannot resolve it. Do not use a middle grade to mean you are uncertain.
+An irrelevant condition that can clearly be excluded is grade 1, not U.
+Only score constraints encountered within this window. Do not score a later phase
+merely because its target appears in the scene. These grades describe visible
+constraints and support, not calibrated levels of compression damage.
+
+A — Alignment and maintained manipulation relation (negative evidence).
+How demanding is the observed requirement to align, stop at a target, or maintain
+a particular hand-object relation while manipulating it, beyond merely following
+a visibly supported push? Do not count obstacle passage here; that belongs to B.
+1: No such alignment or maintained-manipulation demand is encountered; open
+   transfer/retraction or an already aligned, visibly supported press/push.
+2: Broad approach or coarse pose adjustment; the hand remains outside final
+   engagement and there is visibly substantial adjustment room.
+3: Final approach/alignment or maintained manipulation is underway, but a single
+   tight target relation is not yet imposed by the visible configuration.
+4: A particular handle/held-object relation or final target alignment must be
+   maintained in the visible motion; generic translation would not describe it.
+5: A visibly tight mating/engagement or precise unassisted endpoint dominates the
+   motion, with little visible remaining adjustment room (e.g. seating an object
+   into its matching opening). A mechanism's own supported stop is not by itself 5.
+Use the strongest observed A constraint in the window, not its duration.
+
+B — Passage clearance (negative evidence).
+How restricted is the visible passage available to the hand AND any carried
+object along the demonstrated window? Being in a named container is insufficient.
+1: No nearby passage boundary or obstacle relevant to this movement.
+2: A boundary is nearby but a broad clearance corridor is visibly maintained.
+3: Passing a rim/frame/neighbor with a clear remaining gap that limits path choice.
+4: A narrow passage visibly constrains the path; only a small gap remains around
+   the moving hand/object relative to its visible size.
+5: Near-fitting passage, or simultaneous boundaries leave almost no visible
+   lateral room along part of the demonstrated movement.
+Use the strongest observed B constraint. Do not infer centimeters from pixels.
+
+C — Passive support or guidance during interaction (positive evidence).
+How continuously and completely does visible external support/geometry carry or
+guide the manipulated part along its intended motion? This is about what the
+environment constrains, NOT a second inverse rating of A or B.
+1: No applicable passive support/guidance is visible in this window.
+2: A supporting/guide surface is present, but actual supported engagement is only
+   beginning or ends during the window; the main motion remains hand-guided.
+3: Part of the motion is visibly supported/guided, while substantial alignment
+   or unsupported movement is still required within the window.
+4: Supported engagement is maintained through the window and guides the main
+   direction, while other visible movement remains controlled by the hand.
+5: The relevant motion is visibly supported and directed throughout, as in an
+   aligned supported push/press toward a visible supported stop; this does not
+   by itself assert that all other constraints are absent.
+Do not award 4/5 solely from the existence of a rail/hinge or a named task.
+If its support continuity is hidden, answer U rather than guessing.
+
+D — Open movement / broad landing allowance (positive evidence).
+How much of the demonstrated movement has a visibly open corridor or a broad
+landing area with room around the moving hand/object and its arrival location?
+1: No applicable open movement/broad landing allowance is visible.
+2: Only a short part is visibly open/broad; most of the window remains local
+   manipulation, constrained departure or constrained arrival.
+3: A substantial open/broad portion is visible, but the window also includes a
+   constrained departure or final approach.
+4: Almost all movement and its arrival region are visibly open/broad, with only
+   a brief visible approach/departure boundary and no tight final placement.
+5: The complete window is open transfer/retraction or a broad unconstrained
+   landing, including its arrival region; no precise docking or narrow passage.
+The existence of a countertop elsewhere in the image is not supporting evidence.
+
+Evaluate all four independently. A and C may both be high: guided structure can
+coexist with a demanding maintained grasp. Do not subtract one answer from another.
+If a window changes between support types, rate the coverage using these anchors;
+do not give both C and D a 5 because each holds in a different short subinterval.
+Do not invent intermediate events between the three snapshots. Where those events
+are necessary for a confident answer and command facts do not resolve them, use U.
+
+Output exactly four lines, with no explanation or additional numbers:
+A) <1|2|3|4|5|U>
+B) <1|2|3|4|5|U>
+C) <1|2|3|4|5|U>
+D) <1|2|3|4|5|U>
