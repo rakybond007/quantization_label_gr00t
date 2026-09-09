@@ -19,7 +19,11 @@ OUT=$W/assets/frame_cache_robocasa_stride2
 
 $HOME/miniconda3/envs/quant_gate/bin/python $W/vlm_gate/scripts/make_stride_labels.py --stride 2
 mkdir -p $OUT
-$HOME/miniconda3/envs/quant_gate/bin/python $W/vlm_gate/scripts/build_gate_frame_cache_real.py \
+# **`_real` 이 아니라 이쪽이다.** 이름이 비슷해 헷갈리는데 둘은 다른 데이터셋용이다.
+#   build_gate_frame_cache_real.py   exterior + wrist    2뷰, DROID pnp
+#   build_gate_frame_cache.py        left/right/wrist    3뷰, robocasa
+# 인자가 똑같아서 조용히 받고, 없는 mp4 를 찾다 몇 초 만에 죽는다.
+$HOME/miniconda3/envs/quant_gate/bin/python $W/vlm_gate/scripts/build_gate_frame_cache.py \
   --dataset-path /sjw_alinlab2/home/myungkyu/.cache/huggingface/lerobot/kimtaey/robocasa_mg_gr00t_300 \
   --labels "$LAB" --out-dir "$OUT"
 echo "--- 산출물"; du -sh $OUT; ls $OUT | head -4

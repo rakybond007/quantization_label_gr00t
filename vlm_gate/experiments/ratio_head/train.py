@@ -381,7 +381,8 @@ def main():
                else int(np.ceil(args.max_steps / per_epoch)))
     print(json.dumps({"rows": len(data), "bs": args.bs, "steps_per_epoch": per_epoch,
                       "max_steps": args.max_steps or per_epoch * args.epochs,
-                      "epochs_planned": n_epoch}), flush=True)
+                      "epochs_planned": n_epoch,
+                      "epochs_arg": args.epochs}), flush=True)
     for epoch in range(n_epoch):
         model.train(); total = 0.; n = 0
         torch.cuda.synchronize(); tick=time.perf_counter()
@@ -419,12 +420,26 @@ def main():
         # 홀드아웃이 있으면 가장 좋은 에폭을, 없으면 마지막 에폭을 저장한다.
         # 같은 집합으로 고르고 채점하면 점수가 낙관적으로 나오므로, 비교가
         # 목적일 때는 홀드아웃 없이 마지막을 쓰는 쪽이 깨끗하다.
-        if (v["bce"] < best) if HOLDOUT else (epoch + 1 == args.epochs):
+        #
+        # **`n_epoch` 로 센다, `args.epochs` 가 아니라.** `--max-steps` 를 주면
+        # 실제로 도는 에폭은 `ceil(max_steps/per_epoch)` 인데 여기서 기본값 10 과
+        # 견주면 두 가지로 조용히 틀린다. 도는 에폭이 10보다 적으면 한 번도
+        # 저장되지 않고, 많으면 10에폭짜리를 마지막이라고 저장한다. 뒤엣것은
+        # 터지지도 않아서 30k스텝 결과라고 들고 나오게 된다.
+        if (v["bce"] < best) if HOLDOUT else (epoch + 1 == n_epoch):
             best = v["bce"] if HOLDOUT else float(total / n)
             torch.save({"model":model.state_dict(),"config":model.config,"epoch":epoch+1,
                         "res":128,"views":VIEW_KEYS,"task_emb_file":str(Path(args.task_emb).resolve()),
                         "args":vars(args),"val":v,"format":"proprio_history_v1",
                         "input_semantics":"state[f], action[max(0,f-H):f], left padding + mask"},out/"checkpoint.pt")
+    # 저장이 한 번도 안 됐으면 여기서 크게 죽는다. 조건이 어긋나면 `best` 가
+    # `inf` 인 채로 JSON 을 쓰다 엉뚱한 자리에서 터지는데, 그러면 원인이 안
+    # 보인다. 산출물이 없다는 것을 산출물 이름으로 말한다.
+    if not (out / "checkpoint.pt").exists():
+        raise RuntimeError(
+            f"{n_epoch}에폭을 다 돌았는데 checkpoint.pt 가 없다 -- 저장 조건이 "
+            f"한 번도 안 맞았다 (holdout={HOLDOUT}, best={best})")
+
     floor = text_floor(labels, train_idx, val_idx)
     print(json.dumps({"text_floor": floor}, ensure_ascii=False), flush=True)
     summary={"job_id":os.getenv("SLURM_JOB_ID"),"gpu":torch.cuda.get_device_name(),
