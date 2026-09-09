@@ -10,6 +10,11 @@ HERE="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 RUN=${RUN:-$W/vlm_gate/experiments/ratio_head/artifacts/smoke}
 LAB=${LAB:-$W/vlm_gate/output/_gate_distill/robocasa_contact_ratio.parquet}
 
+# 스모크는 매번 새로 시작한다. 학습기가 out-dir 을 exist_ok=False 로 만들어서,
+# 앞 판이 빈 디렉터리만 남기고 죽으면 다음 판이 FileExistsError 로 죽는다.
+# 본학습(run_full.sh)에서는 안 지운다 -- 거기서는 덮어쓰기가 사고다.
+rm -rf "$RUN"
+
 $HOME/miniconda3/envs/quant_gate/bin/python "$HERE/train.py" \
   --dataset-path /sjw_alinlab2/home/myungkyu/.cache/huggingface/lerobot/kimtaey/robocasa_mg_gr00t_300 \
   --labels "$LAB" \

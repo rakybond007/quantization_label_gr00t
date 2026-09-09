@@ -267,7 +267,13 @@ def main():
     z = np.load(args.task_emb, allow_pickle=True)
     emb = {t: e for t,e in zip(z["tasks"], z["emb"])}
     labels = select_split(pd.read_parquet(args.labels), args)
-    labels[["episode_index","frame_index","task","p_yes","split"]].to_parquet(out/"split.parquet", index=False)
+    # `p_yes` 는 이전 게이트 실험의 열이라 배속 라벨에는 없다. 스키마에 있는
+    # 것만 적는다. `ratio` 와 `fixed` 를 같이 남기는 것은 뜻도 맞다 -- 어느 행이
+    # 가드로 1.0 에 박힌 것인지 split 파일만 보고 알 수 있어야 나중에 칸별
+    # 정확도를 다시 볼 때 편하다.
+    keep = ["episode_index", "frame_index", "task", "split"]
+    keep += [c for c in ("ratio", "fixed", "conf") if c in labels.columns]
+    labels[keep].to_parquet(out / "split.parquet", index=False)
     data = MotionFrames(labels, args.dataset_path, args.cache_dir, emb, args.history)
     if args.preload:
         data.preload()
