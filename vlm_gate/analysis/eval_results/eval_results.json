@@ -286,6 +286,112 @@
      }
     }
    },
+   "baseline_60k_K1p5_kp1200": {
+    "conditions": {
+     "baseline_for_damage": "baseline_60k_K1 (kp400/z4) — 서보가 다르다",
+     "clip": "해당 없음 (dexjoco 실행 경로에 ±1 컨트롤러 클립이 없다)",
+     "damping_ratio": 4.0,
+     "gate": "없음 (균일 고정 배속)",
+     "kd_derived": 277.1,
+     "osc_pos_gains": 1200
+    },
+    "n": 300,
+    "n_tasks": 6,
+    "source": "ALIN cluster (prehj)",
+    "steps_on_success": 313.5,
+    "success": 0.5967,
+    "tasks": {
+     "click_mouse": {
+      "n": 50,
+      "n_success": 38,
+      "steps_on_success": 425.1,
+      "success": 0.76
+     },
+     "fold_glasses": {
+      "n": 50,
+      "n_success": 11,
+      "steps_on_success": 485.5,
+      "success": 0.22
+     },
+     "hammer_nail": {
+      "n": 50,
+      "n_success": 38,
+      "steps_on_success": 160.7,
+      "success": 0.76
+     },
+     "pick_bucket": {
+      "n": 50,
+      "n_success": 28,
+      "steps_on_success": 359.2,
+      "success": 0.56
+     },
+     "pinch_tongs": {
+      "n": 50,
+      "n_success": 27,
+      "steps_on_success": 380.0,
+      "success": 0.54
+     },
+     "water_plant": {
+      "n": 50,
+      "n_success": 37,
+      "steps_on_success": 221.4,
+      "success": 0.74
+     }
+    }
+   },
+   "baseline_60k_K1p5_kp800": {
+    "conditions": {
+     "baseline_for_damage": "baseline_60k_K1 (kp400/z4) — 서보가 다르다",
+     "clip": "해당 없음 (dexjoco 실행 경로에 ±1 컨트롤러 클립이 없다)",
+     "damping_ratio": 4.0,
+     "gate": "없음 (균일 고정 배속)",
+     "kd_derived": 226.3,
+     "osc_pos_gains": 800
+    },
+    "n": 300,
+    "n_tasks": 6,
+    "source": "ALIN cluster (prehj)",
+    "steps_on_success": 300.1,
+    "success": 0.68,
+    "tasks": {
+     "click_mouse": {
+      "n": 50,
+      "n_success": 39,
+      "steps_on_success": 378.9,
+      "success": 0.78
+     },
+     "fold_glasses": {
+      "n": 50,
+      "n_success": 25,
+      "steps_on_success": 468.1,
+      "success": 0.5
+     },
+     "hammer_nail": {
+      "n": 50,
+      "n_success": 43,
+      "steps_on_success": 166.4,
+      "success": 0.86
+     },
+     "pick_bucket": {
+      "n": 50,
+      "n_success": 30,
+      "steps_on_success": 331.6,
+      "success": 0.6
+     },
+     "pinch_tongs": {
+      "n": 50,
+      "n_success": 26,
+      "steps_on_success": 333.6,
+      "success": 0.52
+     },
+     "water_plant": {
+      "n": 50,
+      "n_success": 41,
+      "steps_on_success": 218.7,
+      "success": 0.82
+     }
+    }
+   },
    "baseline_60k_K2": {
     "n": 300,
     "n_tasks": 6,
@@ -382,6 +488,165 @@
      }
     }
    },
+   "baseline_60k_K2_kp1200": {
+    "conditions": {
+     "baseline_for_damage": "baseline_60k_K1 (kp400/z4) — 서보가 다르다",
+     "clip": "해당 없음 (dexjoco 실행 경로에 ±1 컨트롤러 클립이 없다)",
+     "damping_ratio": 4.0,
+     "gate": "없음 (균일 고정 배속)",
+     "kd_derived": 277.1,
+     "osc_pos_gains": 1200
+    },
+    "n": 300,
+    "n_tasks": 6,
+    "source": "ALIN cluster (prehj)",
+    "steps_on_success": 275.4,
+    "success": 0.6533,
+    "tasks": {
+     "click_mouse": {
+      "n": 50,
+      "n_success": 36,
+      "steps_on_success": 348.8,
+      "success": 0.72
+     },
+     "fold_glasses": {
+      "n": 50,
+      "n_success": 18,
+      "steps_on_success": 474.2,
+      "success": 0.36
+     },
+     "hammer_nail": {
+      "n": 50,
+      "n_success": 47,
+      "steps_on_success": 159.7,
+      "success": 0.94
+     },
+     "pick_bucket": {
+      "n": 50,
+      "n_success": 24,
+      "steps_on_success": 281.8,
+      "success": 0.48
+     },
+     "pinch_tongs": {
+      "n": 50,
+      "n_success": 33,
+      "steps_on_success": 338.5,
+      "success": 0.66
+     },
+     "water_plant": {
+      "n": 50,
+      "n_success": 38,
+      "steps_on_success": 195.9,
+      "success": 0.76
+     }
+    }
+   },
+   "baseline_60k_K2_kp1200_damp2": {
+    "conditions": {
+     "baseline_for_damage": "baseline_60k_K1 (kp400/z4) — 서보가 다르다",
+     "clip": "해당 없음 (dexjoco 실행 경로에 ±1 컨트롤러 클립이 없다)",
+     "damping_ratio": 2.0,
+     "gate": "없음 (균일 고정 배속)",
+     "kd_derived": 138.6,
+     "osc_pos_gains": 1200
+    },
+    "n": 300,
+    "n_tasks": 6,
+    "source": "ALIN cluster (prehj)",
+    "steps_on_success": 246.3,
+    "success": 0.4567,
+    "tasks": {
+     "click_mouse": {
+      "n": 50,
+      "n_success": 40,
+      "steps_on_success": 230.2,
+      "success": 0.8
+     },
+     "fold_glasses": {
+      "n": 50,
+      "n_success": 11,
+      "steps_on_success": 477.8,
+      "success": 0.22
+     },
+     "hammer_nail": {
+      "n": 50,
+      "n_success": 25,
+      "steps_on_success": 132.5,
+      "success": 0.5
+     },
+     "pick_bucket": {
+      "n": 50,
+      "n_success": 12,
+      "steps_on_success": 206.8,
+      "success": 0.24
+     },
+     "pinch_tongs": {
+      "n": 50,
+      "n_success": 25,
+      "steps_on_success": 390.0,
+      "success": 0.5
+     },
+     "water_plant": {
+      "n": 50,
+      "n_success": 24,
+      "steps_on_success": 155.4,
+      "success": 0.48
+     }
+    }
+   },
+   "baseline_60k_K2_kp800": {
+    "conditions": {
+     "baseline_for_damage": "baseline_60k_K1 (kp400/z4) — 서보가 다르다",
+     "clip": "해당 없음 (dexjoco 실행 경로에 ±1 컨트롤러 클립이 없다)",
+     "damping_ratio": 4.0,
+     "gate": "없음 (균일 고정 배속)",
+     "kd_derived": 226.3,
+     "osc_pos_gains": 800
+    },
+    "n": 300,
+    "n_tasks": 6,
+    "source": "ALIN cluster (prehj)",
+    "steps_on_success": 277.1,
+    "success": 0.6633,
+    "tasks": {
+     "click_mouse": {
+      "n": 50,
+      "n_success": 36,
+      "steps_on_success": 359.7,
+      "success": 0.72
+     },
+     "fold_glasses": {
+      "n": 50,
+      "n_success": 23,
+      "steps_on_success": 441.1,
+      "success": 0.46
+     },
+     "hammer_nail": {
+      "n": 50,
+      "n_success": 45,
+      "steps_on_success": 170.2,
+      "success": 0.9
+     },
+     "pick_bucket": {
+      "n": 50,
+      "n_success": 34,
+      "steps_on_success": 273.3,
+      "success": 0.68
+     },
+     "pinch_tongs": {
+      "n": 50,
+      "n_success": 26,
+      "steps_on_success": 305.9,
+      "success": 0.52
+     },
+     "water_plant": {
+      "n": 50,
+      "n_success": 35,
+      "steps_on_success": 204.1,
+      "success": 0.7
+     }
+    }
+   },
    "baseline_60k_K2p5": {
     "conditions": {
      "clip_scale": null,
@@ -429,6 +694,112 @@
       "n_success": 34,
       "steps_on_success": 222.1,
       "success": 0.68
+     }
+    }
+   },
+   "baseline_60k_K2p5_kp1200": {
+    "conditions": {
+     "baseline_for_damage": "baseline_60k_K1 (kp400/z4) — 서보가 다르다",
+     "clip": "해당 없음 (dexjoco 실행 경로에 ±1 컨트롤러 클립이 없다)",
+     "damping_ratio": 4.0,
+     "gate": "없음 (균일 고정 배속)",
+     "kd_derived": 277.1,
+     "osc_pos_gains": 1200
+    },
+    "n": 300,
+    "n_tasks": 6,
+    "source": "ALIN cluster (prehj)",
+    "steps_on_success": 231.7,
+    "success": 0.63,
+    "tasks": {
+     "click_mouse": {
+      "n": 50,
+      "n_success": 25,
+      "steps_on_success": 331.5,
+      "success": 0.5
+     },
+     "fold_glasses": {
+      "n": 50,
+      "n_success": 17,
+      "steps_on_success": 424.2,
+      "success": 0.34
+     },
+     "hammer_nail": {
+      "n": 50,
+      "n_success": 45,
+      "steps_on_success": 121.0,
+      "success": 0.9
+     },
+     "pick_bucket": {
+      "n": 50,
+      "n_success": 34,
+      "steps_on_success": 242.5,
+      "success": 0.68
+     },
+     "pinch_tongs": {
+      "n": 50,
+      "n_success": 26,
+      "steps_on_success": 272.6,
+      "success": 0.52
+     },
+     "water_plant": {
+      "n": 50,
+      "n_success": 42,
+      "steps_on_success": 178.7,
+      "success": 0.84
+     }
+    }
+   },
+   "baseline_60k_K2p5_kp800": {
+    "conditions": {
+     "baseline_for_damage": "baseline_60k_K1 (kp400/z4) — 서보가 다르다",
+     "clip": "해당 없음 (dexjoco 실행 경로에 ±1 컨트롤러 클립이 없다)",
+     "damping_ratio": 4.0,
+     "gate": "없음 (균일 고정 배속)",
+     "kd_derived": 226.3,
+     "osc_pos_gains": 800
+    },
+    "n": 300,
+    "n_tasks": 6,
+    "source": "ALIN cluster (prehj)",
+    "steps_on_success": 285.7,
+    "success": 0.6533,
+    "tasks": {
+     "click_mouse": {
+      "n": 50,
+      "n_success": 36,
+      "steps_on_success": 422.1,
+      "success": 0.72
+     },
+     "fold_glasses": {
+      "n": 50,
+      "n_success": 21,
+      "steps_on_success": 478.3,
+      "success": 0.42
+     },
+     "hammer_nail": {
+      "n": 50,
+      "n_success": 39,
+      "steps_on_success": 185.2,
+      "success": 0.78
+     },
+     "pick_bucket": {
+      "n": 50,
+      "n_success": 37,
+      "steps_on_success": 247.3,
+      "success": 0.74
+     },
+     "pinch_tongs": {
+      "n": 50,
+      "n_success": 21,
+      "steps_on_success": 313.1,
+      "success": 0.42
+     },
+     "water_plant": {
+      "n": 50,
+      "n_success": 42,
+      "steps_on_success": 185.9,
+      "success": 0.84
      }
     }
    },
