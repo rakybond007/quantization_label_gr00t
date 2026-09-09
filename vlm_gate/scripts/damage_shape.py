@@ -36,13 +36,16 @@ def main():
     df = pd.read_parquet(chord)
     KS = sorted(df.K.unique())
 
+    # 열 이름을 `drop` 으로 두지 않는다. `DataFrame.drop` 이 메서드라 `s.drop`
+    # 이 열이 아니라 바인딩된 메서드를 집고, 그러면 열이 없다는 말 대신
+    # "function 에 mean 이 없다" 로 죽는다. 동료가 잡았다.
     rec = []
     for (t, K), g in df.groupby(["task", "K"]):
         if t not in succ or K not in succ[t] or succ[t].get(1.0, 0) <= 0:
             continue
         b = succ[t][1.0]
         rec.append({"task": t, "K": K, "cut": float(np.median(g["pos"])),
-                    "drop": (b - succ[t][K]) / b, "base": b})
+                    "loss": (b - succ[t][K]) / b, "base": b})
     R = pd.DataFrame(rec)
 
     # 구간은 전체 분위로 나눈다. 값을 지어낸 자리에서 자르지 않는다.
@@ -59,7 +62,7 @@ def main():
         line = f"  {lo:.3f}~{hi:.3f}  "
         for K in KS:
             s = R[(R.K == K) & (R.cut >= lo) & (R.cut < hi)]
-            line += (f"{s.drop.mean():+8.1%}({len(s):2d})" if len(s)
+            line += (f"{s['loss'].mean():+8.1%}({len(s):2d})" if len(s)
                      else f"{'-':>12s}")
         print(line)
 
@@ -73,8 +76,8 @@ def main():
         s = R[R.K == K]
         if len(s) < 10:
             continue
-        top = s[s.cut >= np.percentile(s.cut, 80)].drop
-        bot = s[s.cut <= np.percentile(s.cut, 20)].drop
+        top = s[s.cut >= np.percentile(s.cut, 80)]["loss"]
+        bot = s[s.cut <= np.percentile(s.cut, 20)]["loss"]
         # 태스크당 50에피 -> 성공률 표준오차 약 0.07, 상대손상은 기준선으로 나눔
         se = float(np.sqrt(top.var() / max(1, len(top))
                            + bot.var() / max(1, len(bot))))

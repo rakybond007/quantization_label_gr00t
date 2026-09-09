@@ -116,3 +116,17 @@ tools/dev run 'python vlm_gate/scripts/foo.py --limit 4'   # 이후 전부 그 G
 
 로그인 한도는 **tmux 창 수**로 센다(`@developer maxlogins 4`). `dev` 가 창을
 늘리는 것도 로그인을 늘린다 — 노드마다 `dev` 를 새로 세우지 않는다.
+
+## 맥에서 파이썬 구문을 검사할 때
+
+맥의 `python3` 는 3.13 이고 **서버 `quant_gate` 는 3.10** 이다. 그래서 맥에서
+`ast.parse` 가 통과해도 서버에서 깨진다. f-string 안에 같은 종류의 따옴표를
+중첩하는 것(`f"{d["k"]}"`)이 3.12 부터 되는 문법이라 특히 잘 걸린다.
+
+    python3 -c "import ast; ast.parse(open('X.py').read(), feature_version=(3,10))"
+
+`feature_version` 을 빼면 검사가 아니라 통과 도장이 된다.
+
+그리고 **pandas 열 이름을 DataFrame 메서드와 겹치게 두지 않는다.** `drop`,
+`count`, `min`, `max`, `mean`, `sum` 같은 이름은 `df.drop` 이 열이 아니라
+바인딩된 메서드를 집어서, 열이 없다는 말 대신 엉뚱한 자리에서 죽는다.
