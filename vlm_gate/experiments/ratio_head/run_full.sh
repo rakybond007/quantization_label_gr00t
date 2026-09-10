@@ -23,11 +23,18 @@ RUN=${RUN:-$W/vlm_gate/experiments/ratio_head/artifacts/contact_30k}
 LAB=${LAB:-$W/vlm_gate/output/_gate_distill/robocasa_contact_ratio_instr.parquet}
 BS=${BS:-256}
 STEPS=${STEPS:-30000}
+# **홀드아웃을 준다.** 기본이 0 이라 첫 본학습(170707)이 전량으로 돌았고,
+# 그래서 체크포인트는 나왔는데 일반화했는지 말할 근거가 없다. 학습 손실이
+# 0.1486 -> 0.1274 로 내려간 것은 맞췄다는 증거가 아니다 -- 367k 파라미터가
+# 258k 행을 외운 것일 수도 있다. 에피소드 단위로 자른다(train.py:113).
+VAL=${VAL:-0.1}
+# 캐시. stride2 판(약 102만 행)이 나왔으면 그쪽을 쓰고 배치를 512 로 올린다.
+CACHE=${CACHE:-$W/assets/frame_cache_robocasa}
 
 $HOME/miniconda3/envs/quant_gate/bin/python "$HERE/train.py" \
   --dataset-path /sjw_alinlab2/home/myungkyu/.cache/huggingface/lerobot/kimtaey/robocasa_mg_gr00t_300 \
   --labels "$LAB" \
-  --cache-dir "$W/assets/frame_cache_robocasa" \
+  --cache-dir "$CACHE" \
   --task-emb "$W/assets/robocasa_task_embeddings.npz" \
   --out-dir "$RUN" \
-  --max-steps "$STEPS" --bs "$BS" --num-workers 8 "$@"
+  --max-steps "$STEPS" --bs "$BS" --val-frac "$VAL" --num-workers 8 "$@"

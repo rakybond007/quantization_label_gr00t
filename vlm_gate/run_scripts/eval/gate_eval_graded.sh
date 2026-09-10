@@ -25,19 +25,32 @@
 # 대조군은 이 판들의 실측 rate_mean 을 보고 uniform_control.sh 로 따로 던진다.
 # **사다리를 바로 쓰지 않는다** -- 사다리는 태스크 단위이고 우리가 묻는 것은
 # 시점 단위다. 평균 배속이 같은데 게이트가 나으면 시점을 가른 것이다.
-#SBATCH --wckey=project-short-name:sub_fast
 # job-name 은 **50자 이상**이어야 한다. 짧으면 슬럼이 거부한다 -- 이 저장소에서
 # 통과한 이름은 전부 50자를 넘고, 28·29자로 쓴 둘만 거부당했다.
-#SBATCH --job-name=gate_eval_graded_vlm_grades_robocasa_24tasks_50ep_arr8
 #SBATCH --nodes=1
 #SBATCH --gpus=2
-#SBATCH --partition=background
 #SBATCH --exclude=worker-node100,worker-node1,worker-node104,worker-node3
-#SBATCH --array=0-7
 #SBATCH --requeue
-#SBATCH --output=out/%A_%a-gate_eval_graded.out
-#SBATCH --error=out/%A_%a-gate_eval_graded.err
 set -u
+
+# ---------- bundle-sbatch 배열 규약 ----------
+# 감싸개는 **부모 뿌리만** 준다. 각 작업이 자기 번호를 검사하고, 자기 디렉터리를
+# 만들고, 소유·권한·심링크를 확인한 뒤, 두 변수를 다시 묶고 나서 쓰기 시작한다.
+# `#SBATCH --array` 는 금지다 -- 배열은 `bundle-sbatch --array 0-7` 로만 만든다.
+task_id=${SLURM_ARRAY_TASK_ID:?SLURM_ARRAY_TASK_ID 가 없다}
+case "$task_id" in
+  0|1|2|3|4|5|6|7) ;;
+  *) echo "예상 밖의 배열 번호 $task_id" >&2; exit 2 ;;
+esac
+task_dir="${CODE_OUTPUT_DIR:?CODE_OUTPUT_DIR 가 없다 -- bundle-sbatch 로 내십시오}/${task_id}"
+mkdir -p -- "$task_dir"
+mode=$(stat -c %a -- "$task_dir")
+if ! test -d "$task_dir" || test -L "$task_dir" || ! test -O "$task_dir" \
+   || test "$mode" != 755; then
+  echo "배열 작업 출력 디렉터리가 안전하지 않다: $task_dir" >&2; exit 2
+fi
+export CODE_OUTPUT_DIR="$task_dir"
+export MODEL_OUTPUT_DIR="$task_dir"
 MODE="${MODE:-stage1}"
 # **두 판이 같은 역치를 쓴다.** 그래야 stage2 가 더한 것이 하나뿐이 된다 --
 # 압축하기로 한 청크의 배속을 고정 2.5 로 두느냐, 현오차가 눈금에서 고르느냐.
@@ -62,8 +75,8 @@ PORT=$((10000 + POFF + SLURM_ARRAY_TASK_ID))
 JUDGE_PORT=$((20000 + POFF + SLURM_ARRAY_TASK_ID))
 N_EPISODES="${N_EPISODES:-50}"
 MAX_STEPS="${MAX_STEPS:-1500}"
-OUTPUT_BASE="${OUTPUT_BASE:-$BASE_DIR/output/robocasa/gate_graded_$MODE}"
-mkdir -p out "$OUTPUT_BASE"
+OUTPUT_BASE="${OUTPUT_BASE:-$CODE_OUTPUT_DIR}"
+mkdir -p "$OUTPUT_BASE"
 cd "$BASE_DIR"
 
 export NO_ALBUMENTATIONS_UPDATE=1

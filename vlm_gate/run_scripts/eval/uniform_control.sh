@@ -9,19 +9,32 @@
 # 묻는 것은 시점 단위이기 때문이다. **평균 배속이 같은데 게이트가 나으면 시점을
 # 가른 것이고, 아니면 아니다.** 사다리 칸(1.5·2.0·2.5)에 정확히 안 맞는 평균이
 # 나오므로 그 사이를 보간해 견주는 것보다 같은 값으로 한 판 더 도는 쪽이 깨끗하다.
-#SBATCH --wckey=project-short-name:sub_fast
 # job-name 은 **50자 이상**이어야 한다. 짧으면 슬럼이 거부한다 -- 이 저장소에서
 # 통과한 이름은 전부 50자를 넘고, 28·29자로 쓴 둘만 거부당했다.
-#SBATCH --job-name=uniform_control_matched_mean_ratio_robocasa_24tasks_50ep_arr8
 #SBATCH --nodes=1
 #SBATCH --gpus=1
-#SBATCH --partition=background
 #SBATCH --exclude=worker-node100,worker-node1,worker-node104,worker-node3
-#SBATCH --array=0-7
 #SBATCH --requeue
-#SBATCH --output=out/%A_%a-uniform_control.out
-#SBATCH --error=out/%A_%a-uniform_control.err
 set -u
+
+# ---------- bundle-sbatch 배열 규약 ----------
+# 감싸개는 **부모 뿌리만** 준다. 각 작업이 자기 번호를 검사하고, 자기 디렉터리를
+# 만들고, 소유·권한·심링크를 확인한 뒤, 두 변수를 다시 묶고 나서 쓰기 시작한다.
+# `#SBATCH --array` 는 금지다 -- 배열은 `bundle-sbatch --array 0-7` 로만 만든다.
+task_id=${SLURM_ARRAY_TASK_ID:?SLURM_ARRAY_TASK_ID 가 없다}
+case "$task_id" in
+  0|1|2|3|4|5|6|7) ;;
+  *) echo "예상 밖의 배열 번호 $task_id" >&2; exit 2 ;;
+esac
+task_dir="${CODE_OUTPUT_DIR:?CODE_OUTPUT_DIR 가 없다 -- bundle-sbatch 로 내십시오}/${task_id}"
+mkdir -p -- "$task_dir"
+mode=$(stat -c %a -- "$task_dir")
+if ! test -d "$task_dir" || test -L "$task_dir" || ! test -O "$task_dir" \
+   || test "$mode" != 755; then
+  echo "배열 작업 출력 디렉터리가 안전하지 않다: $task_dir" >&2; exit 2
+fi
+export CODE_OUTPUT_DIR="$task_dir"
+export MODEL_OUTPUT_DIR="$task_dir"
 : "${RATE:?RATE 를 주십시오 -- 게이트 판의 실측 rate_mean}"
 CKPT_DIR="$HOME/multigpu_workspace/Isaac-GR00T/ckpt/robocasa/groot/groot_n1_5_bs64_baseline/checkpoint-60000"
 BASE_DIR="$HOME/quantization_agent_workspace/vlm_gate"
@@ -30,8 +43,8 @@ CONDA_PATH="$HOME/miniconda3"
 PORT=$((10000 + (SLURM_ARRAY_JOB_ID % 90) * 10 + SLURM_ARRAY_TASK_ID))
 N_EPISODES="${N_EPISODES:-50}"
 MAX_STEPS="${MAX_STEPS:-1500}"
-OUTPUT_BASE="${OUTPUT_BASE:-$BASE_DIR/output/robocasa/uniform_$RATE}"
-mkdir -p out "$OUTPUT_BASE"
+OUTPUT_BASE="${OUTPUT_BASE:-$CODE_OUTPUT_DIR}"
+mkdir -p "$OUTPUT_BASE"
 cd "$BASE_DIR"
 
 export NO_ALBUMENTATIONS_UPDATE=1
