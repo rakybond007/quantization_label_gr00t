@@ -380,6 +380,26 @@ def contact(rec):
                 or rec.get("precise_hold", 0) > 0.5)
 
 
+def conf_of(rec, sign, weight, ngrade):
+    """신뢰도. **접촉이 잡히면 0 이다.**
+
+    가드가 배속만 1.0 으로 박고 신뢰도를 안 건드리면, `conf` 로만 자르는 쪽에서
+    가드가 **적혀만 있고 작동하지 않는다.** 접촉 구간의 `conf` 가 0.6 으로
+    남아 있으면 역치를 넘어 압축된다. 두 판의 평균 신뢰도가 0.4267 로 똑같았던
+    것이 그 증상이다 -- 가드를 걸었는데 신뢰도 분포가 하나도 안 움직였다.
+
+    **등급 A~E 는 안 건드린다.** 비싼 것은 등급이고, 받는 쪽이 규칙을 바꿔 다시
+    계산할 수 있어야 한다. `fixed` 열이 어느 행인지 표시하므로 되짚을 수 있다.
+
+    이것은 **라벨 파일의 이야기다.** 평가 도중 VLM 이 그 자리에서 내는 신뢰도는
+    이 함수를 안 거치므로, 온라인 게이트의 가드는 액션에서 경계를 따로 계산해야
+    한다. 두 자리를 헷갈리지 말 것.
+    """
+    if contact(rec):
+        return 0.0
+    return confidence(rec, sign, weight, ngrade)
+
+
 def main():
     if len(sys.argv) < 3:
         raise SystemExit(__doc__)
@@ -469,7 +489,7 @@ def main():
         for r, v in zip(rows, ratio):
             f.write(json.dumps({**r, "ratio": v,
                                 "task": ep2t.get(r["ep"]),
-                                "conf": round(confidence(r, SIGN, WEIGHT, NGRADE), 4)}) + "\n")
+                                "conf": round(conf_of(r, SIGN, WEIGHT, NGRADE), 4)}) + "\n")
 
     # 배포용 parquet 도 같이 낸다. `apply_ratio_labels.py` 가 읽는 형식이고,
     # 다른 기계에서는 이것 하나만 받으면 된다 -- 등급도 jsonl 도 필요 없다.
@@ -506,7 +526,7 @@ def main():
                 "task": [ep2t.get(r["ep"]) for r in sl],
                 "instruction": [ep2i.get(r["ep"]) for r in sl],
                 "ratio": np.array([ratio[i] for i in idxs], dtype=np.float32),
-                "conf": np.array([confidence(r, SIGN, WEIGHT, NGRADE) for r in sl],
+                "conf": np.array([conf_of(r, SIGN, WEIGHT, NGRADE) for r in sl],
                                  dtype=np.float32),
                 "fixed": np.array([1 if contact(r) else 0 for r in sl], dtype=np.int8),
             }

@@ -87,7 +87,12 @@ def conf_of(df, v):
         g = df[col].to_numpy(float)
         val = np.interp(g, np.arange(1, 6), m)
         (risk if v["sign"][k] < 0 else safe)[:] += v["weight"][k] * val
-    return np.clip((1.0 + safe - risk) / 2.0, 0.0, 1.0)
+    c = np.clip((1.0 + safe - risk) / 2.0, 0.0, 1.0)
+    # 접촉 행은 신뢰도도 0 이다(`ratio_label.conf_of`). 여기서 안 맞추면 이
+    # 도구가 라벨 파일과 다른 값을 내고, 판을 견주는 대신 도구를 견주게 된다.
+    if "fixed" in df.columns:
+        c = np.where(df["fixed"].to_numpy() == 1, 0.0, c)
+    return c
 
 
 def hist(x, lo=0.0, hi=1.0, bins=20, width=44):
