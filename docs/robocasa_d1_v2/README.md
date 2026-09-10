@@ -4,10 +4,11 @@ Implementation of the four-question / five-grade + U proposal. No per-task
 quantile allocation. `IMPLEMENTATION_PLAN.md` documents the assumptions; the
 executed prompt is `vlm_gate/prompts/robocasa_d1_v2.txt`.
 
-Status on 2026-09-10: CPU policy/inference parity and small-head soft-label training
-checks passed. A GPU pilot and real two-GPU GR00T smoke are queued, not yet passed.
-There is no new production label release yet. Synthetic fixture labels are tests,
-not Cosmos annotations and must never be published as a benchmark label dataset.
+Status on 2026-09-10: the 192-window Cosmos pilot completed. The active task is
+labeling only. A new two-GPU srun allocation tests inference batch capacity and
+strict output validity, then starts full-episode stride4 labeling automatically.
+Score differences across batches are not a rejection criterion. No new production
+release exists yet. Synthetic fixture labels are tests and must not be published.
 
 ## Labeling
 
@@ -29,10 +30,11 @@ python vlm_gate/scripts/label_robocasa_d1.py label \
   --out /runs/d1/pilot.jsonl --save-images /runs/d1/pilot_images
 ```
 
-The default pilot is192 windows:24 tasks x2 episodes x4 positions. Inspect the
-rubric against images, including U, before full labeling. Do not modify thresholds
-to get a preferred speed histogram. Compare at least16 windows with batch1.
-Full: prepare without `--pilot`, then launch two clients with `--num-shards 2`
+The default pilot is192 windows:24 tasks x2 episodes x4 positions. Check output
+format and finite, normalized category probabilities before full labeling. Do not
+modify thresholds to get a preferred speed histogram. Test inference batches for
+OOM and malformed responses without allowing single-item retries to hide errors.
+Full: prepare with `--stride 4` without `--pilot`, then launch two clients with `--num-shards 2`
 and `--shard 0`/`1`, each on its own server/port. No GPU training batch inference
 is made from these inference batch tests.
 
@@ -128,3 +130,20 @@ F-level's `smoke_d1_soft_grades.py` checks a tiny actual head's soft CE, U/masks
 all-decoder gradients and state reload. `smoke_d1_dataset.py` checks the real
 dataset/transform/FLARE collation path without loading model weights.
 Passing these does not imply the GPU pilot or full training has passed.
+
+## Stride 4 coverage (2026-09-10 update)
+
+Full RoboCasa coverage now targets every episode at starts 0,4,8,... with
+t+16 < episode length: 492,338 labeled starts. Prepare with `--stride 4`
+and without `--pilot`. Both sidecar and parquet application preserve every
+original frame and attach supervision only to the exact (episode_index,
+frame_index), verifying the original global index and instruction. Unsampled
+frames and the last 16 frames have zero ratio/question validity; no forward
+fill, nearest-label copying or interpolation is performed. Action data remains
+unchanged. Training must respect both validity masks, or sample labeled starts
+explicitly. Full coverage validation uses the manifest stride.
+
+The 192-window Cosmos pilot completed; full labeling has NOT started. Its GPU
+allocation 222710 expired. Per user direction, batch-dependent score differences alone do not block the
+full run; require technically valid responses and a successful capacity test. Policy training/evaluation is not an active
+step of this labeling task.

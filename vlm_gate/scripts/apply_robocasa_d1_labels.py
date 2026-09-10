@@ -30,7 +30,7 @@ def main():
     for name,sha in manifest['dataset_fingerprint'].items():
         if digest(root/'meta'/name)!=sha: raise ValueError(f'dataset fingerprint mismatch {name}')
     if manifest['mode']=='pilot' and not a.pilot: raise ValueError('pilot requires explicit --pilot')
-    if manifest['mode']=='full' and manifest['stride']!=1: raise ValueError('dense training overlay requires stride1')
+    if not isinstance(manifest['stride'],int) or manifest['stride']<1: raise ValueError('invalid stride')
     episodes={r['episode_index']:r for r in map(json.loads,(root/'meta/episodes.jsonl').read_text().splitlines())}
     info=json.loads((root/'meta/info.json').read_text())
     table=pq.read_table(labels)
@@ -52,7 +52,7 @@ def main():
         if any(out.iterdir()): raise ValueError('output must be an empty directory')
     for episode,meta in sorted(episodes.items()):
         lo,hi=np.searchsorted(ep,[episode,episode+1]); fs=frame[lo:hi]; n=meta['length']
-        if manifest['mode']=='full' and not np.array_equal(fs,np.arange(n-16)): raise ValueError(f'coverage ep{episode}')
+        if manifest['mode']=='full' and not np.array_equal(fs,np.arange(0,n-16,manifest['stride'])): raise ValueError(f'coverage ep{episode}')
         if np.any(fs<0) or np.any(fs>=n-16): raise ValueError('label outside full context')
         base_path=root/info['data_path'].format(episode_chunk=episode//info['chunks_size'],episode_index=episode)
         identity=pq.read_table(base_path,columns=['episode_index','index'])
@@ -88,7 +88,8 @@ def main():
                          dataset_modality_sha256=digest(root/'meta/modality.json'),
                          source_sha256=report['canonical_sha256'],ratio_grid=[1,1.5,2,2.5],
                          instruction_caps=caps,episodes=wrote,base_frames=total,labelled_frames=len(ep),
-                         masked_frames=total-len(ep),tail=16,mode=manifest['mode'],
+                         masked_frames=total-len(ep),tail=16,stride=manifest['stride'],
+                         unlabelled_policy='mask_no_propagation',mode=manifest['mode'],
                          annotation_fingerprint=report['raw_fingerprint'])
     output_manifest['overlay_mode']=a.mode
     if not a.dry_run:
