@@ -17,6 +17,7 @@
 import os
 from typing import Optional
 
+import numpy as np
 import torch
 import transformers
 from torch.utils.data import Dataset, Sampler
@@ -27,6 +28,18 @@ from transformers.trainer import (
     get_last_checkpoint,
     get_parameter_names,
     is_sagemaker_mp_enabled,
+)
+
+# Hugging Face Trainer writes NumPy's MT19937 state into rng_state_*.pth.
+# This Transformers Trainer version explicitly uses weights_only=True, but
+# NumPy's reconstruction types are not in its default allowlist. This is a narrow,
+# lexical allowlist around Trainer._load_rng_state; it does not relax any other
+# checkpoint load or install a process-global torch.load hook.
+_RNG_SAFE_GLOBALS = (
+    np.core.multiarray._reconstruct,
+    np.ndarray,
+    np.dtype,
+    type(np.dtype(np.uint32)),
 )
 
 
@@ -70,6 +83,11 @@ class DualBrainTrainer(transformers.Trainer):
 
     def _get_eval_sampler(self, eval_dataset):
         return BaseSampler(eval_dataset, shuffle=False)
+
+    def _load_rng_state(self, checkpoint):
+        """Restore Trainer RNG files while retaining torch's weights-only loader."""
+        with torch.serialization.safe_globals(_RNG_SAFE_GLOBALS):
+            return super()._load_rng_state(checkpoint)
 
     def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
         outputs = model(inputs)

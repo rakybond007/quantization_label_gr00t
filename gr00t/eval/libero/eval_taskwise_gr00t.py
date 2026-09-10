@@ -1,9 +1,11 @@
 import os
 import collections
 import dataclasses
+import json
 import logging
 import math
 import pathlib
+import types
 import imageio
 import numpy as np
 import tqdm
@@ -37,6 +39,12 @@ class Args:
     )
     num_steps_wait: int = 10  # Number of steps to wait for objects to stabilize i n sim
     num_trials_per_task: int = 50  # Number of rollouts per task
+    clip_scale: float = 1.0  # Scale the OSC controller's input/output clip bounds.
+    no_action_clip: bool = False  # Disable only arm delta command saturation.
+    # The +-1 action range is a normalisation artefact, not a hardware limit. A policy
+    # trained on merged (summed) deltas emits magnitudes above 1 that the arm can execute;
+    # truncating them purely for leaving the training range manufactures OOD. Set this to
+    # the largest merge factor the training data used so nothing is silently cut.
 
     #################################################################################################################
     # Utils
@@ -91,10 +99,12 @@ def eval_libero(args: Args) -> None:
         initial_states = task_suite.get_task_init_states(task_id)
 
         # Initialize LIBERO environment and task description
-        env, task_description = _get_libero_env(task, LIBERO_ENV_RESOLUTION, args.seed)
+        env, task_description = _get_libero_env(task, LIBERO_ENV_RESOLUTION, args.seed, args.clip_scale,
+                                                args.no_action_clip)
 
         # Start episodes
         task_episodes, task_successes = 0, 0
+        last_action_clip_status = []
         for episode_idx in tqdm.tqdm(range(args.num_trials_per_task)):
             logging.info(f"\nTask: {task_description}")
             task_segment = task_description.replace(" ", "_")
@@ -119,6 +129,17 @@ def eval_libero(args: Args) -> None:
 
             # Reset environment
             env.reset()
+            # LIBERO's robosuite 1.4.1 default hard_reset creates a fresh OSC
+            # controller, so requested controller modes must be reapplied here.
+            _, no_clip_count = _apply_controller_patches(env, args.clip_scale, args.no_action_clip)
+            last_action_clip_status = action_clip_status(env) if args.no_action_clip else []
+            if args.no_action_clip:
+                if no_clip_count == 0:
+                    raise RuntimeError("--args.no-action-clip requested but no LIBERO OSC delta controller was patched")
+                if not all(row["no_action_clip"] and row["finite"] for row in last_action_clip_status):
+                    raise RuntimeError("--args.no-action-clip controller probe is not finite/active")
+            logging.info("[controller] episode=%s clip_scale=%s no_action_clip=%s status=%s",
+                         episode_idx, args.clip_scale, args.no_action_clip, json.dumps(last_action_clip_status))
             action_plan = collections.deque()
 
             # Set initial states
@@ -251,18 +272,134 @@ def eval_libero(args: Args) -> None:
         f.write(f"Total success rate: {float(total_successes) / float(total_episodes)}\n")
         f.write(f"Total episodes: {total_episodes}\n")
         f.write(f"Success-only mean steps: {succ_only_mean:.2f} (over {len(succ_steps)} ep)\n")
+        f.write(f"no_action_clip: {bool(args.no_action_clip)}\n")
+        if last_action_clip_status:
+            f.write(f"controller_action_clip_status: {json.dumps(last_action_clip_status)}\n")
         f.write("Per-ep records (idx, success, action_steps):\n")
         for rec in ep_records:
             f.write(f"  {rec[0]}\t{rec[1]}\t{rec[2]}\n")
     logging.info(f"Results saved to {result_save_path}")
 
 
-def _get_libero_env(task, resolution, seed):
+def _iter_controllers(env):
+    """Yield physical robot controllers through LIBERO's unwrapped env."""
+    base = env
+    for _ in range(10):
+        if hasattr(base, "robots"):
+            break
+        base = getattr(base, "env", base)
+    for robot in getattr(base, "robots", []):
+        controller = getattr(robot, "controller", None)
+        if controller is not None:
+            yield controller
+        composite = getattr(robot, "composite_controller", None)
+        if composite is not None:
+            parts = getattr(composite, "part_controllers", None) or getattr(composite, "controllers", None) or {}
+            yield from (parts.values() if hasattr(parts, "values") else parts)
+
+
+def _libero_delta_arm_controllers(env):
+    """Only LIBERO's robosuite-1.4.1 OSC arm controller in delta mode.
+
+    v1.4.1 uses ``robosuite.controllers.osc`` and the ``use_delta`` attribute;
+    this strict check excludes grippers and every non-arm controller.
+    """
+    for controller in _iter_controllers(env):
+        if (type(controller).__module__ == "robosuite.controllers.osc"
+                and bool(getattr(controller, "use_delta", False))):
+            yield controller
+
+
+def _finite_unclipped_scale_action(controller, action):
+    """v1.4.1 Controller.scale_action's finite affine map without ``np.clip``."""
+    action = np.asarray(action, dtype=float)
+    if not np.isfinite(action).all():
+        raise ValueError("no-action-clip requires finite controller action")
+    if controller.action_scale is None:
+        input_min, input_max = np.asarray(controller.input_min, dtype=float), np.asarray(controller.input_max, dtype=float)
+        output_min, output_max = np.asarray(controller.output_min, dtype=float), np.asarray(controller.output_max, dtype=float)
+        denominator = np.abs(input_max - input_min)
+        if (np.any(denominator == 0) or not np.isfinite(denominator).all()
+                or not np.isfinite(output_min).all() or not np.isfinite(output_max).all()):
+            raise ValueError("no-action-clip requires finite, nonzero controller scaling bounds")
+        controller.action_scale = np.abs(output_max - output_min) / denominator
+        controller.action_output_transform = (output_max + output_min) / 2.0
+        controller.action_input_transform = (input_max + input_min) / 2.0
+    return (action - controller.action_input_transform) * controller.action_scale + controller.action_output_transform
+
+
+def patch_no_action_clip(env):
+    """Remove only arm delta-command saturation while preserving finite scaling.
+
+    Gripper commands, OSC PD gains, torque clipping, Cartesian limits, and
+    MuJoCo actuator limits remain native; this is not an infinite-bound patch.
+    """
+    count = 0
+    for controller in _libero_delta_arm_controllers(env):
+        controller.scale_action = types.MethodType(_finite_unclipped_scale_action, controller)
+        controller.action_scale = None
+        controller._isr_no_action_clip = True
+        count += 1
+    return count
+
+
+def action_clip_status(env, probe=40.7):
+    """Return a finite 40.7-command probe for per-reset provenance."""
+    rows = []
+    for controller in _libero_delta_arm_controllers(env):
+        command = np.zeros_like(np.asarray(controller.input_max), dtype=float)
+        command[0] = probe
+        scaled = np.asarray(controller.scale_action(command), dtype=float)
+        rows.append({"no_action_clip": bool(getattr(controller, "_isr_no_action_clip", False)),
+                     "input_min": np.asarray(controller.input_min, dtype=float).tolist(),
+                     "input_max": np.asarray(controller.input_max, dtype=float).tolist(),
+                     "output_min": np.asarray(controller.output_min, dtype=float).tolist(),
+                     "output_max": np.asarray(controller.output_max, dtype=float).tolist(),
+                     "probe": float(probe), "probe_scaled": scaled.tolist(),
+                     "finite": bool(np.isfinite(scaled).all())})
+    return rows
+
+
+def _patch_clip_bounds(env, scale):
+    """Idempotently scale finite controller bounds from per-controller originals."""
+    count = 0
+    for controller in _iter_controllers(env):
+        if not hasattr(controller, "_isr_original_clip_bounds"):
+            controller._isr_original_clip_bounds = {
+                attr: np.array(getattr(controller, attr), copy=True)
+                for attr in ("input_max", "input_min", "output_max", "output_min")
+                if getattr(controller, attr, None) is not None
+            }
+        hit = False
+        for attr, original in controller._isr_original_clip_bounds.items():
+            setattr(controller, attr, original * scale)
+            hit = True
+        if hit:
+            controller.action_scale = None
+            count += 1
+    return count
+
+
+def _apply_controller_patches(env, clip_scale, no_action_clip):
+    """Apply optional modes after construction or a LIBERO hard reset."""
+    clip_count = _patch_clip_bounds(env, clip_scale) if clip_scale != 1.0 else 0
+    no_clip_count = patch_no_action_clip(env) if no_action_clip else 0
+    return clip_count, no_clip_count
+
+
+def _get_libero_env(task, resolution, seed, clip_scale=1.0, no_action_clip=False):
     """Initializes and returns the LIBERO environment, along with the task description."""
     task_description = task.language
     task_bddl_file = pathlib.Path(get_libero_path("bddl_files")) / task.problem_folder / task.bddl_file
     env_args = {"bddl_file_name": task_bddl_file, "camera_heights": resolution, "camera_widths": resolution}
     env = OffScreenRenderEnv(**env_args)
+    n, no_clip_count = _apply_controller_patches(env, clip_scale, no_action_clip)
+    if clip_scale != 1.0:
+        logging.info(f"[clip] controller bounds x{clip_scale} ({n} controllers patched)")
+        assert n > 0, "clip_scale requested but no controller bounds were found to patch"
+    if no_action_clip:
+        logging.info("[no-action-clip] LIBERO arm delta saturation disabled (%s controllers patched)", no_clip_count)
+        assert no_clip_count > 0, "no_action_clip requested but no LIBERO OSC delta controller was found"
     env.seed(seed)  # IMPORTANT: seed seems to affect object positions even when using fixed initial state
     return env, task_description
 

@@ -36,6 +36,7 @@ Connects to a base-model server (e.g. ``robocasa_service.py --server`` or
 """
 import argparse
 import os
+import sys
 from collections import defaultdict, deque
 from pathlib import Path
 
@@ -186,6 +187,11 @@ def main():
     p.add_argument("--no_record_video", action="store_true")
 
     # ---- SAIL options ----
+    p.add_argument("--clip-scale", type=float, default=1.0,
+                   help="Scale controller clip bounds. The +-1 range is a normalisation "
+                        "artefact, not a hardware limit; truncating an executable merged "
+                        "command purely for leaving the training range only creates OOD. "
+                        "SAIL merges up to max_group steps, so this must cover that.")
     p.add_argument("--sail", action="store_true",
                    help="Enable SAIL-style aggregation/re-timing. Off => 1-by-1 baseline.")
     p.add_argument("--agg_mag_thresh", type=float, default=0.05,
@@ -228,6 +234,12 @@ def main():
     )
     print(f"Env {args.env_name} loaded.")
     env = RoboCasaWrapper(env)
+    if args.clip_scale != 1.0:
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                        "..", "vlm_gate", "scripts"))
+        from robocasa_service_compress import patch_clip_bounds
+        n_patched = patch_clip_bounds(env, args.clip_scale)
+        print(f"[clip] controller bounds x{args.clip_scale} ({n_patched} controllers)", flush=True)
 
     stats = defaultdict(list)
     pred_path = f"{args.video_dir}/prediction.txt"

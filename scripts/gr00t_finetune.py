@@ -60,6 +60,9 @@ class ArgsConfig:
     save_steps: int = 1000
     """Number of steps between saving checkpoints."""
 
+    save_total_limit: int = 6
+    """Maximum retained trainer checkpoints; default preserves existing recipes."""
+
     # Model parameters
     base_model_path: str = None
     # "nvidia/GR00T-N1.5-3B"
@@ -896,7 +899,7 @@ def main(config: ArgsConfig):
         save_strategy="steps",
         save_steps=config.save_steps,
         # evaluation_strategy="no",
-        save_total_limit=6,
+        save_total_limit=config.save_total_limit,
         report_to=config.report_to,
         seed=42,
         do_eval=False,
@@ -944,23 +947,19 @@ if __name__ == "__main__":
     print(f"Using {config.num_gpus} GPUs")
 
     if config.num_gpus == 1:
-        # Single GPU mode - set CUDA_VISIBLE_DEVICES=0
-        os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-        # Run the script normally
+        # Slurm already constrains CUDA_VISIBLE_DEVICES to this allocation.
         main(config)
     else:
         if os.environ.get("IS_TORCHRUN", "0") == "1":
             main(config)
         else:
-            # Multi-GPU mode - use torchrun
+            # Multi-GPU mode. Preserve Slurm's visible-device mapping; torchrun
+            # ranks are relative to that mapping (0..num_gpus-1).
             script_path = Path(__file__).absolute()
-            # Remove any existing CUDA_VISIBLE_DEVICES from environment
-            if "CUDA_VISIBLE_DEVICES" in os.environ:
-                del os.environ["CUDA_VISIBLE_DEVICES"]
-
-            # Use subprocess.run instead of os.system
             cmd = [
-                "torchrun",
+                sys.executable,
+                "-m",
+                "torch.distributed.run",
                 "--standalone",
                 f"--nproc_per_node={config.num_gpus}",
                 "--nnodes=1",  # default to 1 node for now
@@ -969,6 +968,10 @@ if __name__ == "__main__":
 
             # Convert config to command line arguments
             for key, value in vars(config).items():
+                # Omitting an unset optional preserves Tyro's default. Passing
+                # the string "None" makes optional path fields look real.
+                if value is None:
+                    continue
                 if isinstance(value, bool):
                     # For boolean values, use --flag or --no-flag format
                     if value:
