@@ -130,3 +130,14 @@ tools/dev run 'python vlm_gate/scripts/foo.py --limit 4'   # 이후 전부 그 G
 그리고 **pandas 열 이름을 DataFrame 메서드와 겹치게 두지 않는다.** `drop`,
 `count`, `min`, `max`, `mean`, `sum` 같은 이름은 `df.drop` 이 열이 아니라
 바인딩된 메서드를 집어서, 열이 없다는 말 대신 엉뚱한 자리에서 죽는다.
+
+## 슬럼 잡을 낼 때 걸리는 것 셋
+
+    job-name          **50자 이상**이어야 한다. 짧으면 거부당한다.
+                      이 저장소에서 통과한 이름은 전부 50자를 넘는다.
+    MODEL_OUTPUT_DIR  제출 환경에 있어야 하고 `/rlwrld-unified-checkpoints/hojin2/`
+                      로 시작해야 한다.
+    --cpus-per-task   못 쓴다.
+
+셋 다 조용히 안 넘어간다 -- 제출 자리에서 거부되므로 큐에 안 들어간 것을
+`squeue` 로 확인해야 안다. **던졌다고 말하기 전에 번호를 받는다.**

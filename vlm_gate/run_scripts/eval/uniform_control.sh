@@ -10,7 +10,9 @@
 # 가른 것이고, 아니면 아니다.** 사다리 칸(1.5·2.0·2.5)에 정확히 안 맞는 평균이
 # 나오므로 그 사이를 보간해 견주는 것보다 같은 값으로 한 판 더 도는 쪽이 깨끗하다.
 #SBATCH --wckey=project-short-name:sub_fast
-#SBATCH --job-name=uniform_control_robocasa_24t
+# job-name 은 **50자 이상**이어야 한다. 짧으면 슬럼이 거부한다 -- 이 저장소에서
+# 통과한 이름은 전부 50자를 넘고, 28·29자로 쓴 둘만 거부당했다.
+#SBATCH --job-name=uniform_control_matched_mean_ratio_robocasa_24tasks_50ep_arr8
 #SBATCH --nodes=1
 #SBATCH --gpus=1
 #SBATCH --partition=background

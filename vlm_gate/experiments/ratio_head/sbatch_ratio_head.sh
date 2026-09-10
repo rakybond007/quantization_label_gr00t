@@ -13,7 +13,9 @@
 #
 # sjw_alinlab 은 남의 학습이 서는 자리다. array 를 쓰지 않고 GPU 도 2장까지만
 # 쓴다. sjw_alinlab_premium 은 쿼터를 많이 먹어 따로 허락을 받는다.
-#SBATCH --job-name=ratio_head_robocasa_contact_30k_bs256
+# job-name 은 **50자 이상**이어야 한다. 짧으면 슬럼이 거부한다 -- 이 저장소에서
+# 통과한 이름은 전부 50자를 넘고, 28·29자로 쓴 둘만 거부당했다.
+#SBATCH --job-name=ratio_head_robocasa_contact_guard_ratio_prediction_30k_bs256
 #SBATCH --wckey=project-short-name:sub_fast
 #SBATCH -p sjw_alinlab
 #SBATCH --gpus=2

@@ -26,7 +26,9 @@
 # **사다리를 바로 쓰지 않는다** -- 사다리는 태스크 단위이고 우리가 묻는 것은
 # 시점 단위다. 평균 배속이 같은데 게이트가 나으면 시점을 가른 것이다.
 #SBATCH --wckey=project-short-name:sub_fast
-#SBATCH --job-name=gate_eval_graded_robocasa_24t
+# job-name 은 **50자 이상**이어야 한다. 짧으면 슬럼이 거부한다 -- 이 저장소에서
+# 통과한 이름은 전부 50자를 넘고, 28·29자로 쓴 둘만 거부당했다.
+#SBATCH --job-name=gate_eval_graded_vlm_grades_robocasa_24tasks_50ep_arr8
 #SBATCH --nodes=1
 #SBATCH --gpus=2
 #SBATCH --partition=background
