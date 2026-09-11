@@ -26,6 +26,17 @@ from PIL import Image
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from phase9_checks import ASK, GUIDANCE, NGRADE  # noqa: E402
+
+# **집계를 모델에 맡기는 판.** SELFAGG=1 이면 문항 다섯을 따로 묻지 않고, 어느
+# 문항이 감점/가산점인지 알려 주고 최종 판단 하나를 받는다. 역치가 없어지는 대신
+# 해상도가 다섯 칸이고 운용점을 못 고른다 -- 어느 쪽이 나은지 재려고 두 판을 낸다.
+SELFAGG = os.environ.get("SELFAGG", "") not in ("", "0")
+if SELFAGG:
+    ASK = open(f"{os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}"
+               f"/prompts/robocasa_phase9_selfagg.txt").read().strip()
+    N_ASK = 1
+else:
+    N_ASK = 5
 from robocasa_descriptors import descriptors, facts_text  # noqa: E402
 from vlm_gate import VLMGate  # noqa: E402
 
@@ -46,6 +57,10 @@ SHARD = int(sys.argv[2]) if len(sys.argv) > 2 else 0
 NSHARD = int(sys.argv[3]) if len(sys.argv) > 3 else 1
 BLOCK = 64                      # frames decoded per read
 BATCH = int(os.environ.get('PHASE9_BATCH', 8))   # frames per forward
+# 라벨을 전 프레임 대신 stride 로 뽑는다. 창이 16프레임이라 인접 라벨이 15/16
+# 겹치므로, stride 4 로 뽑아 학습 때 펼쳐도 이진 라벨 재현율 95.1% (반반 균형,
+# 에피 800개 22.7만 프레임 실측). 1 이 15% 아래로 희귀해지면 91% 밑으로 떨어진다.
+STRIDE = int(os.environ.get('PHASE9_STRIDE', 1))
 
 info = json.load(open(f"{DS}/meta/info.json"))
 vks = [k for k in info["features"] if info["features"][k].get("dtype") == "video"]
@@ -127,7 +142,7 @@ for ei, ep in enumerate(eps):
     except Exception:
         continue
     n = min(min(len(v) for v in vrs), len(a) - 4)
-    todo = [f for f in range(max(n, 0)) if (ep, f) not in done]
+    todo = [f for f in range(0, max(n, 0), STRIDE) if (ep, f) not in done]
     if not todo:
         continue
     ins_ep = instr.get(ep, "")
@@ -149,7 +164,7 @@ for ei, ep in enumerate(eps):
                         f"{ins_ep}\n{facts_text(descriptors(a, f))}") for row, f in grp]
             try:
                 rs = gate.judge_batch(payload, GUIDANCE, question=ASK,
-                                      n_ask=5, n_grade=NGRADE)
+                                      n_ask=N_ASK, n_grade=NGRADE)
             except Exception as e:
                 print(f"  ep{ep} f{grp[0]}+: {type(e).__name__}", flush=True)
                 continue
@@ -163,11 +178,12 @@ for ei, ep in enumerate(eps):
                         raise SystemExit(f"judge not answering: {r.get('error', 'empty')}")
                     continue
                 nempty = 0
-                picks = r.get("picks") or [None] * 5
+                picks = r.get("picks") or [None] * N_ASK
                 nfull += int(all(p is not None for p in picks))
-                fh.write(json.dumps({"ep": ep, "f": f,
-                                     **{q: picks[i] for i, q in enumerate("ABCDE")}},
-                                    ensure_ascii=False) + "\n")
+                rec = ({"ep": ep, "f": f, "Z": picks[0]} if SELFAGG else
+                       {"ep": ep, "f": f,
+                        **{q: picks[i] for i, q in enumerate("ABCDE")}})
+                fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
                 nlab += 1
         fh.flush()
     if ei % 20 == 0:

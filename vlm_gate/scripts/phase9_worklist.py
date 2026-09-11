@@ -28,10 +28,14 @@ OUT = sys.argv[2] if len(sys.argv) > 2 else f"{BASE}/output/_gate_distill/phase9
 
 # The labeller stops 4 frames short of the action array, so that is the universe.
 TAIL = 4
+# 라벨러가 stride 로 뽑으면 우주도 그만큼 줄어든다. 안 맞추면 남은 양이 4배로
+# 잡혀 일꾼 배분 자체는 (전 에피소드가 같은 배수라) 멀쩡하지만 출력이 거짓이 된다.
+STRIDE = int(os.environ.get("PHASE9_STRIDE", 1))
 total = {}
 for line in open(f"{DS}/meta/episodes.jsonl"):
     e = json.loads(line)
-    total[e["episode_index"]] = max(0, e["length"] - TAIL)
+    n = max(0, e["length"] - TAIL)
+    total[e["episode_index"]] = (n + STRIDE - 1) // STRIDE
 
 done = {}
 files = sorted(glob.glob(f"{OUT}/labels_*.jsonl"))

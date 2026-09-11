@@ -6,9 +6,33 @@ VLM에게 물었을 때의 정확도는 E=0.834, F=0.520, G=0.929, H=0.616 —
 
 액션 12차원: 0-4 미사용, 5-7 EE delta xyz, 8-10 회전, 11 그리퍼(0/1).
 """
+import json
+import os
+
 import numpy as np
 
 CLIP = 1.0   # 컨트롤러 액션 한계
+
+# 창 평균속도를 전체 분포의 백분위로 옮기는 표 (build_speed_percentiles.py).
+# 101개 경계값이라 searchsorted 한 번이면 된다. 표가 없으면 속도 줄은 예전처럼
+# 절대 경계로 떨어진다 -- 없다고 죽지는 않되, 그 경우는 눈에 보이게 둔다.
+_PCT_PATH = (f"{os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}"
+             f"/configs/robocasa_speed_percentiles.json")
+try:
+    _PCT = np.asarray(json.load(open(_PCT_PATH))["percentiles"], dtype=float)
+except Exception:                                    # noqa: BLE001
+    _PCT = None
+# SPEED_PCT=0 으로 예전 절대 경계 문구로 되돌린다. 둘을 같은 장면에서 견주려고
+# 둔 스위치이고, 기본은 분위다.
+if os.environ.get("SPEED_PCT", "1") == "0":
+    _PCT = None
+
+
+def speed_percentile(v):
+    """speed_mean -> 0..100. 표가 없으면 None."""
+    if _PCT is None:
+        return None
+    return float(np.clip(np.searchsorted(_PCT, v, side="right") - 1, 0, 100))
 
 def descriptors(a, f, n=16):
     """a:(T,12) 계획 청크, f: 시작 프레임. -> dict"""
@@ -35,6 +59,7 @@ def descriptors(a, f, n=16):
     return {"grip_change":grip_change, "reversal":rev, "closed_slow":closed_slow,
             "decel":decel, "clip_excess":clip_excess,
             "speed_mean":float(mag.mean()), "speed_max":float(mag.max()),
+            "speed_pct":speed_percentile(float(mag.mean())),
             "gripper_closed":float((g>0.5).mean())}
 
 def facts_text(x):
@@ -55,9 +80,23 @@ def facts_text(x):
                        else "the gripper stays open throughout"))
     parts.append("the end-effector reverses direction sharply" if x["reversal"]
                  else "the end-effector keeps a consistent direction")
-    sp = ("barely moving" if x["speed_mean"] < 0.12 else
-          "moving at a normal pace" if x["speed_mean"] < 0.50 else "moving fast")
-    parts.append(f"it is {sp} (mean step {x['speed_mean']:.2f}, peak {x['speed_max']:.2f})")
+    # 절대 경계(0.12 / 0.50)는 하위 1.6% 와 46.6% 를 자른다 -- "barely moving" 은
+    # 사실상 안 나오고 과반이 "moving fast" 가 된다. 전체 분포의 백분위로 주면
+    # 다섯 구간이 각각 20% 씩 쓰인다.
+    pc = speed_percentile(x["speed_mean"])
+    if pc is None:
+        sp = ("barely moving" if x["speed_mean"] < 0.12 else
+              "moving at a normal pace" if x["speed_mean"] < 0.50 else "moving fast")
+        parts.append(f"it is {sp} (mean step {x['speed_mean']:.2f}, "
+                     f"peak {x['speed_max']:.2f})")
+    else:
+        sp = ("among the slowest motions in this dataset" if pc < 20 else
+              "on the slow side for this dataset" if pc < 40 else
+              "middling in speed for this dataset" if pc < 60 else
+              "on the fast side for this dataset" if pc < 80 else
+              "among the fastest motions in this dataset")
+        parts.append(f"it is {sp} -- faster than {pc:.0f}% of all moments here "
+                     f"(mean step {x['speed_mean']:.2f}, peak {x['speed_max']:.2f})")
     parts.append("it is holding something while creeping along" if x["closed_slow"]
                  else "it is not creeping along with something held")
     parts.append("it is decelerating to a near stop" if x["decel"]
