@@ -75,7 +75,9 @@ esac
 # 옮기는 것이다. 스모크에서 이 역치가 49% 를 통과시켰다(라벨 기준 예상 35%).
 # 반반에 가까운 쪽이 게이트에 가르는 여지가 제일 크므로 그대로 간다.
 
-CKPT_DIR="$HOME/multigpu_workspace/Isaac-GR00T/ckpt/robocasa/groot/groot_n1_5_bs64_baseline/checkpoint-60000"
+# **관리 루트 아래를 쓴다.** bundle-sbatch 가 그 밖의 체크포인트를 거부한다
+# (HF 내려받기 메타데이터가 없으면). multigpu_workspace 판과 같은 사본이다.
+CKPT_DIR="${CKPT_DIR:-/rlwrld-unified-checkpoints/hojin2/checkpoints/robocasa_gr00t_n1_5_bs64_baseline/checkpoint-60000}"
 COSMOS_VENV="$HOME/quantization_agent_workspace/cosmos_judge_venv"
 BASE_DIR="$HOME/quantization_agent_workspace/vlm_gate"
 CONDA_PATH="$HOME/miniconda3"
