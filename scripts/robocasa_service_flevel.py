@@ -152,6 +152,12 @@ def main():
                         "K, and the client merges them here.  Off (default) means the "
                         "server's decoder already emitted merged rows -- merging again "
                         "would compress twice.")
+    p.add_argument("--no-action-clip", action="store_true",
+                   help="Remove arm delta-command saturation entirely instead of only "
+                        "raising the bound.  --clip-scale still caps a merged row at "
+                        "scale x the trained range; this drops the cap and keeps the "
+                        "finite OSC affine scaling, leaving gripper, mobile base, PD "
+                        "gains and torque limits alone.  Same knob the ISR arms use.")
     p.add_argument("--clip-scale", dest="clip_scale", type=float, default=8.0,
                    help="Scale controller clip bounds.  A merged row of a K>1 stream is "
                         "several fine actions summed and routinely leaves +-1; that range "
@@ -178,14 +184,32 @@ def main():
     print(f"Env {args.env_name} loaded.", flush=True)
     env = RoboCasaWrapper(env)
 
-    if args.clip_scale != 1.0:
+    if args.clip_scale != 1.0 or args.no_action_clip:
         sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                         "..", "vlm_gate", "scripts"))
-        from robocasa_service_compress import patch_clip_bounds
-        n_patched = patch_clip_bounds(env, args.clip_scale)
-        assert n_patched > 0, "clip_scale requested but no controller bounds were patched"
-        print(f"[clip] controller clip bounds x{args.clip_scale} ({n_patched} controllers patched)",
-              flush=True)
+        from robocasa_service_compress import (patch_clip_bounds, patch_no_action_clip,
+                                               action_clip_status)
+
+    def apply_action_patches(env, announce=False):
+        """Re-apply after every reset: robosuite rebuilds the controllers there,
+        and a patch that silently stops applying reads as a clipped run."""
+        if args.clip_scale != 1.0:
+            n = patch_clip_bounds(env, args.clip_scale)
+            assert n > 0, "clip_scale requested but no controller bounds were patched"
+            if announce:
+                print(f"[clip] controller clip bounds x{args.clip_scale} ({n} controllers patched)",
+                      flush=True)
+        if args.no_action_clip:
+            n = patch_no_action_clip(env)
+            assert n > 0, "--no-action-clip requested but no arm controller was patched"
+            if announce:
+                print(f"[clip] arm delta saturation removed ({n} controllers patched)", flush=True)
+                for row in action_clip_status(env):
+                    print(f"[clip]   probe {row['probe']} -> {row['probe_scaled']} "
+                          f"finite={row['finite']} no_action_clip={row['no_action_clip']}",
+                          flush=True)
+
+    apply_action_patches(env, announce=True)
 
     stats = defaultdict(list)
     pred_path = f"{args.video_dir}/prediction.txt"
@@ -217,6 +241,7 @@ def main():
 
     for i in trange(args.n_episodes, desc=args.env_name):
         obs, info = env.reset()
+        apply_action_patches(env)
         if i < len(stats["is_success"]):
             continue
         done = False
