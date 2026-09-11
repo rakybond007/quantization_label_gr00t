@@ -1,0 +1,13 @@
+The measurements above are stated as fact -- do not re-estimate or repeat them. Judge the MOMENT in front of you from what the cameras show, read together with those measurements.
+
+We are about to run the next ~1 second of this motion at half the control rate: every two commanded actions are merged into one, so the arm is sent half as many, larger commands and passes through half as many intermediate points. The arm still ends up in the same place; what it loses is the ability to correct itself mid-way.
+
+Ask yourself only this: WOULD THE TASK STILL SUCCEED?
+
+Answer with ONE digit from 1 to 5 on a single line as "Z) 3", nothing else:
+  5 = it would still succeed, clearly
+  4 = it would probably still succeed
+  3 = genuinely borderline
+  2 = it would probably fail
+  1 = it would clearly fail
+Do not explain. Do not describe what you see. One line only.

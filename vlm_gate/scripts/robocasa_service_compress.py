@@ -37,39 +37,6 @@ from robocasa_service_selective import (
 
 
 
-def count_clip(sub_exec, limit, discrete=None):
-    """압축된 액션이 컨트롤러 한계를 얼마나 넘는가. (넘은 스텝, 초과 합, 총 스텝).
-
-    **압축 갈래마다 따로 세지 않는다.** 예전에는 고정 K 갈래에만 있어서 게이트
-    갈래로 도는 실행은 클립이 물렸는지 산출물로 알 수 없었고, 찍는 자리도
-    `compensator` 안에 있어서 보정을 안 걸면 세어 놓고 안 찍었다.
-
-    0 이면 클립이 안 물린 것이고, 크면 명령이 잘려 나간 것이다. robocasa 는
-    잘려도 성공률이 안 움직인다는 것이 K=1·3·4 에서 실측됐지만(clip3/dyn3 대비
-    차이가 모두 1.6SE 안), **게이트가 2.5배를 초과량 큰 청크에 몰아 준다면 그
-    부분집합에서는 다를 수 있다.** 그래서 남긴다.
-
-    시연 액션으로 잰 값(에피 200): 1.5배 스텝의 21.0%, 2.0배 41.6%,
-    2.5배 53.0% 가 한계를 넘고 2.5배의 평균 초과가 1.046 이다. 이 실험이
-    쓰는 2.5배에서 세게 물린다.
-    """
-    discrete = discrete or set()
-    steps = clipped = 0
-    excess = 0.0
-    for k, v in sub_exec.items():
-        if k in discrete:
-            continue
-        a = np.asarray(v, dtype=float)
-        if a.ndim < 2:
-            a = a.reshape(len(a), -1)
-        over = np.abs(a) - np.abs(np.clip(a, -limit, limit))
-        if over.size and over.max() > 1e-9:
-            clipped += int((over.max(axis=-1) > 1e-9).sum())
-            excess += float(over.sum())
-        steps += a.shape[0]
-    return clipped, excess, steps
-
-
 def patch_clip_bounds(env, scale):
     """Scale robosuite controller clip bounds (input AND output ranges) by
     `scale` — raises the per-step displacement cap; per-unit scale unchanged.
@@ -371,6 +338,11 @@ def main():
                         "현오차로 고른다 -- 현오차가 이 값을 안 넘는 가장 큰 배속.")
     p.add_argument("--rate-grid", type=str, default="1.5,2.0,2.5",
                    help="--rate-by-chord 가 고를 배속 눈금.")
+    p.add_argument("--gate-invert", action="store_true",
+                   help="게이트 신뢰도를 1-conf 로 뒤집어 판정한다. 24 태스크 x 50 "
+                        "에피 폐루프에서 conf 는 K2 성공 유지율과 -0.672(p<0.001) -- "
+                        "라벨이 압축 불가라 한 태스크가 오히려 압축에 강했다. "
+                        "기준성공 통제 후 -0.673, 절대낙폭 +0.679, K3 재현.")
     p.add_argument("--judge-threshold", type=float, default=0.5,
                    help="Quantize when VLM confidence P(safe-to-compress) >= this value.")
     p.add_argument("--judge-guidance", type=str, default="",
@@ -506,6 +478,11 @@ def main():
     if args.task_ceilings:
         with open(args.task_ceilings) as _f:
             ceilings = json.load(_f)
+        # **표가 두 형식으로 돌아다닌다.** analysis/<bench>_task_ceilings.json 은
+        # [하한, 상한] 쌍이고 configs/..._v1.json 은 상한 하나다. float() 에 쌍을
+        # 넣으면 TypeError 로 죽고, 안 죽게 [0] 을 집으면 하한을 상한으로 쓴다.
+        ceilings = {k: (float(v[1]) if isinstance(v, (list, tuple)) else float(v))
+                    for k, v in ceilings.items()}
         _c = ceilings.get(args.env_name)
         print(f"[ceiling] table={args.task_ceilings} task={args.env_name} "
               f"ceiling={_c} floor={args.ceiling_floor} mode={args.ceiling_mode}"
@@ -691,6 +668,13 @@ def main():
                                 res = gate.judge(views, _instr, gate_guidance)
                                 conf = float(res.get("confidence", 0.0))
                             _GATE_MS.append((_time.perf_counter() - _g0) * 1e3)
+                        # 라벨의 부호를 뒤집는다. 24 태스크 x 50 에피 폐루프 실측에서
+                        # conf 는 K2 성공 유지율과 -0.672 (p<0.001) 다 -- 라벨이
+                        # "압축하면 안 된다" 고 한 태스크가 실제로는 압축에 강했다.
+                        # 기준성공 통제 후에도 -0.673, 절대낙폭 +0.679, K3 재현.
+                        # 뒤집은 값이 쓸 만한지 폐루프로 확인하려고 둔 자리다.
+                        if args.gate_invert:
+                            conf = 1.0 - conf
                         q = conf >= args.judge_threshold
                         if args.action_rules:
                             # min(student, rules): a rule that fires blocks outright;
@@ -768,11 +752,6 @@ def main():
                         sub_exec, blocks, _frac_carry = frac_compress_chunk(
                             sub, r_chunk, _frac_carry, discrete_keys=DISCRETE_KEYS,
                             mode="delta", return_blocks=True)
-                        # 게이트 갈래도 센다. 안 세면 이 실행에서 클립이
-                        # 물렸는지 산출물로 알 수 없다.
-                        _c, _e, _n = count_clip(sub_exec, CLIP_LIMIT, DISCRETE_KEYS)
-                        merge_clip_steps += _c; merge_clip_excess += _e
-                        merge_steps += _n
                     else:
                         sub_exec = sub
                 elif ceilings is not None or args.frac_ratio > 0:
@@ -800,8 +779,17 @@ def main():
                         return_blocks=True)
                 elif k_eff > 1:
                     sub_exec, blocks = compress_chunk(sub, k_eff, return_blocks=True)
-                    _c, _e, _n = count_clip(sub_exec, CLIP_LIMIT, DISCRETE_KEYS)
-                    merge_clip_steps += _c; merge_clip_excess += _e; merge_steps += _n
+                    try:
+                        for _k, _v in sub_exec.items():
+                            if _k in DISCRETE_KEYS: continue
+                            _a = np.asarray(_v, dtype=float)
+                            _over = np.abs(_a) - np.abs(np.clip(_a, -CLIP_LIMIT, CLIP_LIMIT))
+                            if _over.max() > 1e-9:
+                                merge_clip_steps += int((_over.max(axis=-1) > 1e-9).sum())
+                                merge_clip_excess += float(_over.sum())
+                            merge_steps += _a.shape[0]
+                    except Exception:
+                        pass
                 else:
                     sub_exec = sub
                 H_exec = next(iter(sub_exec.values())).shape[0]
@@ -879,16 +867,11 @@ def main():
                 f.write(f"eps_min: {args.eps_min} eps_max: {args.eps_max}\n")
         if args.action_rules:
             f.write(f"action_rule_blocks: {rule_blocks} {rule_reasons}\n")
-        # **보정을 안 걸어도 찍는다.** 예전에는 이 두 줄이 compensator 안에
-        # 있어서, 게이트 실행에서 클립이 물렸는지 알 방법이 없었다.
-        if merge_steps:
-            f.write(f"merge_clip_steps: {merge_clip_steps}/{merge_steps} "
-                    f"({merge_clip_steps / merge_steps:.4f}) "
-                    f"merge_clip_excess: {merge_clip_excess:.3f}\n")
-            f.write(f"clip_limit: {CLIP_LIMIT}\n")
         if compensator is not None:
             f.write(f"compensate: {args.compensate}\n")
             f.write(f"compensate_steps: {comp_steps}\n")
+            f.write(f"merge_clip_steps: {merge_clip_steps}/{merge_steps} "
+                    f"merge_clip_excess: {merge_clip_excess:.3f}\n")
             f.write(f"compensate_clip_steps: {comp_clip_steps} "
                     f"clip_excess_total: {comp_clip_total:.3f}\n")
         if gate is not None:

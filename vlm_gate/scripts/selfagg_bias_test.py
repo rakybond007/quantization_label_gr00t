@@ -32,7 +32,12 @@ def main():
           "robocasa_mg_gr00t_300")
     CH = int(json.load(open(f"{DS}/meta/info.json")).get("chunks_size") or 1000)
     port, scenes_f, out_f = int(sys.argv[1]), sys.argv[2], sys.argv[3]
-    ASK = open(f"{BASE}/prompts/robocasa_phase9_selfagg.txt").read().strip()
+    # PROMPT 로 물음만 갈아끼운다. 자체집계 판(감점/가산점 문항 다섯 + 최종 등급)과
+    # 직접 질문 판("두 액션을 하나로 합쳐도 성공하겠는가")을 같은 장면에서 견주려고
+    # 둔 자리다 -- 자체집계 판의 최대 가중 문항(A, 0.667)이 "버튼·스위치는 압축 불가"
+    # 인데, 폐루프 실측에서 그 태스크들이 오히려 압축에 가장 강했다.
+    ASK = open(f"{BASE}/prompts/"
+               f"{os.environ.get('PROMPT', 'robocasa_phase9_selfagg')}.txt").read().strip()
     src = open(f"{BASE}/prompts/robocasa_phase9.txt").read()
     G = src.split("### GUIDANCE\n", 1)[1].split("\n### QUESTION", 1)[0].strip()
     instr = {}
