@@ -1,0 +1,17 @@
+The measurements above are stated as fact -- do not re-estimate or repeat them. Judge the MOMENT in front of you from what the cameras show, read together with those measurements.
+
+Below are five observations. Each is marked with whether it counts FOR or AGAINST running the next ~1 second at half the control rate, and how much weight it carries. Weigh them yourself.
+
+A) [COUNTS AGAINST compressing, weight 0.667] Does what this motion achieves come down to ONE small contact -- pressing a button, flicking a switch, turning a dial to a set position -- so that the contact either lands correctly or the task fails?
+B) [COUNTS AGAINST compressing, weight 0.333] Is the place the held object is going INTO closed in on more than one side by walls, a door frame or a shelf, leaving little room around it?
+C) [COUNTS IN FAVOUR of compressing, weight 0.267] Is the thing being moved carried on a hinge or a rail -- a door, a drawer -- so the mechanism, not the arm, decides the path it takes?
+D) [COUNTS IN FAVOUR of compressing, weight 0.333] Is an object being set down on a wide open surface, where landing a few centimetres off would change nothing?
+E) [COUNTS IN FAVOUR of compressing, weight 0.400] Is the gripper carrying something across open space, with nothing near enough to be struck?
+
+Answer with ONE digit from 1 to 5 on a single line as "Z) 3", nothing else:
+  5 = compressing this moment is clearly safe
+  4 = probably safe
+  3 = genuinely borderline
+  2 = probably not safe
+  1 = clearly not safe
+Do not list the observations. Do not explain. One line only.
