@@ -440,9 +440,19 @@ def main():
               f"(라벨 파일에 없었다 -- VLM 은 안 쓴다)")
 
     ngp = sum(1 for r in rows if r.get("gp"))
-    print(f"등급 분포(gp) 있는 행 {ngp:,}/{len(rows):,} = {ngp/max(1,len(rows)):.1%}"
-          + ("" if ngp else "  <- 없으면 정수 등급으로 떨어진다. 라벨러가 "
-                           "grade_probs 를 안 적은 것이다"))
+    print(f"등급 분포(gp) 있는 행 {ngp:,}/{len(rows):,} = {ngp/max(1,len(rows)):.1%}")
+    # **경고로 두지 않는다.** 이 줄은 전부터 0% 를 찍고 있었는데 출력일 뿐이라
+    # 그냥 지나갔고, 라벨 2.04M 행이 정수 등급으로 만들어졌다. 그 대가는 작지
+    # 않다 -- 등급 하나당 |정수 - 기댓값| 이 평균 0.550 칸이고, 게이트 tau=0.5
+    # 에서 판정 23.8% 가 뒤집힌다. 게다가 정수 conf 는 값이 몇 개뿐이라
+    # tau=0.50/0.517/0.55 가 같은 설정이 된다(압축률 전부 32.9%).
+    # 옛 라벨 파일을 일부러 처리할 때만 ALLOW_INT_GRADES=1 로 넘긴다.
+    if not ngp and os.environ.get("ALLOW_INT_GRADES", "") not in ("1", "true"):
+        raise SystemExit(
+            "등급 분포(gp)가 한 행도 없다. 라벨러가 grade_probs 를 적지 않았다 -- "
+            "정수 등급으로 떨어지면 conf 가 계단이 되고 역치가 작동하지 않는다. "
+            "라벨러를 고치고 다시 만들거나, 옛 파일을 일부러 쓸 때는 "
+            "ALLOW_INT_GRADES=1 을 준다.")
 
     ratio = [None] * len(rows)
     nfix = 0
