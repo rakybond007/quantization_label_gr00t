@@ -40,8 +40,15 @@ def main():
     # 인데, 폐루프 실측에서 그 태스크들이 오히려 압축에 가장 강했다.
     ASK = open(f"{BASE}/prompts/"
                f"{os.environ.get('PROMPT', 'robocasa_phase9_selfagg')}.txt").read().strip()
-    src = open(f"{BASE}/prompts/robocasa_phase9.txt").read()
-    G = src.split("### GUIDANCE\n", 1)[1].split("\n### QUESTION", 1)[0].strip()
+    # GUIDANCE 도 문항 판을 따라간다. v3 자체집계를 v1 GUIDANCE 로 물으면
+    # 무엇이 답을 바꿨는지 알 수 없다.
+    _ck = os.environ.get("CHECKS", "")
+    if _ck:
+        import importlib
+        G = importlib.import_module(_ck).GUIDANCE
+    else:
+        src = open(f"{BASE}/prompts/robocasa_phase9.txt").read()
+        G = src.split("### GUIDANCE\n", 1)[1].split("\n### QUESTION", 1)[0].strip()
     instr = {}
     for line in open(f"{DS}/meta/episodes.jsonl"):
         d = json.loads(line)
@@ -106,7 +113,13 @@ def main():
                 pick = (r.get("picks") or [None])[0]
                 bad += int(pick is None)
                 n += 1
-                fh.write(json.dumps({**s, "Z": pick,
+                # **등급 분포도 적는다.** 정수 Z 만 적으면 산수 집계판에서 겪은
+                # 것과 같은 손실이 자체집계에도 생긴다 -- 뽑힌 등급의 확률이
+                # 평균 0.513, 60% 가 0.5 미만이었다.
+                _gp = (r.get("grade_probs") or [None])[0]
+                _eZ = (sum((i + 1) * float(q) for i, q in enumerate(_gp))
+                       if _gp else None)
+                fh.write(json.dumps({**s, "Z": pick, "gp": _gp, "eZ": _eZ,
                                      "text": (r.get("text") or "")[:200]},
                                     ensure_ascii=False) + "\n")
             fh.flush()
