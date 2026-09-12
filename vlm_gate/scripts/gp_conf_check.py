@@ -38,9 +38,22 @@ def main():
         c = [t for t in d.get("tasks", []) if isinstance(t, str) and len(t.split()) > 1]
         instr[d["episode_index"]] = c[0] if c else ""
     scenes = json.load(open(scenes_f))[:N]
+    # **이어서 돌 수 있게 한다.** 출력을 "w" 로 열고 있어서 할당이 먼저 끊기면
+    # 720 장면을 전부 잃었다. 디버그 할당이 3시간에 끊기므로 재개가 기본이어야 한다.
+    done = set()
+    if os.path.exists(out_f):
+        for line in open(out_f):
+            try:
+                r = json.loads(line)
+                done.add((r["ep"], r["f"]))
+            except Exception:
+                pass
+    scenes = [s for s in scenes if (s["ep"], s["f"]) not in done]
+    if done:
+        print(f"이미 한 것 {len(done)} 건너뜀 · 남은 것 {len(scenes)}", flush=True)
     gate = VLMGate(f"http://127.0.0.1:{port}", timeout=900)
     acts, n_gp, n = {}, 0, 0
-    with open(out_f, "w") as fh:
+    with open(out_f, "a") as fh:
         for s in scenes:
             ep = s["ep"]
             if ep not in acts:
