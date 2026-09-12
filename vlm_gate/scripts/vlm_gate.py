@@ -95,7 +95,21 @@ def build_messages(pil_imgs, instruction, guidance="", question=""):
     sys_text = SYSTEM
     if guidance:
         sys_text = SYSTEM + "\n\nAdditional learned guidance (from prior evaluations):\n" + guidance.strip()
-    if len(pil_imgs) >= 3:
+    if len(pil_imgs) == 6:
+        # **두 시점을 함께 보여 주는 판.** 한 순간만 주면 국면(접근·파지·운반·정렬)을
+        # 볼 근거가 이미지에 없어서, 문항을 국면 기준으로 써 두어도 모델이 태스크
+        # 정체성으로 떨어진다 -- 자체집계 라벨은 태스크 다수결 하나로 86% 가 맞았고
+        # 6/24 태스크는 전 장면이 같은 답이었다. 그래서 t 와 t+16 을 같이 준다.
+        view_note = ("You are shown 6 images: the SAME 3 camera views at two moments. "
+                     "Images 1-3 are NOW (agentview-left, agentview-right, wrist "
+                     "close-up). Images 4-6 are the SAME three views ~1 second LATER, "
+                     "at the end of the motion you are judging. Compare them to see "
+                     "what this motion actually does and which stage of the task it is "
+                     "-- approaching, closing the grasp, carrying, or lining up to "
+                     "release. The wrist camera is mounted on the gripper, so objects "
+                     "normally look close in it; use it to spot the grasp-closure or "
+                     "fine-insertion instant.")
+    elif len(pil_imgs) >= 3:
         view_note = ("You are shown 3 camera views: agentview-left, agentview-right, "
                      "and a wrist (eye-in-hand) close-up. The wrist camera is mounted on "
                      "the gripper, so objects normally look close in it — general "

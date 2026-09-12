@@ -21,6 +21,8 @@ sys.path.insert(0, HERE)
 BASE = os.path.expanduser("~/quantization_agent_workspace/vlm_gate")
 TILES = f"{BASE}/output/_gate_distill/luna_robocasa_full/tiles"
 BATCH = int(os.environ.get("SA_BATCH", 8))
+# PAIR=1 이면 t 와 t+16 의 세 뷰를 모두 보낸다(6장).
+PAIR = os.environ.get("PAIR", "") not in ("", "0")
 
 
 def main():
@@ -62,11 +64,11 @@ def main():
           flush=True)
 
     gate = VLMGate(f"http://127.0.0.1:{port}", timeout=900)
-    acts, bad, n = {}, 0, 0
+    acts, bad, n, skipped = {}, 0, 0, []
     with open(out_f, "a") as fh:
         for b0 in range(0, len(scenes), BATCH):
             grp = scenes[b0:b0 + BATCH]
-            payload = []
+            payload, kept = [], []
             for s in grp:
                 ep = s["ep"]
                 if ep not in acts:
@@ -78,8 +80,23 @@ def main():
                 x = descriptors(acts[ep], s["f"])
                 im = np.array(Image.open(f"{TILES}/{s['tile']}.png").convert("RGB"))
                 w = im.shape[1] // 3
-                payload.append(([im[:, k * w:(k + 1) * w] for k in range(3)],
-                                f"{instr.get(ep, '')}\n{facts_text(x)}"))
+                views = [im[:, k * w:(k + 1) * w] for k in range(3)]
+                if PAIR:
+                    # t+16 의 같은 세 뷰를 뒤에 붙인다. 타일이 stride 8 로 구워져
+                    # 있어 f+16 은 99.2% 존재하고, 없는 장면은 건너뛴다 -- 3장과
+                    # 6장을 섞으면 무엇이 답을 바꿨는지 알 수 없게 된다.
+                    q = f"{TILES}/ep{ep:04d}_f{s['f'] + 16:03d}.png"
+                    if not os.path.exists(q):
+                        skipped.append((ep, s["f"]))
+                        continue
+                    im2 = np.array(Image.open(q).convert("RGB"))
+                    w2 = im2.shape[1] // 3
+                    views += [im2[:, k * w2:(k + 1) * w2] for k in range(3)]
+                payload.append((views, f"{instr.get(ep, '')}\n{facts_text(x)}"))
+                kept.append(s)
+            grp = kept if PAIR else grp
+            if not payload:
+                continue
             try:
                 rs = gate.judge_batch(payload, G, question=ASK, n_ask=1, n_grade=5)
             except Exception as e:                              # noqa: BLE001
@@ -95,7 +112,8 @@ def main():
             fh.flush()
             if (b0 // BATCH) % 10 == 0:
                 print(f"  {n}/{len(scenes)} 형식실패 {bad}", flush=True)
-    print(f"[bias] {n} 장면, 형식실패 {bad} -> {out_f}", flush=True)
+    print(f"[bias] {n} 장면, 형식실패 {bad}, 짝없어 건너뜀 {len(skipped)}"
+          f" -> {out_f}", flush=True)
 
 
 if __name__ == "__main__":
