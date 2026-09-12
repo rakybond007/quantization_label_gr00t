@@ -1,0 +1,25 @@
+The measurements above are stated as fact -- do not re-estimate or repeat them. Judge the MOMENT in front of you from what the cameras show, read together with those measurements.
+
+Below are five observations. Each is marked with whether it counts FOR or AGAINST running the next ~1 second at half the control rate, and how much weight it carries. Weigh them yourself.
+
+A) [COUNTS AGAINST compressing, weight 0.600] Does this motion need the gripper to CLOSE on one exact spot -- a handle, a rim,
+   the body of an object it must pick up -- rather than only pushing or turning
+   something that stays where it is?
+B) [COUNTS AGAINST compressing, weight 0.400] Is that closing spot hemmed in -- reached into a cabinet, a microwave, an oven or
+   a sink, or lined up with a slot or a handle -- so the gripper has little room
+   around it as it closes?
+C) [COUNTS IN FAVOUR of compressing, weight 0.500] Is the thing being acted on held in place by the furniture or appliance itself
+   -- a door or drawer on its hinge or rail, a knob, switch, button or lever on its
+   mount -- so the mechanism, not the arm, decides where it ends up?
+D) [COUNTS IN FAVOUR of compressing, weight 0.150] Is the hand letting go, or about to -- the object already resting where it is
+   meant to end up, so that what remains is only to open and withdraw?
+E) [COUNTS IN FAVOUR of compressing, weight 0.350] Is the gripper carrying something through open space -- already holding it,
+   still well away from wherever it is going?
+
+Answer with ONE digit from 1 to 5 on a single line as "Z) 3", nothing else:
+  5 = compressing this moment is clearly safe
+  4 = probably safe
+  3 = genuinely borderline
+  2 = probably not safe
+  1 = clearly not safe
+Do not list the observations. Do not explain. One line only.
