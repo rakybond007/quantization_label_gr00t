@@ -419,22 +419,26 @@ def run_server(model_id, port, host, max_new_tokens, dtype):
         out = gen.sequences
         text = tok.decode(out[0][n_in:], skip_special_tokens=True).strip()
         r = _parse_text(text, n_ask, n_grade, int(out.shape[1] - n_in))
-        # 배치 경로와 같은 규칙으로 등급 자리의 분포를 덧붙인다. 이 경로가 이것을
-        # 내지 않아서 온라인 게이트와 judge_ab 는 늘 정수 등급으로 떨어졌다 --
-        # expected_grades 가 구현되어 있는데도 robocasa 라벨·게이트 어디에도
-        # 값이 실린 적이 없다(라벨 파일 전수 확인, gp 있는 행 0%).
+        # **배치 경로와 같은 것을 돌려준다.** 이 단일 경로가 `output_scores` 를
+        # 요청하지 않아서, 여기를 타는 모든 호출이 정수 등급만 받고 있었다 --
+        # 온라인 게이트(`chord_rate.ask_gate`)가 이 경로다. 대가가 크다: 등급
+        # 하나당 |정수 - 기댓값| 평균 0.55칸이고, 역치 0.5 에서 판정 23.8% 가
+        # 뒤집히며, 정수 신뢰도는 값이 몇 개뿐이라 0.50/0.517/0.55 가 같은
+        # 설정이 된다. 고른 줄 알았던 역치가 고른 것이 아니게 된다.
+        #
+        # 강제된 슬롯의 로짓을 읽는 것이 아니다. 모델이 텍스트로 답하고, 그 답이
+        # 나온 자리의 등급 토큰 분포를 덧붙일 뿐이다(CLAUDE.md 1번).
         gid = [g[0] for g in GRADE_IDS[:n_grade]] if n_grade > 0 else []
         if gid and getattr(gen, "scores", None):
             import torch.nn.functional as _F
-            sel = torch.stack(gen.scores, dim=1)[:, :, gid]   # (1, T, 등급수)
-            step_p = _F.softmax(sel.float(), dim=-1)
-            emitted = out[:, n_in:]
+            sc = torch.stack(gen.scores, dim=1)[0]        # (T, V)
+            step_p = _F.softmax(sc[:, gid].float(), dim=-1)
+            emitted = out[0, n_in:]
             is_grade = torch.zeros_like(emitted, dtype=torch.bool)
             for g in gid:
                 is_grade |= (emitted == g)
-            pos = torch.nonzero(is_grade[0]).flatten().tolist()[:max(1, n_ask)]
-            r["grade_probs"] = [[round(float(v), 4) for v in step_p[0, t]]
-                                for t in pos]
+            pos = torch.nonzero(is_grade).flatten().tolist()[:max(1, n_ask)]
+            r["grade_probs"] = [[round(float(v), 4) for v in step_p[t]] for t in pos]
         return r
 
     class Handler(BaseHTTPRequestHandler):

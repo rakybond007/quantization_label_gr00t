@@ -112,6 +112,18 @@ def build_instruction(instruction, arr):
     return f"{instruction}\n{facts_text(descriptors(arr, 0))}"
 
 
+_GP_WARNED = [False]
+
+
+def _warn_no_gp():
+    if not _GP_WARNED[0]:
+        _GP_WARNED[0] = True
+        print("[gate] !! 등급 분포(grade_probs)가 안 옵니다. 정수 등급으로 도는 "
+              "중이고, 그러면 신뢰도가 몇 개 값으로 뭉쳐 역치가 뜻을 잃습니다. "
+              "판정 서버의 judge_text 가 output_scores 를 요청하는지 보십시오.",
+              flush=True)
+
+
 def ask_gate(gate, views, instruction, mod, arr=None):
     """등급표로 묻고 신뢰도를 낸다. **강제 슬롯 로짓을 읽지 않는다.**
 
@@ -133,8 +145,23 @@ def ask_gate(gate, views, instruction, mod, arr=None):
                      question=mod.ASK, n_ask=len(SLOTS), n_grade=mod.NGRADE,
                      mode="text")
     picks = res.get("picks")
+    if not picks and ("p_yes_marginal" in res or "quantize" in res):
+        # **서버가 등급 규약을 안 받는 판이다.** `vlm_gate.py` 의 핸들러는
+        # `question`·`n_ask`·`n_grade`·`mode` 를 읽지 않고 강제된 YES/NO 슬롯의
+        # 로짓만 돌려준다(CLAUDE.md 1번이 금지하는 그것). 클라이언트는 보내므로
+        # 요청 쪽만 보면 정상으로 보이고, 여기서 형식 실패로 세면 조용히
+        # "아무것도 압축 안 함" 실행이 된다.
+        raise SystemExit(
+            "판정 서버가 등급 규약을 안 받습니다. `vlm_gate_cosmos.py --serve` 로 "
+            "띄우십시오 -- `vlm_gate.py` 는 강제 YES/NO 로짓만 돌려줍니다.\n"
+            f"  돌아온 키: {sorted(res)}")
     if not picks or len(picks) != len(SLOTS) or any(p is None for p in picks):
         return None, None, res.get("error") or res.get("text", "")[:60]
+    if not res.get("grade_probs"):
+        # 정수 등급만 오면 신뢰도가 몇 개 값으로 뭉치고 역치가 뜻을 잃는다
+        # (0.50/0.517/0.55 가 같은 설정이 된다). 서버가 `output_scores` 를
+        # 요청하는 판인지 확인할 것.
+        _warn_no_gp()
     rec = {k: int(v) for k, v in zip(SLOTS, picks)}
     gp = res.get("grade_probs")
     if gp:
