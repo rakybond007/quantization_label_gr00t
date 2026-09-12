@@ -42,6 +42,18 @@ def descriptors(a, f, n=16):
     mag = np.linalg.norm(d, axis=1)
     # 그리퍼 상태 전이 (파지·해제 순간)
     grip_change = float(np.abs(np.diff(g, prepend=g[0])).max() > 0.5)
+    # **어느 방향으로, 창 안 언제.** 지금까지 사실 문장은 "opens or closes" 한 줄로
+    # 합쳐 줬고, 그래서 모델의 답이 닫힘과 열림에서 사실상 같았다(conf 0.309 대
+    # 0.318, 차이 -0.009). 파지를 시작하는 순간과 놓고 손을 떼는 순간은 압축
+    # 위험이 다를 텐데 같은 문장을 받았다. 시점도 안 줘서 창 앞쪽에서 일어나는
+    # 전이와 끝에서 일어나는 전이를 구별할 수 없었다. 둘 다 공짜로 계산된다.
+    _dg = np.diff(g)
+    _cl = np.nonzero(_dg > 0.5)[0]
+    _op = np.nonzero(_dg < -0.5)[0]
+    grip_close = float(len(_cl) > 0)
+    grip_open = float(len(_op) > 0)
+    _idx = list(_cl) + list(_op)
+    grip_at = int(min(_idx)) if _idx else -1
     # 실제 방향 반전: 연속 두 스텝 모두 유의미하게 크고 90도 넘게 꺾임
     rev = 0.0
     if len(d) > 1:
@@ -56,7 +68,9 @@ def descriptors(a, f, n=16):
     # K2 병합이 컨트롤러 한계를 넘는가 (실현 가능성)
     merged = w[0:-1:2, 5:11] + w[1::2, 5:11] if len(w)>=2 else np.zeros((1,6))
     clip_excess = float(np.mean(np.abs(merged) > CLIP))
-    return {"grip_change":grip_change, "reversal":rev, "closed_slow":closed_slow,
+    return {"grip_change":grip_change, "grip_close":grip_close,
+            "grip_open":grip_open, "grip_at":grip_at,
+            "reversal":rev, "closed_slow":closed_slow,
             "decel":decel, "clip_excess":clip_excess,
             "speed_mean":float(mag.mean()), "speed_max":float(mag.max()),
             "speed_pct":speed_percentile(float(mag.mean())),
@@ -75,9 +89,21 @@ def facts_text(x):
     하네스 제약이지 이 순간의 성질이 아니다.
     """
     parts = []
-    parts.append("the gripper opens or closes during this window" if x["grip_change"]
-                 else ("the gripper stays closed throughout" if x["gripper_closed"] > 0.5
-                       else "the gripper stays open throughout"))
+    _at = x.get("grip_at", -1)
+    _when = f" {_at} of 16 steps in" if _at >= 0 else ""
+    if x.get("grip_close") and x.get("grip_open"):
+        parts.append(f"the gripper closes and then opens again{_when}")
+    elif x.get("grip_close"):
+        parts.append(f"the gripper CLOSES on something{_when} -- the grasp is made "
+                     f"inside this window")
+    elif x.get("grip_open"):
+        parts.append(f"the gripper OPENS to let go{_when} -- the release happens "
+                     f"inside this window")
+    elif x["grip_change"]:
+        parts.append("the gripper opens or closes during this window")
+    else:
+        parts.append("the gripper stays closed throughout" if x["gripper_closed"] > 0.5
+                     else "the gripper stays open throughout")
     parts.append("the end-effector reverses direction sharply" if x["reversal"]
                  else "the end-effector keeps a consistent direction")
     # 절대 경계(0.12 / 0.50)는 하위 1.6% 와 46.6% 를 자른다 -- "barely moving" 은
