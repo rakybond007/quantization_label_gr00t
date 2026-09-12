@@ -25,7 +25,10 @@ from decord import VideoReader
 from PIL import Image
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from phase9_checks import ASK, GUIDANCE, NGRADE  # noqa: E402
+# 문항 판을 CHECKS 로 고른다. 기본은 v1 이라 기존 실행이 그대로 재현된다.
+import importlib  # noqa: E402
+_CK = importlib.import_module(os.environ.get("CHECKS", "phase9_checks"))
+ASK, GUIDANCE, NGRADE = _CK.ASK, _CK.GUIDANCE, _CK.NGRADE
 
 # **집계를 모델에 맡기는 판.** SELFAGG=1 이면 문항 다섯을 따로 묻지 않고, 어느
 # 문항이 감점/가산점인지 알려 주고 최종 판단 하나를 받는다. 역치가 없어지는 대신
