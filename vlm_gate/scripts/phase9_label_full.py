@@ -183,6 +183,13 @@ for ei, ep in enumerate(eps):
                 rec = ({"ep": ep, "f": f, "Z": picks[0]} if SELFAGG else
                        {"ep": ep, "f": f,
                         **{q: picks[i] for i, q in enumerate("ABCDE")}})
+                # **등급 분포를 버리지 않는다.** ratio_label.confidence 는 gp 가
+                # 있으면 정수 등급 대신 기댓값 Σ(i+1)·p(i) 를 쓰는데, 라벨러가
+                # 이것을 적지 않아서 2.04M 행 전부가 정수 등급으로 만들어졌다.
+                # P(3)=0.9 와 P(2)=.3/P(3)=.35/P(4)=.3 은 전혀 다른 상태다.
+                _gp = r.get("grade_probs")
+                if _gp:
+                    rec["gp"] = _gp
                 fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
                 nlab += 1
         fh.flush()

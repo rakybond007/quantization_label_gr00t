@@ -70,6 +70,9 @@ elif _MODE == "none":
 SYSTEM = _vg.SYSTEM
 
 
+NO_THINK = os.environ.get("JUDGE_NO_THINK", "") not in ("", "0")
+
+
 def run_server(model_id, port, host, max_new_tokens, dtype):
     import torch
     from transformers import AutoProcessor
@@ -395,16 +398,44 @@ def run_server(model_id, port, host, max_new_tokens, dtype):
         destroy exactly the number this path exists to produce.
         """
         messages = build_messages(pil_imgs, instruction, guidance, question)
-        inputs = processor.apply_chat_template(
-            messages, add_generation_prompt=True, tokenize=True,
-            return_dict=True, return_tensors="pt",
-        ).to(model.device)
+        # **생각 블록을 닫고 시작할 수 있게 한다.** Qwen3.5 템플릿은 기본으로
+        # `<think>\n` 을 **열어 둔 채** 끝나므로, 등급표를 물어도 모델이 그 안을
+        # 추론으로 채운다 -- 모델 성향이 아니라 템플릿이 시키는 것이다. 응답에
+        # `<think>` 태그가 안 보이는 것도 프롬프트가 이미 열어 둔 탓이다.
+        # 그 인자를 안 받는 모델(Cosmos·gemma)도 있으므로 받아 주는 쪽에만 넘긴다.
+        _tk = dict(add_generation_prompt=True, tokenize=True,
+                   return_dict=True, return_tensors="pt")
+        try:
+            inputs = processor.apply_chat_template(
+                messages, **_tk,
+                **({"enable_thinking": False} if NO_THINK else {})).to(model.device)
+        except TypeError:
+            inputs = processor.apply_chat_template(messages, **_tk).to(model.device)
         n_in = inputs["input_ids"].shape[1]
         with torch.inference_mode():
-            out = model.generate(**inputs, max_new_tokens=int(max_new_tokens),
-                                 do_sample=False)
+            gen = model.generate(**inputs, max_new_tokens=int(max_new_tokens),
+                                 do_sample=False, return_dict_in_generate=True,
+                                 output_scores=True)
+        out = gen.sequences
         text = tok.decode(out[0][n_in:], skip_special_tokens=True).strip()
-        return _parse_text(text, n_ask, n_grade, int(out.shape[1] - n_in))
+        r = _parse_text(text, n_ask, n_grade, int(out.shape[1] - n_in))
+        # 배치 경로와 같은 규칙으로 등급 자리의 분포를 덧붙인다. 이 경로가 이것을
+        # 내지 않아서 온라인 게이트와 judge_ab 는 늘 정수 등급으로 떨어졌다 --
+        # expected_grades 가 구현되어 있는데도 robocasa 라벨·게이트 어디에도
+        # 값이 실린 적이 없다(라벨 파일 전수 확인, gp 있는 행 0%).
+        gid = [g[0] for g in GRADE_IDS[:n_grade]] if n_grade > 0 else []
+        if gid and getattr(gen, "scores", None):
+            import torch.nn.functional as _F
+            sel = torch.stack(gen.scores, dim=1)[:, :, gid]   # (1, T, 등급수)
+            step_p = _F.softmax(sel.float(), dim=-1)
+            emitted = out[:, n_in:]
+            is_grade = torch.zeros_like(emitted, dtype=torch.bool)
+            for g in gid:
+                is_grade |= (emitted == g)
+            pos = torch.nonzero(is_grade[0]).flatten().tolist()[:max(1, n_ask)]
+            r["grade_probs"] = [[round(float(v), 4) for v in step_p[0, t]]
+                                for t in pos]
+        return r
 
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *a):
