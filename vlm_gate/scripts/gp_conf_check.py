@@ -24,7 +24,9 @@ def main():
     from PIL import Image
     from vlm_gate import VLMGate
     from robocasa_descriptors import descriptors, facts_text
-    import phase9_checks as P
+    # CHECKS 로 문항 판을 갈아끼운다. v1/v2/v3 를 같은 장면에서 견주려고 둔 자리다.
+    import importlib
+    P = importlib.import_module(os.environ.get("CHECKS", "phase9_checks"))
     from ratio_label import confidence, expected_grades
     DS = ("/sjw_alinlab2/home/myungkyu/.cache/huggingface/lerobot/kimtaey/"
           "robocasa_mg_gr00t_300")
@@ -71,8 +73,8 @@ def main():
                                  "conf_int": c_int, "conf_exp": c_exp}) + "\n")
             if n % 40 == 0:
                 print(f"  {n}/{len(scenes)} gp있음 {n_gp}", flush=True)
-    print(f"[gp] {n} 장면 · gp 있는 행 {n_gp} ({n_gp/max(n,1):.1%}) -> {out_f}",
-          flush=True)
+    print(f"[gp] {n} 장면 · gp 있는 행 {n_gp} ({n_gp/max(n,1):.1%}) "
+          f"· 문항 {os.environ.get('CHECKS', 'phase9_checks')} -> {out_f}", flush=True)
 
 
 if __name__ == "__main__":
