@@ -34,6 +34,14 @@ def speed_percentile(v):
         return None
     return float(np.clip(np.searchsorted(_PCT, v, side="right") - 1, 0, 100))
 
+# 사실 문장의 지평을 창 밖으로 늘린다. 접근 장면이 전체의 61% 인데 창 안에 그리퍼
+# 사건이 없어서 "stays open throughout" 한 문장만 받는다 -- 위험한 순간이 1초 뒤인지
+# 5초 뒤인지 구별할 근거가 없다. 등급표는 이미 그 근접성을 묻는다("4 = 한 뼘 앞",
+# "3 = 향해 가는 중이나 아직 멀다")는데 정보가 없던 자리다. 방향 수정이 통했던 것과
+# 같은 형태의 공백이지만, 그쪽은 측정된 뭉갬이었고 이쪽은 가설이므로 기본은 끈다.
+GRIP_HORIZON = int(os.environ.get("GRIP_HORIZON", "0"))
+
+
 def descriptors(a, f, n=16):
     """a:(T,12) 계획 청크, f: 시작 프레임. -> dict"""
     w = a[f:f+n]
@@ -68,8 +76,17 @@ def descriptors(a, f, n=16):
     # K2 병합이 컨트롤러 한계를 넘는가 (실현 가능성)
     merged = w[0:-1:2, 5:11] + w[1::2, 5:11] if len(w)>=2 else np.zeros((1,6))
     clip_excess = float(np.mean(np.abs(merged) > CLIP))
+    # 창 밖 다음 파지까지 몇 스텝. 창 안에 파지가 있으면 0 으로 두어 문장이 겹치지
+    # 않게 한다. 없으면 -1.
+    next_grasp = -1
+    if GRIP_HORIZON > 0 and not grip_close:
+        _fut = np.diff((np.asarray(a[:, -1]) > 0.5).astype(int))
+        _nx = [i for i in np.nonzero(_fut > 0.5)[0] if i >= f + n]
+        if _nx and (_nx[0] - (f + n)) <= GRIP_HORIZON:
+            next_grasp = int(_nx[0] - (f + n))
     return {"grip_change":grip_change, "grip_close":grip_close,
             "grip_open":grip_open, "grip_at":grip_at,
+            "next_grasp":next_grasp,
             "reversal":rev, "closed_slow":closed_slow,
             "decel":decel, "clip_excess":clip_excess,
             "speed_mean":float(mag.mean()), "speed_max":float(mag.max()),
@@ -125,8 +142,16 @@ def facts_text(x):
                      f"(mean step {x['speed_mean']:.2f}, peak {x['speed_max']:.2f})")
     parts.append("it is holding something while creeping along" if x["closed_slow"]
                  else "it is not creeping along with something held")
-    parts.append("it is decelerating to a near stop" if x["decel"]
-                 else "it is not decelerating to a stop")
+    _ng = x.get("next_grasp", -1)
+    if _ng >= 0:
+        # 줄 수를 늘리지 않는다 -- 마지막 줄에 덧붙인다. 줄 수가 프레임마다
+        # 달라지면 배치가 패딩을 필요로 한다.
+        parts.append(("it is decelerating to a near stop" if x["decel"]
+                      else "it is not decelerating to a stop")
+                     + f", and the next grasp comes {_ng} steps after this window")
+    else:
+        parts.append("it is decelerating to a near stop" if x["decel"]
+                     else "it is not decelerating to a stop")
     return ("MEASURED FROM THE PLANNED MOTION over the next ~1 second (these are computed "
             "facts, not estimates): " + "; ".join(parts) + ".")
 
