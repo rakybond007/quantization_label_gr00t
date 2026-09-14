@@ -171,10 +171,10 @@ conf    = (1 + Σ_가점 w·g - Σ_감점 w·g) / 2
 
 | 문항 | 이름 | 부호 | 가중 |
 |---|---|---|---|
-| A | PINCH_RIGID | 감점 | 0.600 |
-| B | POUCH | 감점 | 0.400 |
-| C | FREE_END | 가점 | 0.550 |
-| D | IN_TRANSIT | 가점 | 0.450 |
+| A | PINCH_RIGID | 감점 | 0.800 |
+| B | POUCH | 감점 | 0.200 |
+| C | FREE_END | 가점 | 0.300 |
+| D | IN_TRANSIT | 가점 | 0.700 |
 
 ### GUIDANCE  (sha1 `733d71476881`)
 

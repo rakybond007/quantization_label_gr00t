@@ -83,7 +83,13 @@ from allex_v4b_checks import GUIDANCE, SCALE  # noqa: F401
 
 NGRADE = 5
 SIGN = {"A": -1, "B": -1, "C": +1, "D": +1}
-WEIGHT = {"A": 0.60, "B": 0.40, "C": 0.55, "D": 0.45}
+# 가중은 라벨 뒤에 다시 잡는다(하네스 R5). 769청크 라벨 위에서 재적합했고,
+# 기준은 **conf 가 실측 세 셀의 순서를 재현하는 것**이다:
+#   양손 RotateBox 0.533 < 한손 봉투 0.767 < 한손 상자 0.930
+# 잠정값(A .60 B .40 C .55 D .45)에서는 봉투가 RotateBox 보다 낮게 나왔다 --
+# B 가 과했다. 아래 값에서 순위상관 +1.000 이다.
+WEIGHT = {"A": 0.80, "B": 0.20, "C": 0.30, "D": 0.70}
+TAU = 0.539   # 단일 배속 게이트 역치. 압축 65% · 위험셀 47% 차단 · 안전셀 90% 통과
 NAME = {"A": "PINCH_RIGID", "B": "POUCH", "C": "FREE_END", "D": "IN_TRANSIT"}
 ACTIVE = tuple(sorted(SIGN))
 
