@@ -59,6 +59,13 @@ def main():
     print(f"장면 {len(scenes)} (건너뜀 {len(done)}) · CHECKS={CK} · 문항 {PV}",
           flush=True)
 
+    # **문항 수는 판이 정한다.** 5 로 박아 두면 문항이 셋인 판에서 picks 가 전부
+    # None 이 되어 모든 장면이 버려지고 0행으로 끝난다(배속 문항 sa1 이 그랬다).
+    NQ = len(getattr(C, "NAME", None) or getattr(C, "SIGN", {})) or 5
+    QCOLS = sorted(getattr(C, "NAME", None) or getattr(C, "SIGN", {})) or list("ABCDE")
+    # 지시문은 태스크마다 상수라, 넣으면 모델이 그것만 읽고 그림을 안 본다
+    # (실측: 태스크 안/간 답 변동 비가 0.08 로 죽었다). 배속 문항에는 안 넣는다.
+    USE_INSTR = os.environ.get("USE_INSTR", "1") == "1"
     gate = VLMGate(f"http://127.0.0.1:{port}", timeout=900)
     acts, n, ngp, bad = {}, 0, 0, 0
     with open(out_f, "a") as fh:
@@ -78,21 +85,22 @@ def main():
             im = np.array(Image.open(f"{TILES}/{s['tile']}.png").convert("RGB"))
             w = im.shape[1] // NVIEW
             views = [im[:, k * w:(k + 1) * w] for k in range(NVIEW)]
-            r = gate.judge(views, f"{s.get('instruction','')}\n{ft}", G,
-                           question=ASK, n_ask=5, n_grade=C.NGRADE, mode="text")
-            picks = r.get("picks") or [None] * 5
+            _ctx = (f"{s.get('instruction','')}\n{ft}") if USE_INSTR else ft
+            r = gate.judge(views, _ctx, G,
+                           question=ASK, n_ask=NQ, n_grade=C.NGRADE, mode="text")
+            picks = r.get("picks") or [None] * NQ
             if any(p is None for p in picks):
                 bad += 1
                 continue
             gp = r.get("grade_probs")
             eg = ([sum((i + 1) * float(q) for i, q in enumerate(row)) for row in gp]
-                  if gp and len(gp) == 5 else None)
+                  if gp and len(gp) == NQ else None)
             ngp += int(bool(eg))
             g = {q: ((eg[i] if eg else float(picks[i])) - 1.0) / (C.NGRADE - 1)
-                 for i, q in enumerate("ABCDE")}
+                 for i, q in enumerate(QCOLS)}
             conf = min(1.0, max(0.0, (1.0
-                                      + sum(C.WEIGHT[q] * g[q] for q in "ABCDE" if C.SIGN[q] > 0)
-                                      - sum(C.WEIGHT[q] * g[q] for q in "ABCDE" if C.SIGN[q] < 0)) / 2))
+                                      + sum(C.WEIGHT[q] * g[q] for q in QCOLS if C.SIGN.get(q,0) > 0)
+                                      - sum(C.WEIGHT[q] * g[q] for q in QCOLS if C.SIGN.get(q,0) < 0)) / 2))
             n += 1
             fh.write(json.dumps({**{k: s[k] for k in ("cell", "ep", "f", "tile", "phase")},
                                  "picks": picks, "gp": gp, "eg": eg,

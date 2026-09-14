@@ -39,7 +39,10 @@ if SELFAGG:
                f"/prompts/robocasa_phase9_selfagg.txt").read().strip()
     N_ASK = 1
 else:
-    N_ASK = 5
+    # **문항 수는 판이 정한다.** 5 로 박아 두면 문항이 넷인 판(ratio_checks_v5)
+    # 에서 판정기가 다섯 칸을 기대하고 파싱이 전부 실패한다.
+    N_ASK = len(getattr(_CK, 'SIGN', {})) or 5
+_QCOLS = sorted(getattr(_CK, 'SIGN', {})) or list("ABCDE")
 from robocasa_descriptors import descriptors, facts_text  # noqa: E402
 from vlm_gate import VLMGate  # noqa: E402
 
@@ -185,7 +188,9 @@ for ei, ep in enumerate(eps):
                 nfull += int(all(p is not None for p in picks))
                 rec = ({"ep": ep, "f": f, "Z": picks[0]} if SELFAGG else
                        {"ep": ep, "f": f,
-                        **{q: picks[i] for i, q in enumerate("ABCDE")}})
+                        # **열 이름도 판이 정한다.** "ABCDE" 로 박아 두면 문항이
+                        # 넷인 판에서 IndexError 로 전 샤드가 죽는다.
+                        **{q: picks[i] for i, q in enumerate(_QCOLS)}})
                 # **등급 분포를 버리지 않는다.** ratio_label.confidence 는 gp 가
                 # 있으면 정수 등급 대신 기댓값 Σ(i+1)·p(i) 를 쓰는데, 라벨러가
                 # 이것을 적지 않아서 2.04M 행 전부가 정수 등급으로 만들어졌다.

@@ -103,7 +103,9 @@ json.dump({"batch": BATCH, "shard": SHARD, "nshard": NSH, "prompt": PV,
 
 def prep(nm):
     """타일 하나를 판정 입력으로. 못 읽으면 None."""
-    ep = int(nm[2:6]); f = int(nm.split("_f")[1][:3])
+    # 프레임은 마침표까지 읽는다. [:3] 으로 자르면 f1000.png 가 100 이 되어
+    # 다른 프레임의 행을 덮어쓴다 (이 데이터셋은 최대 505 라 무사하지만 함정이다).
+    ep = int(nm[2:6]); f = int(nm.split("_f")[1].split(".")[0])
     if ep % NSH != SHARD or (ep, f) in done:
         return None
     a = A(ep)

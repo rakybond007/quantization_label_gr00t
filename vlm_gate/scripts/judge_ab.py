@@ -31,6 +31,9 @@ TILES = f"{BASE}/output/_gate_distill/luna_robocasa_full/tiles"
 MAN = f"{BASE}/output/_gate_distill/tiles_manifest.txt"
 DS = ("/sjw_alinlab2/home/myungkyu/.cache/huggingface/lerobot/kimtaey/"
       "robocasa_mg_gr00t_300")
+# **청크 크기는 데이터셋이 말한다.** 1000 으로 박으면 이 데이터셋(300개씩)에서
+# ep>=300 이 전부 없는 경로가 되고, pick 과 run 양쪽에서 조용히 빠진다.
+CHUNKS_RUN = int(json.load(open(f"{DS}/meta/info.json")).get("chunks_size") or 1000)
 SLOTS = "ABCDE"
 
 # 문항 다섯이 서로 다르게 떠야 두 모델이 갈리는 자리가 보인다.
@@ -77,24 +80,32 @@ def pick(args):
             ep2t[d["episode_index"]] = t[0]
             ep2n[d["episode_index"]] = d.get("length", 0)
 
+    CHUNKS = int(json.load(open(f"{DS}/meta/info.json")).get("chunks_size") or 1000)
+    skipped = []
     have = set()
+    # 매니페스트는 `ep1329_f088.png` 로 적히고 아래에서 만드는 이름은 확장자가
+    # 없다. 그대로 맞추면 한 줄도 안 맞아 장면이 0개가 된다. 확장자를 떼서 본다.
     for l in open(MAN):
         nm = l.strip()
         if nm:
-            have.add(nm)
+            have.add(nm[:-4] if nm.endswith(".png") else nm)
 
     out = []
     for task in TASKS:
         eps = sorted(e for e, t in ep2t.items() if t == task)[:args.episodes]
         got = defaultdict(list)
         for ep in eps:
+            # **청크 크기를 데이터셋이 말하게 한다.** 1000 으로 박으면 이 데이터셋
+            # (300개씩)에서 ep>=300 이 전부 다른 경로를 가리키고, 아래 except 가
+            # 그것을 삼켜 장면이 0개가 된다. chord_error.py 에서도 같은 자리였다.
             try:
                 a = np.stack(pd.read_parquet(
-                    f"{DS}/data/chunk-{ep // 1000:03d}/"
+                    f"{DS}/data/chunk-{ep // CHUNKS:03d}/"
                     f"episode_{ep:06d}.parquet")["action"].values)
-            except Exception:
+            except Exception as e:
+                skipped.append((ep, type(e).__name__))
                 continue
-            for f in range(0, len(a) - 20, 4):
+            for f in range(0, len(a) - 20, 8):   # 타일이 stride 8 로 구워져 있다
                 nm = f"ep{ep:04d}_f{f:03d}"
                 if nm not in have:
                     continue
@@ -113,6 +124,8 @@ def pick(args):
               + (f"   [!] {miss} 없음" if miss else ""))
 
     json.dump(out, open(args.out, "w"), ensure_ascii=False, indent=1)
+    if skipped:
+        print(f"[!] 액션 못 읽은 에피 {len(skipped)}개 -- 예 {skipped[:3]}")
     print(f"\n장면 {len(out)}개 -> {args.out}")
 
 
@@ -144,7 +157,7 @@ def run(args):
             if ep not in acts:
                 acts.clear()
                 acts[ep] = np.stack(pd.read_parquet(
-                    f"{DS}/data/chunk-{ep // 1000:03d}/"
+                    f"{DS}/data/chunk-{ep // CHUNKS_RUN:03d}/"
                     f"episode_{ep:06d}.parquet")["action"].values)
             x = descriptors(acts[ep], s["f"])
             im = np.array(Image.open(f"{TILES}/{s['tile']}.png").convert("RGB"))

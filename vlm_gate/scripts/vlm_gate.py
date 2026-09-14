@@ -272,8 +272,18 @@ class VLMGate:
 
 
     def judge_batch(self, items, guidance="", question="", n_ask=0, n_grade=0,
-                    max_new_tokens=192):
-        """Judge many frames in one forward. items: [(imgs, instruction), ...]"""
+                    max_new_tokens=192, mode="text"):
+        """Judge many frames in one forward. items: [(imgs, instruction), ...]
+
+        `mode` is accepted so a caller can state the path it wants. The batch
+        endpoint only has one: the server routes every batch to
+        `judge_text_batch`, where the model writes the answer and the server
+        parses it. Anything other than "text" is refused rather than quietly
+        served as text -- a caller asking for forced slot logits must find out
+        it cannot have them here (CLAUDE.md 되돌리지 말 것 1 forbids that path).
+        """
+        if mode not in ("", "text"):
+            return [{"error": f"judge_batch is text-only, got mode={mode!r}"}] * len(items)
         try:
             bat = []
             for imgs, instruction in items:
@@ -287,7 +297,7 @@ class VLMGate:
                 bat.append({"images_b64": b64s, "instruction": instruction})
             payload = json.dumps({"batch": bat, "guidance": guidance,
                                   "question": question, "n_ask": n_ask,
-                                  "n_grade": n_grade,
+                                  "n_grade": n_grade, "mode": "text",
                                   "max_new_tokens": max_new_tokens}).encode()
             req = urllib.request.Request(
                 self.url + "/judge", data=payload,

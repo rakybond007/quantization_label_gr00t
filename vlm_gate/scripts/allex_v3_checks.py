@@ -492,8 +492,38 @@ POOL = {
  "IDLE":  "Are the hands ON NOTHING AT ALL -- moving through open space or standing\n"
           "   still, with nothing in them and nothing being touched?",
 }
-ACTIVE = tuple(os.environ.get("ALLEX_CHECKS", "CLAMP,LOOSE,SHOVE,FLIP,FREE,IDLE").split(","))
+# **기본값은 실제로 돌린 다섯이다.** 전에는 여기에 IDLE 이 붙어 여섯이었는데,
+# IDLE 의 문구가 FREE 와 한 글자도 다르지 않다(POOL 을 보라). 라벨을 낸 실행은
+# 모두 ALLEX_CHECKS 로 다섯을 못 박아 두었으므로 나온 라벨은 무사하다 --
+# sbatch_v5tempo_v3.sh · gap_run.sh · srun_v5tempo_v3_smoke.sh 가 전부 그렇게
+#한다. 하지만 그 export 를 잊은 실행은 같은 질문을 두 번 묻게 되고, 그러면
+# "손에 아무것도 없다" 가 가점 쪽의 40% 에서 57% 로 커진다(0.4+0.4 대 0.4).
+# 가중은 이 다섯에서 양쪽 합이 정확히 1.0 이 되도록 계산된 값이다 -- IDLE 을
+# 더하면 가점 합이 1.4 가 되어 그 전제가 깨진다.
+ACTIVE = tuple(os.environ.get("ALLEX_CHECKS", "CLAMP,LOOSE,SHOVE,FLIP,FREE").split(","))
 _CHECKS = tuple((q, POOL[q]) for q in ACTIVE)
+
+# 같은 문구를 두 번 묻는 일을 코드가 잡는다. 사람이 눈으로 잡으라고 두면
+# 위처럼 몇 주를 지나간다 -- 프롬프트에서는 나란히 놓인 두 줄이고, 모델은
+# 둘에 같은 등급을 주므로 그 개념만 가중이 두 배가 된 것을 알아채기 어렵다.
+_dup = {}
+for _q in ACTIVE:
+    _dup.setdefault(POOL[_q], []).append(_q)
+_same = [v for v in _dup.values() if len(v) > 1]
+if _same:
+    raise SystemExit(
+        "ALLEX_CHECKS 에 문구가 같은 문항이 둘 이상 있다: "
+        + " / ".join(", ".join(v) for v in _same)
+        + ". 같은 개념을 두 번 물으면 그 개념의 가중만 두 배가 된다.")
+
+# 가중은 각 변의 합이 1 이 되게 계산된 값이다(주석 참조). ACTIVE 를 바꿔 놓고
+# 가중을 안 고치면 그 전제가 조용히 깨지므로 여기서 확인한다.
+for _sg, _nm in ((-1, "감점"), (+1, "가점")):
+    _qs = [q for q in ACTIVE if SIGN.get(q) == _sg]
+    _t = sum(WEIGHT[q] for q in _qs)
+    if _qs and abs(_t - 1.0) > 1e-6:
+        print(f"[allex_v3_checks] 경고: {_nm} 가중 합이 {_t:.3f} 다 ({_qs}). "
+              f"WEIGHT 는 각 변 합 1.0 을 전제로 계산된 값이다.", file=sys.stderr)
 
 # 문항마다 다른 눈금이 아니라 하나를 공유한다. 이 눈금이 재는 것은 그 문항이
 # 이 순간을 얼마나 설명하느냐이지 그 상태의 강도가 아니다.

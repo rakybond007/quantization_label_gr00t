@@ -16,6 +16,7 @@ file -- 586 chunks of episodes 0-3 were skipped as "already done" when their
 
     python allex_v3_label.py <port> [episodes,comma,separated]
 """
+import hashlib
 import json
 import os
 import sys
@@ -27,8 +28,8 @@ from PIL import Image
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from allex_v2_common import TASKS, descriptors  # noqa: E402
-from allex_v3_checks import (ACTIVE, ASK, GUIDANCE, NGRADE, confidence,  # noqa: E402
-                             expected_grades,
+from allex_v3_checks import (ACTIVE, ASK, GUIDANCE, NGRADE, SIGN, WEIGHT,  # noqa: E402
+                             confidence, expected_grades,
                              facts_v3, ratio_for, snap)
 from vlm_gate import VLMGate  # noqa: E402
 
@@ -140,6 +141,20 @@ def seg_at(ep, f):
 OUT = (f"{OUTDIR}/records_s{NSH}_{SHARD}.jsonl" if FULL and NSH > 1
        else f"{OUTDIR}/records.jsonl")
 
+# **이 실행이 무슨 문항·부호·가중을 썼는지 남긴다.** 남기지 않으면 나중에
+# records.jsonl 만 보고는 알 수 없다. 실제로 그 상황이 생겨서, 저장된 conf 에
+# 최소제곱을 걸어 가중을 되찾아야 했다 -- eg 를 저장해 둔 덕에 가능했지만
+# 21개 실행을 일일이 역산하는 비용을 치렀다. ablation(LOOSE 빼기, SHOVE 를
+# 감점으로 돌리기 등)을 돌리면 가중이 변 합 1 로 다시 정규화되므로, 어떤
+# 조합이었는지는 파일에 적혀 있어야 한다.
+json.dump({"active": list(ACTIVE), "ngrade": NGRADE,
+           "sign": {q: SIGN[q] for q in ACTIVE},
+           "weight": {q: WEIGHT[q] for q in ACTIVE},
+           "guidance_sha1": hashlib.sha1(GUIDANCE.encode()).hexdigest()[:12],
+           "ask_sha1": hashlib.sha1(ASK.encode()).hexdigest()[:12]},
+          open(OUT.replace(".jsonl", "_meta.json"), "w"),
+          ensure_ascii=False, indent=1)
+
 gate = VLMGate(f"http://127.0.0.1:{PORT}", timeout=300)
 
 done = set()
@@ -232,6 +247,12 @@ for ep in EPS:
                    "cell": CELL.get((ep, f)), "conf": round(confidence(picks, gp), 3), "eg": [round(v,2) for v in (expected_grades(gp) or [])],
                    **{q: picks[i] for i, q in enumerate(ACTIVE)},
                    "K": round(K, 3), "K_snap": snap(K),
+                   # **원본 등급 분포도 싣는다.** eg 만 있으면 가중은 다시 잡을 수
+                   # 있지만 분포 모양은 못 본다 -- P(3)=0.9 와 P(2)/P(3)/P(4)=.3/.35/.3
+                   # 은 eg 가 거의 같은데 전혀 다른 상태다. robocasa·libero 라벨러는
+                   # gp 를 싣는다(배포 parquet 에서 eA~eE 로 줄인다). 여기만 빠져 있었다.
+                   **({"gp": [[round(float(v), 4) for v in row] for row in gp]}
+                      if gp and len(gp) == len(ACTIVE) else {}),
                    "text": r.get("text", "").replace("\n", " | "),
                    **{k: (float(v) if isinstance(v, (int, float, np.floating)) else v)
                       for k, v in x.items()}}
