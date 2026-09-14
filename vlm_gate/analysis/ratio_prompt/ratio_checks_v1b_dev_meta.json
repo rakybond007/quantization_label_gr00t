@@ -1,0 +1,12 @@
+{
+ "checks": "ratio_checks_v1b",
+ "ngrade": 4,
+ "sign": {
+  "A": 1
+ },
+ "weight": {
+  "A": 1.0
+ },
+ "split": "dev",
+ "batch": 8
+}

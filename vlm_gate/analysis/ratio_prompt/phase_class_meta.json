@@ -1,0 +1,10 @@
+{
+ "checks": "phase_class_checks",
+ "ngrade": 4,
+ "ladder": {
+  "1": "파지",
+  "2": "해제",
+  "3": "운반",
+  "4": "접근"
+ }
+}
