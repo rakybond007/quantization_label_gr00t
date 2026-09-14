@@ -294,6 +294,16 @@ def main():
                    help="JSON file mapping task name -> maximum rate. The gate's "
                         "confidence then picks the rate under that ceiling per chunk, "
                         "instead of one global cap for every task.")
+    p.add_argument("--subaction-vlm", action="store_true",
+                   help="서브액션 후보가 둘 이상인 순간에만 판정기에게 묻고 그 답으로 후보를 "
+                        "고른다. 문항은 전 태스크 동일(--judge-checks), 태스크마다 달라지는 "
+                        "것은 지시문에서 뽑은 후보 목록뿐이다. --judge-url/--judge-checks 필요.")
+    p.add_argument("--subaction-rate", action="store_true",
+                   help="지시문에서 뽑은 서브액션 목록과 액션 국면으로 청크마다 "
+                        "배속을 정한다. 판정기를 쓰지 않는다.")
+    p.add_argument("--conf-quantiles", type=str, default="",
+                   help="태스크별 conf 분위표 JSON. 주면 배속을 conf 의 절대값이 "
+                        "아니라 그 태스크 분포에서의 분위로 정한다.")
     p.add_argument("--ceiling-floor", type=float, default=1.0,
                    help="Rate a chunk gets at confidence 0.")
     p.add_argument("--ceiling-mode", type=str, default="frac", choices=["frac", "eps"],
@@ -475,6 +485,21 @@ def main():
         return None if v is None else np.asarray(v, dtype=float).reshape(-1, 3)[-1]
 
     ceilings = None
+    _conf_tab = None
+    _sa_rate = None
+    _sa_pick_hist = []
+    if args.subaction_rate or args.subaction_vlm:
+        from subaction_rate import rate_for as _sa_rate
+        from subaction_rate import candidates as _sa_cands, pick_from as _sa_pick
+        print(f"[subaction] 지시문+액션 배속 · task={args.env_name}", flush=True)
+
+    def _sa_grip(d):
+        """실행 dict -> 그리퍼 값 (T,). 청크는 {"action.xxx": (T,D)} 평탄화 dict 다."""
+        import numpy as _np
+        for k in d:
+            if "gripper" in k:
+                return _np.asarray(d[k]).reshape(len(d[k]), -1)[:, 0]
+        return None
     if args.task_ceilings:
         with open(args.task_ceilings) as _f:
             ceilings = json.load(_f)
@@ -487,6 +512,20 @@ def main():
         print(f"[ceiling] table={args.task_ceilings} task={args.env_name} "
               f"ceiling={_c} floor={args.ceiling_floor} mode={args.ceiling_mode}"
               + ("" if _c is not None else "  (task absent -> no compression)"), flush=True)
+
+    if args.conf_quantiles:
+        with open(args.conf_quantiles) as _f:
+            _qt = json.load(_f)
+        _tabs = _qt.get("tables", _qt)
+        _v = _tabs.get(args.env_name)
+        if _v is None:
+            print(f"[quantile] {args.env_name} 이 분위표에 없다 -- 절대값 사상을 쓴다",
+                  flush=True)
+        else:
+            _conf_tab = np.asarray(_v, dtype=float)
+            print(f"[quantile] table={args.conf_quantiles} task={args.env_name} "
+                  f"p0={_conf_tab[0]:.3f} p50={_conf_tab[50]:.3f} "
+                  f"p100={_conf_tab[-1]:.3f} · 배속을 분위로 정한다", flush=True)
 
     # Optional zero-shot VLM gate: per chunk get confidence P(safe-to-compress);
     # quantize (K) when conf >= threshold, else raw (K=1).
@@ -523,6 +562,7 @@ def main():
     # 위 elif 본문 안에 끼우면 gate_log 가 안 열리는 경로가 생긴다.
     _checks = None
     _grade_hist, _rate_hist, _gate_bad = [], [], 0
+    _picks = None   # 마지막 판정의 등급. --subaction-vlm 이 그대로 쓴다.
     _rate_grid = tuple(float(x) for x in args.rate_grid.split(","))
     if args.judge_checks:
         from chord_rate import (load_checks, ask_gate, flat_actions, pick_rate,
@@ -604,6 +644,20 @@ def main():
                     # forces a call; else reuse the previous decision while ttl>0.
                     _gk = next((k for k in sub if "gripper" in k), None)
                     call = True
+                    # 후보가 하나뿐이면 물어볼 것이 없다. 판정기가 병목이라
+                    # (호출 ~900ms) 안 물으면 그만큼 그대로 빨라진다. 넓힌
+                    # 목록에서 후보가 둘 이상인 칸은 32% 뿐이다.
+                    if args.subaction_vlm and len(_sa_cands(args.env_name,
+                                                            grip=_sa_grip(sub))) < 2:
+                        call = False
+                        _picks = None
+                    # 후보가 하나뿐이면 물어볼 것이 없다. 판정기가 병목이라
+                    # (호출 ~900ms) 안 물으면 그만큼 그대로 빨라진다. 넓힌
+                    # 목록에서 후보가 둘 이상인 칸은 32% 뿐이다.
+                    if args.subaction_vlm and len(_sa_cands(args.env_name,
+                                                            grip=_sa_grip(sub))) < 2:
+                        call = False
+                        _picks = None
                     if args.gate_ttl_max > 0 and _g_last_q is not None:
                         grip_evt = False
                         if args.gate_gripper_trigger and _gk is not None:
@@ -697,6 +751,11 @@ def main():
                     else:
                         conf, q = _g_last_conf, _g_last_q
                         _g_ttl -= 1
+                    if q is None:
+                        # 후보가 하나뿐이라 아예 안 물은 청크. 게이트의 판단은
+                        # --subaction-vlm 에서 압축 여부를 정하지 않는다(배속은
+                        # 후보가 정한다). 장부가 깨지지 않게 중립값을 둔다.
+                        conf, q = 0.0, False
                     if _gk is not None:
                         _g_prev_grip = float(np.asarray(sub[_gk]).reshape(len(sub[_gk]), -1)[-1, -1])
                     gate_confs.append(conf)
@@ -754,9 +813,50 @@ def main():
                             mode="delta", return_blocks=True)
                     else:
                         sub_exec = sub
+                elif args.subaction_vlm:
+                    # **문항은 전 태스크 동일하고, 후보 목록만 태스크마다 다르다.**
+                    # 액션이 국면을 정해 후보를 좁힌다. 하나로 떨어지면 판정기를
+                    # 부르지 않는다 -- 물어볼 것이 없는데 부르면 시간만 든다.
+                    # 위 게이트 블록이 이 청크에 대해 이미 같은 문항을 물었다.
+                    # 여기서 또 부르면 청크마다 판정이 두 번 돈다 -- 그 답을 쓴다.
+                    _cands = _sa_cands(args.env_name, grip=_sa_grip(sub))
+                    _gr = None
+                    if len(_cands) > 1 and _checks is not None and _picks:
+                        _gr = {q: g for q, g in zip(sorted(_checks.SIGN), _picks)}
+                    _sub_name, r_chunk = _sa_pick(_cands, _gr)
+                    _sa_pick_hist.append(_sub_name)
+                    _rate_hist.append(r_chunk)
+                    if r_chunk > 1.0:
+                        sub_exec, blocks, _frac_carry = frac_compress_chunk(
+                            sub, r_chunk, _frac_carry, discrete_keys=DISCRETE_KEYS,
+                            mode="delta", return_blocks=True)
+                    else:
+                        sub_exec = sub
+                elif args.subaction_rate:
+                    # **지시문 목록 + 액션 국면으로 배속을 정한다. 판정기 불필요.**
+                    # 액션은 접근/파지/운반/해제를 정확히 주지만 놓기의 종류를
+                    # 모르고(셋 다 '해제'), 지시문은 종류를 알지만 지금이 어느
+                    # 단계인지 모른다. 합치면 24 태스크 전부에서 서브액션이
+                    # 유일하게 정해진다.
+                    r_chunk = _sa_rate(args.env_name, grip=_sa_grip(sub))
+                    _rate_hist.append(r_chunk)
+                    if r_chunk > 1.0:
+                        sub_exec, blocks, _frac_carry = frac_compress_chunk(
+                            sub, r_chunk, _frac_carry, discrete_keys=DISCRETE_KEYS,
+                            mode="delta", return_blocks=True)
+                    else:
+                        sub_exec = sub
                 elif ceilings is not None or args.frac_ratio > 0:
                     # Confidence picks the rate itself; fractional blocks hit it exactly.
-                    r_chunk = (args.ceiling_floor + _c * (_ceil - args.ceiling_floor)
+                    # **신뢰도를 분위로 바꿔 쓴다.** conf 의 절대값은 0.4 근처 좁은
+                    # 띠에 몰려 있어(태스크 안 표준편차 0.02~0.04) 그대로 곱하면
+                    # 배속이 사실상 상수가 된다 -- 실측으로 상한의 80% 이상을
+                    # 고르는 청크가 0% 였다. 분위를 쓰면 사다리 전 범위를 쓴다.
+                    _cq = _c
+                    if _conf_tab is not None:
+                        _cq = float(np.searchsorted(_conf_tab, _c, side="right")) / 100.0
+                        _cq = min(max(_cq, 0.0), 1.0)
+                    r_chunk = (args.ceiling_floor + _cq * (_ceil - args.ceiling_floor)
                                if ceilings is not None else args.frac_ratio)
                     if r_chunk > 1.0:
                         sub_exec, blocks, _frac_carry = frac_compress_chunk(
@@ -892,6 +992,13 @@ def main():
                 f.write(f"rate_mean: {_r.mean():.4f}\n")
                 for _v in sorted(set(_r.tolist())):
                     f.write(f"rate_{_v}: {(_r == _v).mean():.4f}\n")
+            if _sa_pick_hist:
+                from collections import Counter as _Ctr
+                _pc = _Ctr(x for x in _sa_pick_hist if x)
+                _n = sum(_pc.values()) or 1
+                f.write("subaction_picks: "
+                        + " ".join(f"{k}={v/_n:.3f}" for k, v in _pc.most_common())
+                        + f" (n={_n})\n")
             if args.gate_ttl_max > 0:
                 f.write(f"gate_ttl: max={args.gate_ttl_max} lo={args.gate_ttl_lo} "
                         f"hi={args.gate_ttl_hi} gripper_trigger={args.gate_gripper_trigger}\n")

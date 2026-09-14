@@ -1,0 +1,146 @@
+{
+ "tasks": {
+  "CloseDrawer": [
+   "approach",
+   "contact_coarse"
+  ],
+  "CloseSingleDoor": [
+   "approach",
+   "contact_coarse"
+  ],
+  "CloseDoubleDoor": [
+   "approach",
+   "contact_coarse"
+  ],
+  "TurnSinkSpout": [
+   "approach",
+   "contact_coarse"
+  ],
+  "CoffeePressButton": [
+   "approach",
+   "contact_coarse"
+  ],
+  "TurnOffMicrowave": [
+   "approach",
+   "contact_coarse"
+  ],
+  "TurnOnMicrowave": [
+   "approach",
+   "contact_coarse"
+  ],
+  "TurnOnStove": [
+   "approach",
+   "contact_knob"
+  ],
+  "TurnOffStove": [
+   "approach",
+   "contact_knob"
+  ],
+  "TurnOnSinkFaucet": [
+   "approach",
+   "contact_knob"
+  ],
+  "TurnOffSinkFaucet": [
+   "approach",
+   "contact_knob"
+  ],
+  "OpenDrawer": [
+   "approach",
+   "grasp_open",
+   "grasp_confined",
+   "pull_swing"
+  ],
+  "OpenSingleDoor": [
+   "approach",
+   "grasp_open",
+   "grasp_confined",
+   "pull_swing"
+  ],
+  "OpenDoubleDoor": [
+   "approach",
+   "grasp_open",
+   "grasp_confined",
+   "pull_swing"
+  ],
+  "PnPCabToCounter": [
+   "approach",
+   "grasp_open",
+   "grasp_confined",
+   "carry",
+   "place_open",
+   "place_precise"
+  ],
+  "CoffeeServeMug": [
+   "approach",
+   "grasp_open",
+   "grasp_confined",
+   "carry",
+   "place_open",
+   "place_precise"
+  ],
+  "PnPCounterToCab": [
+   "approach",
+   "grasp_open",
+   "grasp_confined",
+   "carry",
+   "place_catcher",
+   "place_precise"
+  ],
+  "PnPCounterToMicrowave": [
+   "approach",
+   "grasp_open",
+   "grasp_confined",
+   "carry",
+   "place_catcher",
+   "place_precise"
+  ],
+  "PnPCounterToSink": [
+   "approach",
+   "grasp_open",
+   "grasp_confined",
+   "carry",
+   "place_catcher",
+   "place_precise"
+  ],
+  "PnPCounterToStove": [
+   "approach",
+   "grasp_open",
+   "grasp_confined",
+   "carry",
+   "place_catcher",
+   "place_precise"
+  ],
+  "CoffeeSetupMug": [
+   "approach",
+   "grasp_open",
+   "grasp_confined",
+   "carry",
+   "place_precise",
+   "place_catcher"
+  ],
+  "PnPMicrowaveToCounter": [
+   "approach",
+   "grasp_open",
+   "grasp_confined",
+   "carry",
+   "place_precise",
+   "place_catcher"
+  ],
+  "PnPSinkToCounter": [
+   "approach",
+   "grasp_open",
+   "grasp_confined",
+   "carry",
+   "place_precise",
+   "place_catcher"
+  ],
+  "PnPStoveToCounter": [
+   "approach",
+   "grasp_open",
+   "grasp_confined",
+   "carry",
+   "place_precise",
+   "place_catcher"
+  ]
+ }
+}
