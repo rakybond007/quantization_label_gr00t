@@ -28,9 +28,13 @@ from PIL import Image
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from allex_v2_common import TASKS, descriptors  # noqa: E402
-from allex_v3_checks import (ACTIVE, ASK, GUIDANCE, NGRADE, SIGN, WEIGHT,  # noqa: E402
-                             confidence, expected_grades,
-                             facts_v3, ratio_for, snap)
+# 문항 모듈은 고를 수 있다 -- 다른 라벨러(phase_class_label 등)와 같은 방식이다.
+# 기본은 v3 이므로 앞서 돌린 것들이 그대로 재현된다.
+_CK = __import__(os.environ.get("ALLEX_CHECKS_MODULE", "allex_v3_checks"))
+ACTIVE, ASK, GUIDANCE = _CK.ACTIVE, _CK.ASK, _CK.GUIDANCE
+NGRADE, SIGN, WEIGHT = _CK.NGRADE, _CK.SIGN, _CK.WEIGHT
+confidence, expected_grades = _CK.confidence, _CK.expected_grades
+facts_v3, ratio_for, snap = _CK.facts_v3, _CK.ratio_for, _CK.snap
 from vlm_gate import VLMGate  # noqa: E402
 
 DS = os.environ.get(
