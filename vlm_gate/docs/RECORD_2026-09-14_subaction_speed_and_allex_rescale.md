@@ -348,3 +348,53 @@ pin4 72 에피의 **시작 프레임 + 성패**로 채점. 태스크 평균을 �
 3. 채점은 **에피소드별**로 한다 (R1). 태스크당 순위상관은 부호 확인용으로만.
 4. 장면 문항 v2 를 새 폐루프의 에피소드에서 **홀드아웃 검증**한다. 지금 +0.238
    (p=0.044) 은 n=72 두 번째 시도라 믿을 수 없다.
+
+---
+
+## 10. allex 배달본은 두 개다 -- 리스케일 대상을 헷갈리지 말 것
+
+2026-09-15 추가. 8절에서 다룬 JSON 은 **리스케일 대상이 아니었다.**
+
+| | 경로 | 라벨이 어디에 |
+|---|---|---|
+| (가) | `/rlwrld2/home/david/action_quantization/v1/subtask_labeled_data_update_eef_256x256_hojin/` | `meta/hojin_quantization_confidence.json` · 14,809 청크 · `p`·`K_max`·`K`·`hojin(0~1)` |
+| (나) | `/rlwrld2/home/david/action_quantization/merged_v5tempo_hojin/` | **parquet 의 `hojin` 열** · 프레임마다 배속 K (float32, 1.5~3.0) |
+
+**실제 리스케일 대상은 (나)다.** (가)의 도구(`allex_rescale_ceiling.py`)는 못 쓴다 --
+(나)에는 `p`·`K_max` 가 없고 최종 K 만 있어서 비례 이동의 기준을 p 에서 얻을 수
+없다. 기준을 **그 서브태스크의 현재 최대 K** 로 잡는 별도 도구가 필요하다:
+`scripts/allex_rescale_hojin_column.py`.
+
+(나)를 파일명으로 훑으면 라벨이 안 보인다. `meta/` 에는 `subtasks.jsonl` ·
+`episodes.jsonl` 뿐이고 라벨은 데이터 열이다. **열 이름으로 찾아야 한다.**
+
+### 10-1. 기준점을 하한에 둔다
+
+    anchor=floor (기본)   K' = F + (K - F) * (T - F) / (C - F)
+    anchor=one            K' = 1 + (K - 1) * (T - 1) / (C - 1)
+
+(나)는 **하한 1.5 가 이미 지켜지고 있다.** 1 을 기준으로 줄이면 1.5 가 1.25 로
+내려가 하한을 깨고, 다시 1.5 로 자르면 바닥이 뭉개진다. 전체 평균으로는
+1.7852(floor) vs 1.7155(one).
+
+### 10-2. 적용 결과 (2026-09-15, 전량 1,280 에피)
+
+상한 `Bring 2.0 · Pass 2.5 · Rotate Box 2.0 · Rotate PolyBag 2.5`, 하한 1.5.
+
+| 서브태스크 | 현재최대 | 새상한 | 배율 | 평균 전 -> 후 |
+|---|---|---|---|---|
+| Rotate Box | 3.00 | 2.00 | 0.333 | 1.760 -> 1.587 |
+| Bring Object | 3.00 | 2.00 | 0.333 | 2.304 -> 1.768 |
+| Pass Object | 3.00 | 2.50 | 0.667 | 2.439 -> 2.126 |
+| Rotate PolyBag | 3.00 | 2.50 | 0.667 | 2.255 -> 2.003 |
+
+전체 평균 배속 **2.1207 -> 1.7852**.
+
+산출물: `/rlwrld2/home/david/action_quantization/merged_v5tempo_hojin_recal/`
+(`data/` 만 새로 쓰고 `meta`·`videos` 는 원본 심볼릭 링크. **원본 불변.**)
+
+산출물을 다시 읽어 검증했다(320 에피): 행수·`frame_index` 보존, 상한 초과 프레임
+0, 하한 미만 프레임 0, 값이 바뀐 열은 `hojin` 하나뿐.
+
+**Rotate Box 가 1.589 로 사실상 하한에 붙는다.** 원래 값의 47% 가 이미 1.5 여서
+상한을 3.0 -> 2.0 으로 내리면 대부분이 바닥에 깔린다.
