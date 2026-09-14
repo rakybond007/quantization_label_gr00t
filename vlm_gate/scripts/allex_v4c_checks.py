@@ -40,8 +40,45 @@ touched" 는 이중 부정에 절대 표현이라 긍정하기 어렵고, `held`
 이미 주는데 그것을 되묻고 있었다. 지금 무엇을 하는 중인지 -- **옮겨 가는
 중인지** -- 를 묻는다.
 """
-from allex_v4_checks import (confidence, expected_grades, facts_v3,  # noqa: F401
+from allex_v4_checks import (confidence, expected_grades,  # noqa: F401
                              ratio_for, snap)
+from allex_v4_checks import facts_v3 as _facts_v3_twohand
+
+
+# ---------------------------------------------------------------------------
+# 한 팔만 일하는 순간에 양손 개념을 말하지 않는다.
+#
+# 이 작업은 **양손을 쓰는 것이 박스 조작(돌리기 · 돌리기 좋게 맞추기)뿐**이고
+# 나머지(가져오기 · 봉투 뒤집기 · 옆으로 보내기)는 전부 한 팔이다. 청크의
+# 44.8% 가 한 팔인데, 기존 사실 문장은 거기서도 "손바닥이 멀리 떨어져 있다",
+# "모여든다" 를 말한다 -- 한 팔만 일할 때 두 손목 사이 거리는 의미가 없고,
+# 모델이 화면 대신 그것을 읽으면 오답이 된다.
+#
+# 손가락 관절값으로 한손 파지를 가려 보려 했지만 안 된다. 눈으로 라벨한 16
+# 청크에서 최적 문턱의 정확도가 81.2% 이고, 빈손인데 손가락값이 파지 범위에
+# 들어오는 경우가 있다(허공에서 미리 손 모양을 잡는 동작). **그래서 쥐었는지는
+# 사실로 단정하지 않고 화면에 맡긴다.**
+_GAP_CLAUSES = ("the palms are close in to each other",
+                "the palms are a middling distance apart",
+                "the palms are well apart",
+                "and drawing together", "and moving apart",
+                "and holding that distance")
+
+
+def facts_v3(x, task=None):
+    t = _facts_v3_twohand(x, task)
+    if not x.get("one_handed"):
+        return t
+    for c in _GAP_CLAUSES:
+        t = t.replace("; " + c, "").replace(c + "; ", "")
+    # **단정하지 않는다.** 앞 판에서 "so nothing is being held between two palms
+    # right now" 를 붙였더니 모델이 그것을 "아무것도 안 들었다" 로 읽어 D(이동
+    # 중)가 한손 청크의 98.2% 에서 4등급 이상이 됐고, B(늘어진 짐)는 계속
+    # 눌렸다. 한 팔이 일한다는 사실만 말하고, 무엇을 쥐었는지는 화면에 맡긴다.
+    return t.replace("only one arm is moving",
+                     "only one arm is working and the other is idle, so the "
+                     "two-palm measurements do not apply here -- what that one "
+                     "hand has, if anything, is for you to see")
 from allex_v4b_checks import GUIDANCE, SCALE  # noqa: F401
 
 NGRADE = 5
