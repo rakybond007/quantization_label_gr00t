@@ -24,10 +24,10 @@ JUDGE_PY="$HOME/quantization_agent_workspace/cosmos_judge_venv/bin/python"
 RUN_PY="/sjw_alinlab/home/hojin2/miniconda3/envs/quant_gate_eval/bin/python"
 cd "$HOME/quantization_agent_workspace/vlm_gate" || exit 1
 
-export PHASE9_OUT="$PWD/output/_gate_distill/phase9_v7_stride4"
+export PHASE9_OUT="$PWD/output/_gate_distill/ratio_v5_full"
 export PHASE9_BATCH=8
 export PHASE9_STRIDE=4
-export CHECKS=phase9_checks_v7
+export CHECKS=ratio_checks_v5
 NW=16
 : "${SLURM_ARRAY_TASK_ID:=0}"
 mkdir -p "$PHASE9_OUT" out

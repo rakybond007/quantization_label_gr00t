@@ -1,0 +1,112 @@
+{
+ "damage_at_2p5": {
+  "goal/0": -0.38,
+  "goal/1": -0.78,
+  "goal/2": -0.08,
+  "goal/3": -0.72,
+  "goal/4": -0.06,
+  "goal/5": 0.0,
+  "goal/6": -0.54,
+  "goal/7": -0.12,
+  "goal/8": -0.16,
+  "goal/9": -0.64,
+  "long/0": -0.36,
+  "long/1": -0.98,
+  "long/2": -0.38,
+  "long/3": 0.0,
+  "long/4": -0.1,
+  "long/5": -0.08,
+  "long/6": -0.46,
+  "long/7": -0.1,
+  "long/8": -0.64,
+  "long/9": -0.42,
+  "object/0": 0.0,
+  "object/1": -0.4,
+  "object/2": -0.16,
+  "object/3": -0.04,
+  "object/4": -0.16,
+  "object/5": -0.04,
+  "object/6": -0.38,
+  "object/7": 0.0,
+  "object/8": -0.4,
+  "object/9": -0.04,
+  "spatial/0": -0.8,
+  "spatial/1": -0.42,
+  "spatial/2": -0.32,
+  "spatial/3": -0.88,
+  "spatial/4": -0.34,
+  "spatial/5": -0.76,
+  "spatial/6": -0.5,
+  "spatial/7": -0.44,
+  "spatial/8": -0.72,
+  "spatial/9": -0.58
+ },
+ "neutral": [
+  "spatial/9",
+  "goal/6",
+  "spatial/6",
+  "long/6",
+  "spatial/7",
+  "spatial/1",
+  "long/9",
+  "object/1",
+  "object/8",
+  "object/6",
+  "goal/0",
+  "long/2",
+  "long/0",
+  "spatial/4",
+  "spatial/2"
+ ],
+ "risk": [
+  "long/1",
+  "spatial/3",
+  "spatial/0",
+  "goal/1",
+  "spatial/5",
+  "spatial/8",
+  "goal/3",
+  "goal/9",
+  "long/8"
+ ],
+ "selected": {
+  "CATCHER": {
+   "covers": 8,
+   "pool": "stable"
+  },
+  "CROWDED_PICK": {
+   "covers": 4,
+   "pool": "risk"
+  },
+  "NO_HOLD": {
+   "covers": 3,
+   "pool": "stable"
+  },
+  "SMALL_TARGET": {
+   "covers": 7,
+   "pool": "risk"
+  },
+  "WIDE_SURFACE": {
+   "covers": 4,
+   "pool": "stable"
+  }
+ },
+ "stable": [
+  "object/2",
+  "object/4",
+  "goal/8",
+  "goal/7",
+  "long/4",
+  "long/7",
+  "goal/2",
+  "long/5",
+  "goal/4",
+  "object/3",
+  "object/5",
+  "object/9",
+  "object/0",
+  "object/7",
+  "goal/5",
+  "long/3"
+ ]
+}
