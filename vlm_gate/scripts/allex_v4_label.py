@@ -64,7 +64,14 @@ print(f"[i] 지시문 {len(TASKS)}개: " +
 
 EPS = sorted(int(p.split("episode_")[1][:6])
              for p in __import__("glob").glob(f"{DS}/data/*/*.parquet"))
-if NEP:
+# 에피를 골라 돌릴 수 있다. 앞에서부터 N 개만 보면 표본이 한쪽에 몰린다 --
+# ep0~14 는 잡은구간 손바닥 간격이 전부 0.352~0.404 로 넓은 쪽이었고, 그래서
+# "늘어진 짐" 문항이 한 번도 안 떴다. 물체가 갈리는 축을 일부러 덮어야 한다.
+_pick = os.environ.get("ALLEX_EPS", "")
+if _pick:
+    want = {int(x) for x in _pick.replace(",", " ").split()}
+    EPS = [e for e in EPS if e in want]
+elif NEP:
     EPS = EPS[:NEP]
 print(f"[i] 에피 {len(EPS)} · 청크 {CHUNK} · stride {STRIDE} · 문항 {''.join(Q)}",
       flush=True)
