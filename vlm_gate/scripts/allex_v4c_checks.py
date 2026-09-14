@@ -84,14 +84,14 @@ from allex_v4b_checks import GUIDANCE, SCALE  # noqa: F401
 NGRADE = 5
 SIGN = {"A": -1, "B": -1, "C": +1, "D": +1}
 WEIGHT = {"A": 0.60, "B": 0.40, "C": 0.55, "D": 0.45}
-NAME = {"A": "PINCH_RIGID", "B": "SWINGING_LOAD", "C": "FREE_END", "D": "IN_TRANSIT"}
+NAME = {"A": "PINCH_RIGID", "B": "POUCH", "C": "FREE_END", "D": "IN_TRANSIT"}
 ACTIVE = tuple(sorted(SIGN))
 
 _AXES = (
     "A) Are the two hands SQUEEZING something between them to hold it, and is that\n"
     "   thing HARD -- a box, a carton, something that will not squash?\n"
-    "B) Is a LIMP load being carried along -- something that hangs, sags or sways\n"
-    "   under the hands as the arms travel?\n"
+    "B) Is the item a POUCH OR PACKET -- a soft mailer, a padded envelope, a\n"
+    "   plastic parcel -- rather than a rigid carton with square sides?\n"
     "C) Is the thing only being SENT ACROSS -- slid or passed over to the other side,\n"
     "   or shoved on its way -- with no particular spot it has to come to rest on?\n"
     "D) Are the hands ON THEIR WAY -- reaching out towards something, or drawing back\n"

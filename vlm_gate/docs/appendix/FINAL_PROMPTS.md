@@ -172,7 +172,7 @@ conf    = (1 + Σ_가점 w·g - Σ_감점 w·g) / 2
 | 문항 | 이름 | 부호 | 가중 |
 |---|---|---|---|
 | A | PINCH_RIGID | 감점 | 0.600 |
-| B | SWINGING_LOAD | 감점 | 0.400 |
+| B | POUCH | 감점 | 0.400 |
 | C | FREE_END | 가점 | 0.550 |
 | D | IN_TRANSIT | 가점 | 0.450 |
 
@@ -190,7 +190,7 @@ Most moments are neither. Sliding something across to the other side, pushing so
 Judge the moment in front of you, not the name of the job. One segment passes through several of these from one second to the next.
 ```
 
-### QUESTION  (sha1 `4e631aec122b`)
+### QUESTION  (sha1 `6fc571516e1d`)
 
 ```
 The measurements above are stated as fact -- do not re-estimate or repeat them. Answer each check from what the cameras show about the MOMENT in front of you, read together with those measurements.
@@ -203,8 +203,8 @@ Answer each check on its own line as "A) 3", in order, nothing else -- one digit
 A grade refers only to the check on that line.
 A) Are the two hands SQUEEZING something between them to hold it, and is that
    thing HARD -- a box, a carton, something that will not squash?
-B) Is a LIMP load being carried along -- something that hangs, sags or sways
-   under the hands as the arms travel?
+B) Is the item a POUCH OR PACKET -- a soft mailer, a padded envelope, a
+   plastic parcel -- rather than a rigid carton with square sides?
 C) Is the thing only being SENT ACROSS -- slid or passed over to the other side,
    or shoved on its way -- with no particular spot it has to come to rest on?
 D) Are the hands ON THEIR WAY -- reaching out towards something, or drawing back
