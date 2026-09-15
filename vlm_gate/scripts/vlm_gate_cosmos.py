@@ -146,7 +146,11 @@ def run_server(model_id, port, host, max_new_tokens, dtype):
             differently-calibrated part of the distribution.
         """
         labels = [chr(ord("A") + i) for i in range(n_ask)]
-        messages = build_messages(pil_imgs, instruction, guidance, question)
+        # 등급 문항 경로는 allex(Gemini) 배치로 보낸다 -- system 메시지 없이
+        # GUIDANCE 가 user 본문 머리로. 이진 게이트용 SYSTEM 은 마지막 줄이
+        # "Answer with exactly one word: YES or NO." 라서 등급 문항과 같이
+        # 나가면 한 프롬프트가 서로 다른 답 형식을 요구한다. `prompts/FORMAT.md` §1.
+        messages = build_messages(pil_imgs, instruction, guidance, question, user_only=True)
         inputs = processor.apply_chat_template(
             messages, add_generation_prompt=True, tokenize=True,
             return_dict=True, return_tensors="pt",
@@ -193,7 +197,11 @@ def run_server(model_id, port, host, max_new_tokens, dtype):
         """
         labels = [chr(ord("A") + i) for i in range(n_ask)]
         ids = GRADE_IDS[:n_grade]
-        messages = build_messages(pil_imgs, instruction, guidance, question)
+        # 등급 문항 경로는 allex(Gemini) 배치로 보낸다 -- system 메시지 없이
+        # GUIDANCE 가 user 본문 머리로. 이진 게이트용 SYSTEM 은 마지막 줄이
+        # "Answer with exactly one word: YES or NO." 라서 등급 문항과 같이
+        # 나가면 한 프롬프트가 서로 다른 답 형식을 요구한다. `prompts/FORMAT.md` §1.
+        messages = build_messages(pil_imgs, instruction, guidance, question, user_only=True)
         inputs = processor.apply_chat_template(
             messages, add_generation_prompt=True, tokenize=True,
             return_dict=True, return_tensors="pt",
@@ -300,7 +308,11 @@ def run_server(model_id, port, host, max_new_tokens, dtype):
         _t_pre = time.time()
         seqs, n_in = [], []
         for it in items:
-            msg = build_messages(it["imgs"], it.get("instruction", ""), guidance, question)
+            # 등급 문항 경로는 allex(Gemini) 배치로 보낸다 -- system 메시지 없이
+            # GUIDANCE 가 user 본문 머리로. 이진 게이트용 SYSTEM 은 마지막 줄이
+            # "Answer with exactly one word: YES or NO." 라서 등급 문항과 같이
+            # 나가면 한 프롬프트가 서로 다른 답 형식을 요구한다. `prompts/FORMAT.md` §1.
+            msg = build_messages(it["imgs"], it.get("instruction", ""), guidance, question, user_only=True)
             enc = processor.apply_chat_template(
                 msg, add_generation_prompt=True, tokenize=True,
                 return_dict=True, return_tensors="pt")
@@ -397,7 +409,11 @@ def run_server(model_id, port, host, max_new_tokens, dtype):
         answer in the requested form IS the measurement, and filling it in would
         destroy exactly the number this path exists to produce.
         """
-        messages = build_messages(pil_imgs, instruction, guidance, question)
+        # 등급 문항 경로는 allex(Gemini) 배치로 보낸다 -- system 메시지 없이
+        # GUIDANCE 가 user 본문 머리로. 이진 게이트용 SYSTEM 은 마지막 줄이
+        # "Answer with exactly one word: YES or NO." 라서 등급 문항과 같이
+        # 나가면 한 프롬프트가 서로 다른 답 형식을 요구한다. `prompts/FORMAT.md` §1.
+        messages = build_messages(pil_imgs, instruction, guidance, question, user_only=True)
         # **생각 블록을 닫고 시작할 수 있게 한다.** Qwen3.5 템플릿은 기본으로
         # `<think>\n` 을 **열어 둔 채** 끝나므로, 등급표를 물어도 모델이 그 안을
         # 추론으로 채운다 -- 모델 성향이 아니라 템플릿이 시키는 것이다. 응답에

@@ -58,7 +58,12 @@ PORT = sys.argv[1]
 N = int(sys.argv[2]) if len(sys.argv) > 2 else 0          # 0 = every tile
 SHARD = int(sys.argv[3]) if len(sys.argv) > 3 else 0
 NSHARD = int(sys.argv[4]) if len(sys.argv) > 4 else 1
-from phase9_checks import ASK, GUIDANCE, NGRADE, SIGN, WEIGHT  # noqa: E402,F401
+# 어느 문항판을 쓰는지 CHECKS 로 고른다. 기본은 옛 절제실험용 phase9_checks 였고
+# 그 때문에 배포 라벨(phase9_checks_v7 계열)과 다른 문항으로 대조한 적이 있다.
+import importlib, os as _os  # noqa: E402
+_CK = importlib.import_module(_os.environ.get("CHECKS", "phase9_checks"))
+ASK, GUIDANCE, NGRADE, SIGN, WEIGHT = (
+    _CK.ASK, _CK.GUIDANCE, _CK.NGRADE, _CK.SIGN, _CK.WEIGHT)
 
 info = json.load(open(f"{DS}/meta/info.json"))
 _acts = {}

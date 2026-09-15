@@ -25,6 +25,11 @@ sys.path.insert(0, HERE)
 
 OUT = os.path.join(ROOT, "prompts")
 
+# 문구의 원본은 작업본이다(레포는 그 사본을 담는다). 라벨러 설정도 거기서 읽는다.
+SRC = os.environ.get(
+    "VLM_GATE_SRC",
+    os.path.expanduser("~/quantization_agent_workspace/vlm_gate"))
+
 # 사실 예시는 데이터셋이 있어야 만들 수 있으므로 여기에 붙여 둔다. 각 줄 옆에
 # 그것을 낸 함수를 적어 두어, 의심스러우면 직접 다시 낼 수 있게 한다.
 FACTS_EXAMPLE = {
@@ -58,6 +63,24 @@ FACTS_EXAMPLE = {
     ),
 }
 
+def _nviews(bench, fallback):
+    """라벨러 설정에서 실제 뷰 수를 읽는다.
+
+    손으로 적은 상수는 어긋난다. libero 를 3 으로 적어 두는 바람에 없는 카메라
+    두 대를 말하는 전문이 레포에 올라갔다.
+    """
+    try:
+        import importlib.util
+        sp = importlib.util.spec_from_file_location(
+            "label_chunks", f"{SRC}/scripts/label_chunks.py")
+        m = importlib.util.module_from_spec(sp)
+        sp.loader.exec_module(m)
+        return len(m.BENCHMARKS[bench]["views"])
+    except Exception:
+        return fallback
+
+
+
 BENCH = [
     # (이름, 판, 문구 출처, 부호·가중치 모듈, 설명)
     ("robocasa", "v7", ("module", "phase9_checks_v7"), "phase9_checks_v7",
@@ -66,11 +89,17 @@ BENCH = [
      # robocasa 라벨링은 그 경로를 타지 않는다 -- 여기에 6 을 적었다가 실제로
      # 나가지 않는 "Images 1-3 are NOW / 4-6 are LATER" 문구를 전문에 싣는
      # 사고가 있었다. **장수는 라벨러 코드에서 확인하고 적는다.**
-     "24 태스크 · 압축 여부 게이트", 3, "cosmos"),
+     "24 태스크 · 압축 여부 게이트", 3, "cosmos"),   # 타일 3등분 = 3장
     ("libero", "v3c",
      ("files", "analysis/_evolver/_libero/libero_guidance_v3c.txt",
       "analysis/_evolver/_libero/libero_questions_v3c.txt"),
-     "libero_v3c_checks", "40 태스크 · 압축 여부 게이트", 3, "cosmos"),
+     # **이미지 2장이다.** 여기에 3 을 적어 두었었고, 그래서 전문에
+     # "3 camera views: agentview-left, agentview-right, and a wrist" 가 실려
+     # 나갔다 -- libero 에는 그 두 이름의 카메라가 없다. 데이터셋의 비디오 키는
+     # front_view 와 left_wrist_view 둘뿐이고, label_chunks.py 의
+     # BENCHMARKS["libero"]["views"] 도 ("front", "wrist") 다. 상수를 손으로
+     # 적지 말고 _nviews() 로 라벨러 설정에서 끌어온다.
+     "libero_v3c_checks", "40 태스크 · 압축 여부 게이트", _nviews("libero", 2), "cosmos"),
     ("allex", "v4c", ("module", "allex_v4c_checks"), "allex_v4c_checks",
      "단일 배속 게이트 · 서브태스크 라벨 없이 지시문만", 2, "gemini_api"),
 ]
@@ -111,7 +140,10 @@ def assembled(name, ver, note, where, g, q, sign, weight, nm, ngrade, nviews, pa
     import numpy as np
     from PIL import Image
     imgs = [Image.fromarray(np.zeros((8, 8, 3), dtype=np.uint8)) for _ in range(nviews)]
-    msgs = VG.build_messages(imgs, "{instruction}\n{computed facts}", g, q)
+    # 라벨러의 등급 경로는 user_only 로 부른다(vlm_gate_cosmos.py 의 네 곳).
+    # 여기서 그대로 따라야 전문이 실제로 나간 글자와 같다.
+    msgs = VG.build_messages(imgs, "{instruction}\n{computed facts}", g, q,
+                             user_only=True)
     sys_text = next((m["content"][0]["text"] for m in msgs if m["role"] == "system"), "")
     usr_text = next(x["text"] for m in msgs if m["role"] == "user"
                     for x in m["content"] if x.get("type") == "text")

@@ -22,7 +22,9 @@ sys.path.insert(0, HERE)
 # (이름, 판, checks 모듈, 라벨러가 보내는 이미지 장수, 라벨러 파일)
 COSMOS = [
     ("robocasa", "v7", "phase9_checks_v7", 3, "scripts/phase9_two_sided.py"),
-    ("libero", "v3c", "libero_v3c_checks", 3, "scripts/label_chunks.py"),
+    # 2장이다. front_view 와 left_wrist_view 뿐 -- label_chunks.py 의
+    # BENCHMARKS["libero"]["views"] 도 ("front", "wrist") 다.
+    ("libero", "v3c", "libero_v3c_checks", 2, "scripts/label_chunks.py"),
 ]
 
 
@@ -48,7 +50,13 @@ def main():
         else:
             M = importlib.import_module(mod)
             g, q = M.GUIDANCE, M.ASK
-        msgs = build_messages(dummy(nviews), "INSTR\nFACTS", g, q)
+        # **자리표시를 생성기와 같은 글자로 넣는다.** 전에는 "INSTR\nFACTS" 를
+        # 넣고 전문에는 {instruction}/{computed facts} 가 있어서, 그 줄을
+        # 통째로 "없다" 고 잡았다(오탐). 아래 3)의 "{" 건너뛰기가 그 줄을
+        # 걸러 주려면 자리표시가 중괄호 그대로여야 한다.
+        msgs = build_messages(dummy(nviews),
+                              "{instruction}\n{computed facts}", g, q,
+                              user_only=True)
         sys_text = next((m["content"][0]["text"] for m in msgs if m["role"] == "system"), "")
         usr_text = next(x["text"] for m in msgs if m["role"] == "user"
                         for x in m["content"] if x.get("type") == "text")
@@ -122,7 +130,7 @@ def selftest():
     cases = [
         ("prompts/robocasa_v7_FULL.txt", "<3 images>", "<6 images>", "이미지 장수"),
         ("prompts/robocasa_v7_FULL.txt", "YES or NO", "YES or MAYBE", "SYSTEM 본문"),
-        ("prompts/libero_v3c_FULL.txt", "You are shown 3 camera views", "You are shown 9 camera views", "view_note"),
+        ("prompts/libero_v3c_FULL.txt", "You are shown 2 camera views", "You are shown 9 camera views", "view_note"),
         ("prompts/allex_v4c_FULL.txt", "PINCH_RIGID" if False else "SQUEEZING", "SQUEEZINGX", "문항 줄"),
     ]
     ok = True

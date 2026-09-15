@@ -110,6 +110,24 @@ GRADED_SYSTEM = (
     "piece of evidence, and they are combined afterwards."
 )
 
+# 최소 수정판. **틀린 줄 하나만 고친다.**
+#
+# 원래 SYSTEM 의 마지막 줄 "Answer with exactly one word: YES or NO." 는 등급 다섯 줄을
+# 요구하는 문항과 정면으로 모순된다. 점수와 무관하게 틀린 지시다. 여기서는 그 한 줄만
+# 문항에 형식을 넘기는 문장으로 바꾸고 **나머지는 글자 하나 건드리지 않는다** --
+# 국면 규칙도 그대로 남긴다.
+#
+# 두 개를 같이 걷어낸 GRADED_SYSTEM 은 robocasa 사다리 상관을 -0.512 -> -0.195 로
+# 무너뜨렸다. 그래서는 어느 변경이 원인인지 가릴 수 없다(하네스 R2: 한 번에 하나).
+_WRONG_LINE = "Answer with exactly one word: YES or NO."
+_RIGHT_LINE = ("Answer in the form the checks below ask for, and nothing else -- "
+               "each check is one piece of evidence, and they are combined afterwards.")
+assert _WRONG_LINE in SYSTEM, "SYSTEM 의 마지막 줄이 바뀌었다 -- 최소 수정판을 다시 확인하라"
+MINFIX_SYSTEM = SYSTEM.replace(_WRONG_LINE, _RIGHT_LINE)
+
+if os.environ.get("JUDGE_MINFIX_SYSTEM") == "1":
+    SYSTEM = MINFIX_SYSTEM
+
 if os.environ.get("JUDGE_GRADED_SYSTEM") == "1":
     SYSTEM = GRADED_SYSTEM
 
@@ -132,7 +150,7 @@ if os.environ.get("JUDGE_NO_SYSTEM") == "1":
     SYSTEM = ""
 
 
-def build_messages(pil_imgs, instruction, guidance="", question=""):
+def build_messages(pil_imgs, instruction, guidance="", question="", user_only=False):
     if not isinstance(pil_imgs, (list, tuple)):
         pil_imgs = [pil_imgs]
     sys_text = SYSTEM
@@ -158,12 +176,40 @@ def build_messages(pil_imgs, instruction, guidance="", question=""):
                      "the gripper, so objects normally look close in it — general "
                      "closeness is normal. Use the wrist view only to spot the actual "
                      "grasp-closure or fine-insertion instant.")
+    elif len(pil_imgs) == 2:
+        # **libero 와 dexjoco 는 카메라가 2대다.** 전에는 여기가 "the current camera
+        # view(s)" 였고, 한편 libero 전문에는 3대(agentview-left/right/wrist)라고
+        # 적혀 있었다 -- libero 에는 그 두 이름의 카메라가 없다(front_view,
+        # left_wrist_view 뿐). 있는 것만 말한다.
+        view_note = ("You are shown 2 camera views of this one moment: a scene view "
+                     "and a wrist (eye-in-hand) close-up. The wrist camera is mounted "
+                     "on the gripper, so objects normally look close in it -- general "
+                     "closeness is normal. Use the wrist view only to spot the actual "
+                     "grasp-closure or fine-insertion instant.")
     else:
         view_note = "You are shown the current camera view(s)."
     user_content = [{"type": "image", "image": im} for im in pil_imgs]
     tail_q = question.strip() if question else (
         "Can the next ~1 second of motion be compressed (run at half rate)? "
         "Answer YES (compress) or NO (needs precise full-rate control).")
+
+    if user_only:
+        # **allex(Gemini) 배치.** system 메시지를 쓰지 않고 GUIDANCE 가 user 본문의
+        # 머리로 들어간다. 이진 게이트용 SYSTEM 을 등급 문항과 같이 보내면 한
+        # 프롬프트가 서로 다른 답 형식을 요구하고, 그 SYSTEM 이 "reaching/carrying
+        # = YES, closing the gripper = NO" 라는 답 매핑을 미리 준다. 자세한 규격은
+        # `prompts/FORMAT.md`.
+        #
+        # 호출부는 지시문과 계산 사실을 `f"{instr}\n{facts}"` 로 붙여 넘긴다
+        # (phase9_two_sided.py, label_chunks.py). allex 처럼 두 자리로 떼어 놓기
+        # 위해 첫 줄까지를 지시문으로 본다 -- 시그니처를 네 층 고치는 대신.
+        instr, _, facts = str(instruction).partition("\n")
+        parts = [guidance.strip(), view_note,
+                 f"The robot was told: {instr.strip()}", facts.strip(), tail_q]
+        user_content.append({"type": "text",
+                             "text": "\n\n".join(x for x in parts if x)})
+        return [{"role": "user", "content": user_content}]
+
     user_content.append({"type": "text", "text": (
         f"Task: {instruction}\n{view_note}\n" + tail_q)})
     msgs = []

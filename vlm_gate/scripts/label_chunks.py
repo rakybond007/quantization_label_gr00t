@@ -100,6 +100,29 @@ def pick_views(info, wanted):
     return out
 
 
+def dump_prompt(path, guidance, ask, nviews):
+    """나간 전문을 그대로 남긴다.
+
+    이게 없으면 어떤 프롬프트로 만든 라벨인지 나중에 복구할 수 없다. 실제로 그런
+    일이 있었다 -- 09-05 의 204만 robocasa 라벨이 어느 문항으로 만들어졌는지 알 수
+    없고, 레포에 올라간 "v7 전문" 은 그 라벨보다 10일 뒤에 만든 판이다. 문항 파일
+    경로만 적어 두는 것으로는 부족하다; 파일은 그 뒤로 바뀐다.
+
+    장수는 실제로 여는 뷰 수에서 끌어온다. 상수로 적으면 어긋난다 -- 전문 생성기가
+    libero 를 3장으로 적어 두었는데 libero 는 카메라가 front_view 와
+    left_wrist_view 두 대뿐이었다.
+    """
+    from vlm_gate import build_messages
+    msgs = build_messages([Image.new("RGB", (8, 8))] * nviews,
+                          "{instruction}\n{computed facts}", guidance, ask,
+                          user_only=True)
+    body = "\n".join(c["text"] for m in msgs for c in m["content"]
+                     if c["type"] == "text")
+    roles = " + ".join(m["role"] for m in msgs)
+    with open(path, "w") as fh:
+        fh.write(f"# roles: {roles}\n[USER]\n<{nviews} images>\n{body}\n")
+
+
 def read_questions(cfg):
     if cfg["questions"]:
         return open(cfg["questions"]).read().strip()
@@ -141,6 +164,8 @@ def main():
     guidance = open(cfg["guidance"]).read().strip()
     ask = read_questions(cfg)
     slots = count_slots(ask)
+    dump_prompt(out_path.replace(".jsonl", "_PROMPT.txt"), guidance, ask,
+                len(cfg["views"]))
     print(f"[label] {bench} shard{shard}/{nsh} stride={stride} "
           f"질문 {len(slots)}개({slots}) -> {os.path.basename(out_path)}", flush=True)
 

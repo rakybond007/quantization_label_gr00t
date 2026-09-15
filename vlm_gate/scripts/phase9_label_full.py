@@ -128,6 +128,23 @@ if os.path.exists(FP):
             continue
         done.add((r["ep"], r["f"]))
 
+# **조립된 전문을 그대로 남긴다.** 이게 없으면 나중에 어떤 프롬프트로 만든 라벨인지
+# 복구할 수 없다. 실제로 그런 일이 있었다: 09-05 의 204만 robocasa 라벨이 어느 문항
+# 으로 만들어졌는지 알 수 없고, 레포에 올라간 "v7 전문" 은 그 라벨보다 10일 뒤에
+# 만든 판이다. 모듈 경로를 적어 두는 것으로는 부족하다 -- 파일은 그 뒤로 바뀐다.
+# 나간 글자를 남겨야 한다. 장수는 `VK`(실제로 여는 비디오 키) 에서 끌어온다;
+# 상수로 적으면 어긋난다(생성기가 libero 를 3장으로 적어 두었던 것이 그 예다).
+def _dump_prompt(path, guidance, ask, nviews):
+    from PIL import Image as _I
+    from vlm_gate import build_messages as _bm
+    msgs = _bm([_I.new("RGB", (8, 8))] * nviews,
+               "{instruction}\n{computed facts}", guidance, ask, user_only=True)
+    body = "\n".join(c["text"] for m in msgs for c in m["content"]
+                     if c["type"] == "text")
+    roles = " + ".join(m["role"] for m in msgs)
+    open(path, "w").write(f"# roles: {roles}\n[USER]\n<{nviews} images>\n{body}\n")
+
+
 gate = VLMGate(f"http://127.0.0.1:{PORT}", timeout=300)
 
 json.dump({"batch": BATCH, "shard": SHARD, "nshard": NSHARD, "decode_block": BLOCK,
@@ -136,6 +153,9 @@ json.dump({"batch": BATCH, "shard": SHARD, "nshard": NSHARD, "decode_block": BLO
                    "batch to reproduce this file"},
           open(f"{OUT}/meta_{'r' if REVERSE else 'w'}{SHARD}.json" if WORKLIST else
                f"{OUT}/meta_s{NSHARD}_{SHARD}.json", "w"))
+_dump_prompt(f"{OUT}/PROMPT_"
+             + (f"{'r' if REVERSE else 'w'}{SHARD}" if WORKLIST
+                else f"s{NSHARD}_{SHARD}") + ".txt", GUIDANCE, ASK, len(VK))
 fh = open(FP, "a")
 nlab = nfull = nempty = 0
 for ei, ep in enumerate(eps):
