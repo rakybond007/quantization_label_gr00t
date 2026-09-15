@@ -55,15 +55,110 @@ A grade refers only to the check on that line.
 
 ## 3. 계산 사실
 
-- **액션에서 계산한 사실만.** 추정·형용사가 아니라 측정값이다.
+- **액션에서 계산한 사실만.** 화면을 보고 짐작한 것이 아니라 계획된 액션에서 나온
+  값이다. 다만 판정기에게 건네는 형태는 아래 `문장으로 바꿀 때` 를 따른다 --
+  상태는 말로, 압축 요구만 숫자로.
 - **줄 수를 고정한다.** 조건부로 문장이 붙었다 빠지면 프롬프트 길이가 프레임마다
   달라지고, 배치 패딩이 `mm_token_type_ids` 를 어긋나게 해서 배치 8 에서 32개 중
   17개가 빈 답으로 돌아온 적이 있다.
 - **한계 위반이 아니라 녹화 분포 대비로 말한다.** "이 값은 한계를 넘는다" 가 아니라
-  "이 데이터셋 순간들의 70% 보다 빠르다". 데이터셋에 없는 값이 로봇의 한계를 뜻하지
-  않는다.
+  "이 녹화본 대부분보다 크다". 데이터셋에 없는 값이 로봇의 한계를 뜻하지 않고, 시연
+  범위를 넘는 것 자체가 감점 사유가 아니다.
 - ASK 첫 줄에 `The measurements above are stated as fact -- do not re-estimate or
   repeat them.` 을 둔다.
+
+### 무엇을 계산하나 (네 벤치마크가 쓰는 뼈대)
+
+계산 사실이 있는 이유: **압축 요구는 픽셀에 안 보인다.** 두 프레임은 궤적이 어디로
+갈 계획인지 말해주지 않는데, K 배로 합칠 때 컨트롤러가 받을 점프는 계획된 액션에만
+있다. 속도·방향도 정지 프레임에서 "운반 중" 과 "내려놓는 중" 을 못 가른다.
+
+**단, 계산 사실 칸에 지시문을 넣지 말 것.** allex 에서 넣어봤더니 모델이 화면 대신
+지시문을 보고 답해서 한 태스크 안 청크들이 한 값으로 뭉쳤다 (Rotate Box 77청크가
+같은 값, 칸 내 분산 0.112 -> 0.049, rho +0.525 -> +0.491). 그래서 `facts_v3(x)` 는
+`task` 를 넘기지 않는다 -- 버그가 아니라 측정으로 정한 것이다. 지시문은 `ASK` 앞의
+`The robot was told:` 줄로만 한 번 들어간다.
+
+구현: `robocasa_descriptors.py` · `allex_v2_common.py` · `libero_descriptors.py` ·
+`dexjoco_descriptors.py` 의 `descriptors()`. 모두 **계획된 액션**(실행 결과가 아니라
+컨트롤러에 나갈 값)에서 청크 창 하나를 보고 낸다.
+
+| 무리 | 무엇 | 어디서 쓰나 |
+|---|---|---|
+| 잡음/놓음 | `grip_change` `grip_close` `grip_open` `grip_at` `gripper_closed` | robocasa · libero |
+| (다지손) | `hand_change` `hand_active_frac` `hand_speed_mean/max` `hand_trend` | dexjoco · allex |
+| 속도 | `speed_mean` `speed_max` `speed_pct`(분포 내 분위) `rot_speed_mean/max` | 전부 |
+| 방향 | `reversal`(방향 급반전) `decel`(멈춤으로 감속) `up`/`down`/`turn` | 전부 |
+| 하중 | `closed_slow`(무언가 든 채 기어감) `held` | 전부 |
+| **압축 요구** | `merge_demand_kK` / `merged_pos_max` `merged_rot_max` `merged_hand_max` / `skip_excess` | 전부 |
+
+**압축 요구가 핵심 양이다.** 배율 K 로 합칠 때 컨트롤러가 **한 제어 틱에** 요구받는
+변위다. 청크마다 다르고 계획된 액션에서 바로 나온다 -- 국면 구성으로 역산하는 길은
+막혀 있다(태스크마다 국면 구성이 거의 같아 설계행렬 조건수 1158).
+
+**식은 액션 공간이 정한다. 재는 물리량은 같다.**
+
+| 액션 공간 | 식 | 구현 |
+|---|---|---|
+| 절대 타깃 | `max ‖a[i+K] − a[i]‖` (블록의 마지막만 남음) | allex `md(K)`, dexjoco `_merged_*` |
+| 상대/델타 | `Σ` K 개 델타 | robocasa `w[0:-1:2] + w[1::2]` |
+
+allex·dexjoco 는 절대 관절 타깃이라 블록-라스트가 곧 병합이다(로봇은 같은 자세에
+도달하되 K 틱이 아니라 1 틱에). robocasa·libero 는 델타라 더한다. dexjoco 가 이름을
+`skip_excess` 라 붙였지만 재는 것은 **병합 점프**다 -- 이름에 속지 말 것.
+`dexjoco_descriptors.py` 머리주석이 그 이유를 적어 두었다.
+
+함정 둘:
+- **회전은 측지거리로.** rotvec 을 그냥 빼면 안 된다. `(r[:-1].inv() * r[1:]).as_rotvec()`
+  (`_rotvec_step_angles`). dexjoco 는 손목 6D 회전이 있어 반드시 걸린다.
+- **다지손엔 이진 그리퍼 차원이 없다.** robocasa 의 `grip_change` 류가 성립하지 않는다.
+  16-DoF 손은 연속이라 파지/해제를 **손관절 운동량**으로 잡는다
+  (`hand_change` `hand_active_frac` `hand_trend`).
+
+**한계 위반으로 쓰지 말 것.** v2 에서 "시연에 없던 크기" 라고 적었다가 **뺐다.**
+우리 목적은 느린 시연보다 빨리 움직이는 것이고, 시연 범위를 넘는 것 자체는 감점
+사유가 아니다 -- 시뮬에서 clip 을 푸는 것과 같은 이치다. `MERGE_LIMIT_V2`(0.385 rad)
+· `CLIP`(1.0) · `JUMP_LIMIT_*` 는 **디스크립터 내부 신호**로만 쓰고, 판정기에게는
+좋다/나쁘다 대신 **다른 순간들에 비해 큰가 작은가**만 말한다.
+
+### 문장으로 바꿀 때 (`allex_facts.py` 가 기준이다)
+
+**상태는 말로, 압축 요구만 숫자와 함께.**
+
+```
+상태      문턱값으로 3단 나눠 말로만 준다. 날숫자를 안 준다.
+          "the arms are moving fast" / "the fingers are shifting a little"
+          "the palms are close in, and drawing together"
+          -- 날숫자를 넘기면 해석이 판정기 몫이 된다. 문턱값이 이미 분포에서
+             나온 것이라 말 자체가 분포를 담고 있다.
+
+압축 요구  숫자 + 분위대. 이것만 숫자를 준다.
+          "at 2x this stretch would move 0.128 rad in one step, larger than most"
+          "at 3x 0.171 rad, much larger than most moments in this recording"
+```
+
+분위대 5단(`much smaller than most` / `smaller than most` / `about average` /
+`larger than most` / `much larger than most moments in this recording`)의 경계는
+**그 데이터셋 전체에서 뽑는다.** allex 는 9,179 청크에서 k2 p20 .059 · p40 .084 ·
+p60 .116 · p80 .173, k3 는 .079/.114/.156/.234. 새 벤치마크는 자기 분포로 다시 낸다.
+
+**사실 문장을 늘리면 모든 문항의 답이 바뀐다.** allex 에서 돌림/유지를 가르려고
+`speed_ratio`·`rot_asym` 두 문장을 넣어봤다. 신호는 있었는데(순간 정답지 84청크에서
+AUC 0.320·0.343) 판정기가 쓰지 못했다:
+
+| 판정기 | A 물고vs접근 | A 돌림vs유지 | 답이 바뀐 비율 |
+|---|---|---|---|
+| sonnet | 0.774 -> 0.762 | 0.500 -> 0.500 | A 1% B 1% C 24% D 5% |
+| gemini | 0.834 -> **0.691** | 0.575 -> 0.527 | A 46% B 36% C 51% D 46% |
+
+노린 것은 안 오르고 본래 표적이 떨어졌다. **사실 두 문장이 네 문항을 다 흔든다** --
+R2 간섭은 문항끼리만의 문제가 아니다. 그래서 두 문장은 뺐다.
+
+**신호가 있는데 판정기가 못 쓰면 문장으로 주지 말고 계산으로 직접 쓴다** (conf 에
+곱하거나 배속을 직접 조정). 문항을 늘리는 것도 같은 이유로 권하지 않는다 -- 화면에서
+못 읽는 것을 물으면 답이 안 나온다.
+
+숫자는 고정 폭(`%.3f`)으로, 문장 수는 조건과 무관하게 항상 같게.
 
 ## 4. 문항
 
