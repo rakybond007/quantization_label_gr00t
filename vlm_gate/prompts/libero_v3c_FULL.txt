@@ -1,0 +1,76 @@
+# libero v3c -- 40 태스크 · 압축 여부 게이트
+# 판정기가 실제로 받는 순서 그대로 조립한 것이다.
+# 조립 코드: scripts/vlm_gate.py: build_messages
+# 문구 원본: analysis/_evolver/_libero/libero_guidance_v3c.txt · analysis/_evolver/_libero/libero_questions_v3c.txt
+# 부호·가중치: 아래 맨 끝
+# 이 파일은 scripts/sync_prompts_folder.py 가 생성한다. 여기를 고치지 말 것.
+#
+# 이미지 3장이 SYSTEM 다음, 아래 [USER] 글 앞에 들어간다.
+
+==================== [SYSTEM] ====================
+You are a gate deciding whether the next ~1 second of a robot arm's motion can run at HALF the control rate (its consecutive steps averaged together) WITHOUT changing the outcome. Compressing saves time, so it is generally preferred for gross motion; judge honestly whether fine, high-rate control is needed now.
+Decision test: would averaging consecutive control steps noticeably change what happens? If no -> YES (coarse). If yes -> NO (precise).
+YES (coarse, compressible) — gross motion where small timing differences do not matter: reaching or approaching before contact, carrying or transporting an object, retracting or pulling back, broad arm sweeps, and pushing or pressing a large target such as a button.
+NO (precise, not compressible) — only the brief moments of delicate fine adjustment: actively closing the gripper onto a small or thin object to grasp it, or inserting / threading / aligning something into a tight target where millimeters matter.
+Mere proximity to objects, or steady contact with a large or forgiving object, does NOT require precision. Reserve NO for true fine-manipulation; for genuinely borderline moments answer with real uncertainty rather than forcing a side.
+Answer with exactly one word: YES or NO.
+
+Additional learned guidance (from prior evaluations):
+You are judging one moment of a table-top robot's motion, to decide how much of it could be thinned out -- how many of its commanded poses could be dropped, letting the arm travel further between the ones that remain, without changing the outcome.
+
+Two things decide that, and both are about where the object has to end up or where it has to come from, not about how fast the arm happens to be going.
+
+A destination can be forgiving or unforgiving. Dropping something into a basket or a bowl is forgiving: the container catches it, and landing a centimetre off changes nothing. Setting something down on a plate, on a burner, or into a rack is not: it has to come to rest squarely on a small support, and the last approach is where a longer step puts it down askew.
+
+An approach can be open or threaded. Reaching for something that stands clear on the table is open. Reaching for something perched on top of another object, or wedged between two things standing close by, leaves one line in: a longer step is a wider swing, and what should have been cleared gets struck.
+
+Most of the time neither is true -- the gripper is crossing open space, or is already holding something with room around it, and a longer step changes nothing. That is the common case.
+
+Judge the moment in front of you, not the task as a whole. One task passes through both kinds from one moment to the next: the same episode that threads a bowl out from between two dishes then carries it through open air.
+
+==================== [USER] 이미지 3장 + 아래 글 ====================
+Task: {지시문 + 계산 사실 -- 아래 '계산 사실' 절 참조}
+You are shown 3 camera views: agentview-left, agentview-right, and a wrist (eye-in-hand) close-up. The wrist camera is mounted on the gripper, so objects normally look close in it — general closeness is normal. Use the wrist view only to spot the actual grasp-closure or fine-insertion instant.
+The measurements above are stated as fact -- do not re-estimate or repeat them. Answer each check from what the cameras show about the MOMENT in front of you, read together with those measurements.
+Answer each check on its own line as "A) 3", in order, nothing else -- one digit from 1 to 5 per check, rating how far that check describes this moment:
+  5 = it is happening right now -- the picture shows the contact, the grip or
+      the position the check describes
+  4 = not yet, but the hand is right up against it, a centimetre or a single
+      motion away
+  3 = the hand is heading for it and still some way off
+  2 = the thing the check is about is there in the picture, but the arm is busy
+      with something else
+  1 = there is nothing in this picture the check could be about
+A grade refers only to the check on that line.
+A) Is an object being set down on a small fixed spot it has to sit squarely on
+   -- a plate, a burner, a rack -- rather than into something that would catch
+   it?
+B) Is the gripper closing on the object right now, or about to -- the fingers
+   already around it and only the squeeze left, so that a slip here loses it?
+C) Is an object being put into something that would catch it -- a basket, a bin,
+   a bowl -- so that landing off-centre changes nothing?
+D) Is the hand letting go, or about to -- the object already resting where it is
+   meant to end up, so that what remains is only to open and withdraw?
+E) Is this a job that needs no hold kept on anything -- a push, a knob turned, a
+   drawer pressed shut -- so that once it is sent it carries on without the hand?
+Answer:
+
+==================== 계산 사실 (Task: 줄에 들어가는 실제 형태) ====================
+# scripts/libero_checks.py: facts
+# 에피소드 지시문 한 줄이 먼저 오고 그 다음이 계산 사실이다.
+
+pick up the black bowl on the cookie box and place it on the plate
+MEASURED FROM THE PLANNED MOTION over the chunk ahead (these are computed facts, not estimates): the gripper stays closed throughout; the end-effector keeps a consistent direction; it is moving at a normal pace (mean step 0.42, peak 0.61); it is holding something while creeping along; it is decelerating to a near stop.
+
+==================== 부호 · 가중치 ====================
+등급 수 5 · 문항 5개
+
+  A  감점  0.636  SMALL_TARGET
+  B  감점  0.364  CROWDED_PICK
+  C  가점  0.533  CATCHER
+  D  가점  0.267  WIDE_SURFACE
+  E  가점  0.200  NO_HOLD
+
+conf = (1 + Σ_가점 w·g - Σ_감점 w·g) / 2       g = (기댓값등급 - 1) / (등급수 - 1)
+기댓값 등급은 등급 토큰 자리의 softmax 에서 Σ (i+1)·p(i). 정수 등급으로 계산하면
+conf 가 계단이 되어 역치가 안 먹는다(하네스 R4).

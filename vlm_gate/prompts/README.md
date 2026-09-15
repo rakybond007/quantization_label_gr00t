@@ -13,18 +13,39 @@
 | libero | v3c | `analysis/_evolver/_libero/libero_guidance_v3c.txt · analysis/_evolver/_libero/libero_questions_v3c.txt` | `053844846ac9` | `697bf64ffaca` | `scripts/libero_v3c_checks.py` |
 | allex | v4c | `scripts/allex_v4c_checks.py 의 GUIDANCE / ASK` | `733d71476881` | `6fc571516e1d` | `scripts/allex_v4c_checks.py` |
 
-## 파일
-
-벤치마크마다 네 개다.
+## 먼저 이것만 열면 된다
 
 ```
-<벤치>_<판>_guidance.txt        무엇을 판단하는 일인지
-<벤치>_<판>_questions.txt       등급 척도와 문항
+robocasa_v7_FULL.txt      <- 판정기가 실제로 받는 전문, 순서 그대로
+libero_v3c_FULL.txt
+allex_v4c_FULL.txt
+```
+
+조립이 단순히 사실+GUIDANCE+QUESTION 이 아니다. `scripts/vlm_gate.py:
+build_messages` 가 이렇게 만든다:
+
+```
+[SYSTEM]  SYSTEM 상수
+          + "Additional learned guidance (from prior evaluations):" + GUIDANCE
+[USER]    이미지 N장
+          + "Task: " + 에피소드 지시문 + 계산 사실
+          + view_note  (이미지 개수로 갈린다: 6장 / 3장 / 그 외)
+          + QUESTION
+```
+
+**SYSTEM 과 view_note 를 빼고 보면 프롬프트를 잘못 읽는다.** SYSTEM 이 과제
+자체를 규정하고(YES/NO 압축 가능성), view_note 가 이미지 배치를 설명한다.
+합친본은 둘을 포함하고, 아래 조각 파일들은 포함하지 않는다.
+
+## 조각 파일 (원본과 1:1 로 대조할 때)
+
+```
+<벤치>_<판>_guidance.txt        GUIDANCE 만
+<벤치>_<판>_questions.txt       QUESTION 만 (등급 척도 + 문항)
 <벤치>_<판>_facts_example.txt   계산 사실이 실제로 나간 형태
 <벤치>_<판>_sign_weight.txt     문항별 부호와 가중치
 ```
 
-프롬프트는 **계산 사실 + GUIDANCE + QUESTION** 세 덩이로 조립된다.
 계산 사실은 프롬프트의 일부다 -- 빼고 물으면 다른 질문이 된다.
 
 ## 최종이 아닌 파일들 (역사·다른 실험)

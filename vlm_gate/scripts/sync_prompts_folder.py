@@ -69,13 +69,13 @@ FACTS_EXAMPLE = {
 BENCH = [
     # (이름, 판, 문구 출처, 부호·가중치 모듈, 설명)
     ("robocasa", "v7", ("module", "phase9_checks_v7"), "phase9_checks_v7",
-     "24 태스크 · 압축 여부 게이트"),
+     "24 태스크 · 압축 여부 게이트", 6),
     ("libero", "v3c",
      ("files", "analysis/_evolver/_libero/libero_guidance_v3c.txt",
       "analysis/_evolver/_libero/libero_questions_v3c.txt"),
-     "libero_v3c_checks", "40 태스크 · 압축 여부 게이트"),
+     "libero_v3c_checks", "40 태스크 · 압축 여부 게이트", 3),
     ("allex", "v4c", ("module", "allex_v4c_checks"), "allex_v4c_checks",
-     "단일 배속 게이트 · 서브태스크 라벨 없이 지시문만"),
+     "단일 배속 게이트 · 서브태스크 라벨 없이 지시문만", 2),
 ]
 
 
@@ -92,9 +92,67 @@ def read_source(src):
     return g, q
 
 
+def assembled(name, ver, note, where, g, q, sign, weight, nm, ngrade, nviews):
+    """판정기가 실제로 받는 순서 그대로 한 파일에 담는다.
+
+    조립은 `scripts/vlm_gate.py: build_messages` 가 한다. 단순히
+    사실+GUIDANCE+QUESTION 이 아니다 -- SYSTEM 이 먼저 있고, GUIDANCE 는 그 뒤에
+    "Additional learned guidance" 로 붙고, 이미지 개수에 따라 view_note 가 또 붙고,
+    사용자 쪽은 "Task: {지시문+사실}" + view_note + QUESTION 순서다. 쪼개 놓으면
+    이 순서가 안 보여서, 합친본을 이 폴더의 대표 파일로 둔다.
+    """
+    import vlm_gate as VG
+    sys_text = VG.SYSTEM
+    if g:
+        sys_text = (VG.SYSTEM + "\n\nAdditional learned guidance (from prior "
+                    "evaluations):\n" + g.strip())
+    # view_note 는 이미지 개수로 갈린다. build_messages 의 분기를 그대로 읽어 온다.
+    import re as _re
+    src = open(os.path.join(HERE, "vlm_gate.py")).read()
+    body = src[src.index("def build_messages"):src.index("def parse_decision")]
+    notes = _re.findall(r'view_note = \(?\s*("(?:[^"\\]|\\.)*"(?:\s*"(?:[^"\\]|\\.)*")*)\)?',
+                        body)
+    def lit(x):
+        return "".join(_re.findall(r'"((?:[^"\\]|\\.)*)"', x)).replace('\\n', '\n')
+    view_note = lit(notes[0 if nviews == 6 else (1 if nviews >= 3 else 2)]) if notes else "?"
+
+    tbl = "\n".join(
+        f"  {k}  {'감점' if sign[k] < 0 else '가점'}  {weight.get(k, float('nan')):.3f}"
+        f"  {nm.get(k, '')}" for k in sorted(sign))
+    return f"""# {name} {ver} -- {note}
+# 판정기가 실제로 받는 순서 그대로 조립한 것이다.
+# 조립 코드: scripts/vlm_gate.py: build_messages
+# 문구 원본: {where}
+# 부호·가중치: 아래 맨 끝
+# 이 파일은 scripts/sync_prompts_folder.py 가 생성한다. 여기를 고치지 말 것.
+#
+# 이미지 {nviews}장이 SYSTEM 다음, 아래 [USER] 글 앞에 들어간다.
+
+==================== [SYSTEM] ====================
+{sys_text}
+
+==================== [USER] 이미지 {nviews}장 + 아래 글 ====================
+Task: {{지시문 + 계산 사실 -- 아래 '계산 사실' 절 참조}}
+{view_note}
+{q}
+
+==================== 계산 사실 (Task: 줄에 들어가는 실제 형태) ====================
+{FACTS_EXAMPLE[name].rstrip()}
+
+==================== 부호 · 가중치 ====================
+등급 수 {ngrade} · 문항 {len(sign)}개
+
+{tbl}
+
+conf = (1 + Σ_가점 w·g - Σ_감점 w·g) / 2       g = (기댓값등급 - 1) / (등급수 - 1)
+기댓값 등급은 등급 토큰 자리의 softmax 에서 Σ (i+1)·p(i). 정수 등급으로 계산하면
+conf 가 계단이 되어 역치가 안 먹는다(하네스 R4).
+"""
+
+
 def build():
     files, rows = {}, []
-    for name, ver, src, wmod, note in BENCH:
+    for name, ver, src, wmod, note, nviews in BENCH:
         g, q = read_source(src)
         M = importlib.import_module(wmod)
         sign, weight = getattr(M, "SIGN", {}), getattr(M, "WEIGHT", {})
@@ -105,6 +163,9 @@ def build():
                 f"# 권위 있는 원본: {where}\n"
                 f"# 이 파일은 scripts/sync_prompts_folder.py 가 생성한 사본이다. "
                 f"여기를 고치지 말 것.\n\n")
+        files[f"{name}_{ver}_FULL.txt"] = assembled(
+            name, ver, note, where, g, q, sign, weight, nm,
+            getattr(M, "NGRADE", "?"), nviews)
         files[f"{name}_{ver}_guidance.txt"] = head + g + "\n"
         files[f"{name}_{ver}_questions.txt"] = head + q + "\n"
         files[f"{name}_{ver}_facts_example.txt"] = FACTS_EXAMPLE[name]
@@ -128,15 +189,32 @@ def readme(rows):
            "|---|---|---|---|---|---|"]
     for name, ver, where, gs, qs, wmod in rows:
         out.append(f"| {name} | {ver} | `{where}` | `{gs}` | `{qs}` | `scripts/{wmod}.py` |")
-    out += ["", "## 파일", "",
-            "벤치마크마다 네 개다.", "",
+    out += ["", "## 먼저 이것만 열면 된다", "",
             "```",
-            "<벤치>_<판>_guidance.txt        무엇을 판단하는 일인지",
-            "<벤치>_<판>_questions.txt       등급 척도와 문항",
+            "robocasa_v7_FULL.txt      <- 판정기가 실제로 받는 전문, 순서 그대로",
+            "libero_v3c_FULL.txt",
+            "allex_v4c_FULL.txt",
+            "```", "",
+            "조립이 단순히 사실+GUIDANCE+QUESTION 이 아니다. `scripts/vlm_gate.py:",
+            "build_messages` 가 이렇게 만든다:", "",
+            "```",
+            "[SYSTEM]  SYSTEM 상수",
+            "          + \"Additional learned guidance (from prior evaluations):\" + GUIDANCE",
+            "[USER]    이미지 N장",
+            "          + \"Task: \" + 에피소드 지시문 + 계산 사실",
+            "          + view_note  (이미지 개수로 갈린다: 6장 / 3장 / 그 외)",
+            "          + QUESTION",
+            "```", "",
+            "**SYSTEM 과 view_note 를 빼고 보면 프롬프트를 잘못 읽는다.** SYSTEM 이 과제",
+            "자체를 규정하고(YES/NO 압축 가능성), view_note 가 이미지 배치를 설명한다.",
+            "합친본은 둘을 포함하고, 아래 조각 파일들은 포함하지 않는다.", "",
+            "## 조각 파일 (원본과 1:1 로 대조할 때)", "",
+            "```",
+            "<벤치>_<판>_guidance.txt        GUIDANCE 만",
+            "<벤치>_<판>_questions.txt       QUESTION 만 (등급 척도 + 문항)",
             "<벤치>_<판>_facts_example.txt   계산 사실이 실제로 나간 형태",
             "<벤치>_<판>_sign_weight.txt     문항별 부호와 가중치",
             "```", "",
-            "프롬프트는 **계산 사실 + GUIDANCE + QUESTION** 세 덩이로 조립된다.",
             "계산 사실은 프롬프트의 일부다 -- 빼고 물으면 다른 질문이 된다.", "",
             "## 최종이 아닌 파일들 (역사·다른 실험)", "",
             "이 폴더에 먼저 있던 파일들이다. **어느 것도 최종 라벨링 프롬프트가 아니다.**",

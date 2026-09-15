@@ -1,0 +1,68 @@
+# allex v4c -- 단일 배속 게이트 · 서브태스크 라벨 없이 지시문만
+# 판정기가 실제로 받는 순서 그대로 조립한 것이다.
+# 조립 코드: scripts/vlm_gate.py: build_messages
+# 문구 원본: scripts/allex_v4c_checks.py 의 GUIDANCE / ASK
+# 부호·가중치: 아래 맨 끝
+# 이 파일은 scripts/sync_prompts_folder.py 가 생성한다. 여기를 고치지 말 것.
+#
+# 이미지 2장이 SYSTEM 다음, 아래 [USER] 글 앞에 들어간다.
+
+==================== [SYSTEM] ====================
+You are a gate deciding whether the next ~1 second of a robot arm's motion can run at HALF the control rate (its consecutive steps averaged together) WITHOUT changing the outcome. Compressing saves time, so it is generally preferred for gross motion; judge honestly whether fine, high-rate control is needed now.
+Decision test: would averaging consecutive control steps noticeably change what happens? If no -> YES (coarse). If yes -> NO (precise).
+YES (coarse, compressible) — gross motion where small timing differences do not matter: reaching or approaching before contact, carrying or transporting an object, retracting or pulling back, broad arm sweeps, and pushing or pressing a large target such as a button.
+NO (precise, not compressible) — only the brief moments of delicate fine adjustment: actively closing the gripper onto a small or thin object to grasp it, or inserting / threading / aligning something into a tight target where millimeters matter.
+Mere proximity to objects, or steady contact with a large or forgiving object, does NOT require precision. Reserve NO for true fine-manipulation; for genuinely borderline moments answer with real uncertainty rather than forcing a side.
+Answer with exactly one word: YES or NO.
+
+Additional learned guidance (from prior evaluations):
+You are judging one instant of a two-armed robot with hands, to decide how much of the next stretch of its motion could be thinned out -- how many of its commanded poses could be dropped, letting the arms travel further between the ones that remain, without changing the outcome.
+
+What thinning takes away is the arms' chance to correct on the way, and there are two ways that loses the object. One is a hold that exists only as a balance: the thing is trapped between two hands and nothing is closed around it, so the hold IS the push of one hand against the other. If that thing is stiff it cannot give, and a coarser swing changes the balance and drops it. Something soft squashes and stays pinched.
+
+The other is a load that does not hold its own shape. A bag or a sagging thing hangs, swings and shifts while it is carried, and the further the arms travel between commanded poses the further it swings.
+
+Most moments are neither. Sliding something across to the other side, pushing something that is still resting on a surface, or moving with nothing in the hands -- a longer step changes nothing.
+
+Judge the moment in front of you, not the name of the job. One segment passes through several of these from one second to the next.
+
+==================== [USER] 이미지 2장 + 아래 글 ====================
+Task: {지시문 + 계산 사실 -- 아래 '계산 사실' 절 참조}
+You are shown the current camera view(s).
+The measurements above are stated as fact -- do not re-estimate or repeat them. Answer each check from what the cameras show about the MOMENT in front of you, read together with those measurements.
+Answer each check on its own line as "A) 3", in order, nothing else -- one digit from 1 to 5 per check, rating how far that check describes this moment:
+  5 = clearly true of this moment
+  4 = mostly true
+  3 = partly true
+  2 = barely true
+  1 = not true at all
+A grade refers only to the check on that line.
+A) Are the two hands SQUEEZING something between them to hold it, and is that
+   thing HARD -- a box, a carton, something that will not squash?
+B) Is the item a POUCH OR PACKET -- a soft mailer, a padded envelope, a
+   plastic parcel -- rather than a rigid carton with square sides?
+C) Is the thing only being SENT ACROSS -- slid or passed over to the other side,
+   or shoved on its way -- with no particular spot it has to come to rest on?
+D) Are the hands ON THEIR WAY -- reaching out towards something, or drawing back
+   from what they have finished, carrying nothing between them?
+Answer:
+
+==================== 계산 사실 (Task: 줄에 들어가는 실제 형태) ====================
+# scripts/allex_facts.py: facts(descriptors(A, WR, WL, f, 16))
+# 압축 요구는 한계 위반이 아니라 녹화 분포 대비로 말한다 -- 데이터셋에 없는 값이
+# 로봇의 한계를 뜻하지는 않기 때문이다.
+
+The robot was told: Bring the package over, orient barcode up, then place it on the conveyor.
+(계산 사실은 청크마다 다르다. allex_facts.py 를 직접 호출해 확인할 것.)
+
+==================== 부호 · 가중치 ====================
+등급 수 5 · 문항 4개
+
+  A  감점  0.700  PINCH_RIGID
+  B  감점  0.300  POUCH
+  C  가점  0.800  FREE_END
+  D  가점  0.200  IN_TRANSIT
+
+conf = (1 + Σ_가점 w·g - Σ_감점 w·g) / 2       g = (기댓값등급 - 1) / (등급수 - 1)
+기댓값 등급은 등급 토큰 자리의 softmax 에서 Σ (i+1)·p(i). 정수 등급으로 계산하면
+conf 가 계단이 되어 역치가 안 먹는다(하네스 R4).

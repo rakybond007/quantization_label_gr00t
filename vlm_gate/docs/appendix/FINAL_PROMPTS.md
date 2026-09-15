@@ -17,6 +17,17 @@ libero 의 `libero_v2_checks.py` ~ `libero_v3c_checks.py` 는 바이트 단위�
 그 모듈이 부호·가중치만 담기 때문이고, **문항이 안 바뀌었다는 뜻이 아니다.**
 `prompts/libero_v2.txt` 는 v2 판이며 최신이 아니다.
 
+**이 부록은 GUIDANCE·QUESTION·계산 사실만 담는다. SYSTEM 과 view_note 는 빠져 있다.**
+둘 다 실제로 프롬프트에 들어가며, SYSTEM 은 과제 자체를 규정하고(YES/NO 압축 가능성)
+view_note 는 이미지 배치를 설명한다. 조립된 전문은 `prompts/<벤치>_<판>_FULL.txt` 에
+있고 `scripts/sync_prompts_folder.py` 가 생성한다 -- **프롬프트를 통째로 인용해야 할 때는
+그 파일을 쓸 것.** 조립 순서:
+
+```
+[SYSTEM]  SYSTEM 상수 + "Additional learned guidance (...):" + GUIDANCE
+[USER]    이미지 N장 + "Task: " + 지시문 + 계산 사실 + view_note + QUESTION
+```
+
 프롬프트는 세 덩이로 조립된다 -- **계산 사실**(지시문 + 액션에서 계산한 사실 문장), **GUIDANCE**(무엇을 판단하는 일인지), **QUESTION**(등급 척도와 문항). 계산 사실은 프롬프트의 일부다. 빼고 물으면 다른 질문이 된다.
 
 ---
