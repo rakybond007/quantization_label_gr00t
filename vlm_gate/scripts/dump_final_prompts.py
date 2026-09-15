@@ -20,12 +20,18 @@ TEXT_FILE = {"libero_v3c_checks": "prompts/libero_v2.txt"}
 
 FINAL = [
     ("robocasa", "phase9_checks_v7",
-     "scripts/judge_ab.py: facts_text",
-     "24 태스크 · 압축 여부 게이트. v1→v7, 네 판."),
+     "scripts/robocasa_descriptors.py: facts_text",
+     "24 태스크 · 압축 여부 게이트. v1→v7, 네 판. 문구는 모듈 상수(GUIDANCE/ASK)에 "
+     "있고 계산 사실은 함수가 청크마다 만든다 -- 그래서 이 부록에는 사실 예시가 "
+     "따로 붙는다. libero 는 조립된 텍스트 파일 하나라 예시가 파일 안에 이미 있다."),
     ("libero", "libero_v3c_checks",
      "scripts/libero_checks.py: facts",
-     "40 태스크 · 압축 여부 게이트. 문구가 모듈이 아니라 텍스트 파일에 있다 -- "
-     "파일 이름이 v2 인데 v3c 가 쓴다. 다음에 고칠 사람이 헷갈리지 않게 적어 둔다."),
+     "40 태스크 · 압축 여부 게이트. **문구가 checks 모듈에 없다** -- 모듈은 부호·가중치만 "
+     "담고, 문항 본문은 analysis/_evolver/_libero/libero_questions_v3c.txt 와 "
+     "libero_guidance_v3c.txt 에 있다. prompts/libero_v2.txt 는 v2 판이고 최신이 아니다. "
+     "libero_v2_checks.py ~ libero_v3c_checks.py 가 바이트 단위로 같은 것은 그 모듈이 "
+     "부호·가중치만 담기 때문이며, 문항이 안 바뀌었다는 뜻이 아니다 -- v3a 는 D, v3b 는 "
+     "B 를 재조준했고 v3c 가 둘을 합쳤다."),
     ("allex", "allex_v4c_checks",
      "scripts/allex_v3_checks.py: facts_v3",
      "단일 배속 게이트. 서브태스크 라벨 없이 지시문만. v4→v4c, 세 판."),
