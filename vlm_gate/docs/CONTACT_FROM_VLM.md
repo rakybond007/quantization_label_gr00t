@@ -1,0 +1,87 @@
+# 접촉을 VLM 문항만으로 뽑을 수 있나 — 된다
+
+2026-09-15. 정답지 156청크(접촉 119 / 비접촉 37) · Gemini 3.8 Flash · LiteLLM 프록시.
+
+## 왜 물었나
+
+ATQ 의 `fixed`("압축하면 안 되는 구간")를 지금까지 `meta/subtasks.jsonl` 의
+서브태스크 전환점에서 뽑았다. 그런데 **우리가 라벨한 데이터셋에는 그 파일이 없다**:
+
+```
+frontier_demo_cumul/{v1_v2, v1_v2_v3, v1_v2_v3_v4, v1_v2_v3_v4_v5, v1_v2_v3_v4_v5_v6}
+  -> subtask 계열 파일 전무 (단수 subtask.jsonl 도 없음)
+parquet 열에도 접촉 관련 열 없음
+subtasks.jsonl 을 가진 데이터셋과 에피 길이가 맞는 것도 없음
+```
+
+`action_quantization/merged_v5tempo*` 계열엔 있지만 **리타임본**이라 에피 번호도
+시간축도 대응되지 않는다. 그 라벨의 annotator 는 `retime_to_v5.py` 이므로 원본
+시간축 라벨이 존재했을 텐데, 접근 범위에서 찾지 못했고 리타임 매핑도 없다.
+
+## 정답지
+
+`analysis/contact/eye_labels_156.json` — 프레임을 직접 보고 표시한 것.
+
+```
+-1 불가(접근/이송) 37   = 접촉 없음
+ 0 한손상자 50 · 1 한손봉투 26 · 2 양손상자 36 · 3 Pass 7   = 접촉 있음 (119)
+```
+
+## 물어본 것
+
+`scripts/allex_contact_probe_checks.py`. 검증된 v4c(A~D)를 건드리지 않는 **독립**
+모듈이다 — 문항을 덧붙이면 기존 문항 답이 바뀐다는 음성 결과가 이미 있다
+(5번째 TURNING 문항 추가 시 AUC 0.842 -> 0.718).
+
+```
+P) Is a hand TOUCHING an object right now -- fingers or palm against it, close
+   enough that moving the hand would move the object?            (상태)
+Q) Is a hand RIGHT AT THE MOMENT of taking hold or letting go -- fingers closing
+   onto something, or opening off something they were holding?   (경계)
+R) Is an object PUSHING BACK on a hand -- being squeezed, lifted, dragged or
+   turned, so the hand has to work against it?                   (힘)
+```
+
+**계산 사실을 일부러 주지 않는다** (`facts()` 가 `""` 를 돌려준다). 손 토크에서
+나온 수치를 사실로 넣으면 그 신호를 되읽는 것이 되어 "장면만으로 아는가" 라는
+질문 자체가 무의미해진다.
+
+## 결과
+
+111청크 시점 (접촉 82 / 비접촉 29):
+
+| 신호 | 접촉 평균 | 비접촉 평균 | AUC |
+|---|---|---|---|
+| **P 닿아 있나 (상태)** | 3.55 | 1.34 | **0.818** |
+| Q 잡거나 놓는 순간 (경계) | 2.10 | 1.14 | 0.782 |
+| R 저항하나 (힘) | 2.44 | 1.21 | 0.735 |
+| P+Q+R 평균 | 2.70 | 1.23 | **0.844** |
+| 손 토크 (에피 상대 분위) | — | — | 0.750 |
+| 기존 D 문항 뒤집기 (5−D) | — | — | 0.667 |
+
+**P 하나가 손 토크를 넘는다.** 그리고 P 의 등급 분포가 1에 46개 / 5에 47개로
+양극단에 몰린다 -- 3("모르겠다")으로 도망가지 않고 단정한다.
+
+## 결론
+
+1. **접촉 라벨 파일이 필요 없다.** 판정 때 문항 하나만 더 물으면 conf 와 같은
+   레코드에 실린다. `subtasks.jsonl` 도, Foundry 라벨러도, 손 토크 계산도 없어도 된다.
+2. **P 하나만 추가한다.** 셋 다 쓰면 0.844 로 오르지만 문항 3개 값이고, 문항을
+   늘리면 기존 문항 답이 바뀐다는 음성 결과가 있다.
+3. **Q 를 경계 탐지기로 검증한 것은 아니다.** 정답지가 상태 라벨이라, Q 의 0.782 는
+   "접촉 구간에서 Q 가 높다" 는 뜻이고 경계 순간만 집었는지는 경계 정답지가 없어
+   못 쟀다. `fixed` 의 용도가 "압축하면 안 되는 구간" 이므로 **상태 탐지기(P)가
+   오히려 맞는 도구다.**
+
+## 대안들 (P 를 안 쓸 경우)
+
+| 방법 | AUC | 비용 | 비고 |
+|---|---|---|---|
+| 기존 D 뒤집기 | 0.667 | 0 | 이미 라벨에 있다. 다시 안 돌려도 된다 |
+| 손 토크 (에피 상대) | 0.750 | 0 | 데이터셋 열에서 계산. `v1_v2` effort 는 실측값(\|max\| 34.4) |
+| P 문항 추가 | 0.818 | 재판정 | v1_v2 는 이미 27,872청크 판정이 끝났으므로 다시 돌려야 한다 |
+
+손 토크는 **에피 상대 문턱**이어야 한다. 절대 토크는 에피마다 다르다 -- robocasa
+추종비에서 얻은 것과 같은 교훈이다. 그리고 리타임 데이터셋의 effort 는 배속과 함께
+재샘플된 값이라 같은 측정에서 AUC 0.66 밖에 안 나오고, merge manifest 자신이 그
+effort 를 placeholder 라고 적고 있다.
