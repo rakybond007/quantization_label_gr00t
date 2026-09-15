@@ -160,6 +160,27 @@ R2 간섭은 문항끼리만의 문제가 아니다. 그래서 두 문장은 뺐
 
 숫자는 고정 폭(`%.3f`)으로, 문장 수는 조건과 무관하게 항상 같게.
 
+### 기간을 글로 못 박지 말 것
+
+창은 16스텝으로 같아도 초로 환산하면 데이터셋마다 다르다.
+
+```
+robocasa  20 fps  ->  0.80 초
+allex     30 fps  ->  0.53 초
+libero    10 fps  ->  1.60 초
+dexjoco   30 fps  ->  0.53 초
+```
+
+robocasa 전문은 "You are judging one **second** of a kitchen robot's motion" 이라고
+적고 있었다 -- 실제의 1.25배다. 같은 문구를 libero 로 옮기면 1.6초를 1초라 부르게
+된다. allex 처럼 **"the next stretch of its motion"**, libero 처럼 **"one moment"**,
+계산 사실 머리글은 **"over the chunk ahead"** 로 쓴다.
+
+**알려진 예외:** `allex_v4c_FULL.txt` 의 마지막 GUIDANCE 줄에 "from one second to the
+next" 가 남아 있다(실제 0.53초). 고치면 48,086 청크 라벨이 무효가 되고, 그 줄은
+측정값 주장이 아니라 "한 구간 안에서 국면이 계속 바뀐다" 는 취지라서 그대로 둔다.
+새로 만드는 프롬프트는 따라 하지 말 것.
+
 ## 4. 문항
 
 - **한 문항은 한 가지만 묻는다.** 그래야 등급이 의미를 갖는다.

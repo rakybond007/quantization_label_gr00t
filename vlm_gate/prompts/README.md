@@ -9,7 +9,7 @@
 
 | 벤치마크 | 판 | 권위 있는 원본 | GUIDANCE sha1 | QUESTION sha1 | 부호·가중치 |
 |---|---|---|---|---|---|
-| robocasa | v7 | `scripts/phase9_checks_v7.py 의 GUIDANCE / ASK` | `c3ba33024565` | `2f32c1b411e7` | `scripts/phase9_checks_v7.py` |
+| robocasa | v7 | `scripts/phase9_checks_v7.py 의 GUIDANCE / ASK` | `a7b85f0e6f34` | `2f32c1b411e7` | `scripts/phase9_checks_v7.py` |
 | libero | v3c | `analysis/_evolver/_libero/libero_guidance_v3c.txt · analysis/_evolver/_libero/libero_questions_v3c.txt` | `053844846ac9` | `723112fd65b2` | `scripts/libero_v3c_checks.py` |
 | allex | v4c | `scripts/allex_v4c_checks.py 의 GUIDANCE / ASK` | `733d71476881` | `6fc571516e1d` | `scripts/allex_v4c_checks.py` |
 

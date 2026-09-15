@@ -63,8 +63,12 @@ NAME = {"A": "CLOSE_EXACT", "B": "HEMMED_IN", "C": "FIXTURE_HELD",
 WEIGHT = {"A": 0.60, "B": 0.40,
           "C": 0.50, "D": 0.15, "E": 0.35}
 
+# 기간을 글로 못 박지 않는다. 창은 16스텝인데 robocasa 는 20fps 라 0.80초,
+# libero 는 10fps 라 1.60초다. "one second" 라고 쓰면 robocasa 에서 25% 과장이고
+# 같은 문구를 libero 에 옮기면 배로 틀린다. allex 도 기간 대신 "the next stretch
+# of its motion" 이라고만 한다.
 GUIDANCE = (
-    "You are judging one second of a kitchen robot's motion, to decide how much of it "
+    "You are judging one moment of a kitchen robot's motion, to decide how much of it "
     "could be thinned out -- how many of its commanded poses could be dropped, letting "
     "the arm travel further between the ones that remain, without changing the outcome.\n\n"
     "What thinning takes away is the arm's chance to correct itself on the way. That "
@@ -72,7 +76,7 @@ GUIDANCE = (
     "of all when that spot is hemmed in. It matters least where the arm only pushes or "
     "turns something that is already held in place by its own hinge, rail or mount.\n\n"
     "Judge the moment in front of you, not the task as a whole. One task passes through "
-    "both kinds from one second to the next."
+    "both kinds from one moment to the next."
 )
 
 # 척도는 **allex(Gemini) 와 같은 값 척도**다. v7 까지는 물리적 근접 사다리였다
