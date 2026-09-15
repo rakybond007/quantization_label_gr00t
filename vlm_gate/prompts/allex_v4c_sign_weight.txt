@@ -1,0 +1,10 @@
+# allex v4c -- 단일 배속 게이트 · 서브태스크 라벨 없이 지시문만
+# 권위 있는 원본: scripts/allex_v4c_checks.py 의 GUIDANCE / ASK
+# 이 파일은 scripts/sync_prompts_folder.py 가 생성한 사본이다. 여기를 고치지 말 것.
+
+등급 수 5 · 문항 4개
+
+  A  감점  0.700  PINCH_RIGID
+  B  감점  0.300  POUCH
+  C  가점  0.800  FREE_END
+  D  가점  0.200  IN_TRANSIT

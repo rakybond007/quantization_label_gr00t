@@ -1,0 +1,21 @@
+# allex v4c -- 단일 배속 게이트 · 서브태스크 라벨 없이 지시문만
+# 권위 있는 원본: scripts/allex_v4c_checks.py 의 GUIDANCE / ASK
+# 이 파일은 scripts/sync_prompts_folder.py 가 생성한 사본이다. 여기를 고치지 말 것.
+
+The measurements above are stated as fact -- do not re-estimate or repeat them. Answer each check from what the cameras show about the MOMENT in front of you, read together with those measurements.
+Answer each check on its own line as "A) 3", in order, nothing else -- one digit from 1 to 5 per check, rating how far that check describes this moment:
+  5 = clearly true of this moment
+  4 = mostly true
+  3 = partly true
+  2 = barely true
+  1 = not true at all
+A grade refers only to the check on that line.
+A) Are the two hands SQUEEZING something between them to hold it, and is that
+   thing HARD -- a box, a carton, something that will not squash?
+B) Is the item a POUCH OR PACKET -- a soft mailer, a padded envelope, a
+   plastic parcel -- rather than a rigid carton with square sides?
+C) Is the thing only being SENT ACROSS -- slid or passed over to the other side,
+   or shoved on its way -- with no particular spot it has to come to rest on?
+D) Are the hands ON THEIR WAY -- reaching out towards something, or drawing back
+   from what they have finished, carrying nothing between them?
+Answer:

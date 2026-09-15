@@ -1,0 +1,7 @@
+# scripts/robocasa_descriptors.py: facts_text(descriptors(action, f))
+# phase9_two_sided.py:132 이 `instr + "\n" + facts_text(x)` 로 조립한다.
+# robocasa_mg_gr00t_300 episode 0, frame 0 / frame 48 에서 실제로 나온 출력.
+
+MEASURED FROM THE PLANNED MOTION over the next ~1 second (these are computed facts, not estimates): the gripper stays open throughout; the end-effector keeps a consistent direction; it is among the slowest motions in this dataset -- faster than 3% of all moments here (mean step 0.17, peak 0.50); it is not creeping along with something held; it is not decelerating to a stop.
+
+MEASURED FROM THE PLANNED MOTION over the next ~1 second (these are computed facts, not estimates): the gripper stays open throughout; the end-effector keeps a consistent direction; it is on the fast side for this dataset -- faster than 70% of all moments here (mean step 0.74, peak 0.95); it is not creeping along with something held; it is not decelerating to a stop.

@@ -1,0 +1,29 @@
+# robocasa v7 -- 24 태스크 · 압축 여부 게이트
+# 권위 있는 원본: scripts/phase9_checks_v7.py 의 GUIDANCE / ASK
+# 이 파일은 scripts/sync_prompts_folder.py 가 생성한 사본이다. 여기를 고치지 말 것.
+
+The measurements above are stated as fact -- do not re-estimate or repeat them. Answer each check from what the cameras show about the MOMENT in front of you, read together with those measurements.
+Answer each check on its own line as "A) 3", in order, nothing else -- one digit from 1 to 5 per check, rating how far that check describes this moment:
+  5 = it is happening right now -- the picture shows the contact, the grip or
+      the position the check describes
+  4 = not yet, but the hand is right up against it, a centimetre or a single
+      motion away
+  3 = the hand is heading for it and still some way off
+  2 = the thing the check is about is there in the picture, but the arm is busy
+      with something else
+  1 = there is nothing in this picture the check could be about
+A grade refers only to the check on that line.
+A) Does this motion need the gripper to CLOSE on one exact spot -- a handle, a rim,
+   the body of an object it must pick up -- rather than only pushing or turning
+   something that stays where it is?
+B) Is that closing spot hemmed in -- reached into a cabinet, a microwave, an oven or
+   a sink, or lined up with a slot or a handle -- so the gripper has little room
+   around it as it closes?
+C) Is the thing being acted on held in place by the furniture or appliance itself
+   -- a door or drawer on its hinge or rail, a knob, switch, button or lever on its
+   mount -- so the mechanism, not the arm, decides where it ends up?
+D) Is the hand letting go, or about to -- the object already resting where it is
+   meant to end up, so that what remains is only to open and withdraw?
+E) Is the gripper carrying something through open space -- already holding it,
+   still well away from wherever it is going?
+Answer:

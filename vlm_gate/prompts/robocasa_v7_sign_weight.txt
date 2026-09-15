@@ -1,0 +1,11 @@
+# robocasa v7 -- 24 태스크 · 압축 여부 게이트
+# 권위 있는 원본: scripts/phase9_checks_v7.py 의 GUIDANCE / ASK
+# 이 파일은 scripts/sync_prompts_folder.py 가 생성한 사본이다. 여기를 고치지 말 것.
+
+등급 수 5 · 문항 5개
+
+  A  감점  0.600  CLOSE_EXACT
+  B  감점  0.400  HEMMED_IN
+  C  가점  0.500  FIXTURE_HELD
+  D  가점  0.150  LETTING_GO
+  E  가점  0.350  CARRY_OPEN
