@@ -1,11 +1,7 @@
-# libero v3c -- 40 태스크 · 압축 여부 게이트
-# 권위 있는 원본: analysis/_evolver/_libero/libero_guidance_v3c.txt · analysis/_evolver/_libero/libero_questions_v3c.txt
-# 이 파일은 scripts/sync_prompts_folder.py 가 생성한 사본이다. 여기를 고치지 말 것.
+NGRADE 5   questions 5
 
-등급 수 5 · 문항 5개
-
-  A  감점  0.636  SMALL_TARGET
-  B  감점  0.364  CROWDED_PICK
-  C  가점  0.533  CATCHER
-  D  가점  0.267  WIDE_SURFACE
-  E  가점  0.200  NO_HOLD
+  A  risk  0.636  SMALL_TARGET
+  B  risk  0.364  CROWDED_PICK
+  C  safe  0.533  CATCHER
+  D  safe  0.267  WIDE_SURFACE
+  E  safe  0.200  NO_HOLD

@@ -29,9 +29,6 @@ OUT = os.path.join(ROOT, "prompts")
 # 그것을 낸 함수를 적어 두어, 의심스러우면 직접 다시 낼 수 있게 한다.
 FACTS_EXAMPLE = {
     "robocasa": (
-        "# scripts/robocasa_descriptors.py: facts_text(descriptors(action, f))\n"
-        "# phase9_two_sided.py:132 이 `instr + \"\\n\" + facts_text(x)` 로 조립한다.\n"
-        "# robocasa_mg_gr00t_300 episode 0, frame 0 / frame 48 에서 실제로 나온 출력.\n"
         "\n"
         "MEASURED FROM THE PLANNED MOTION over the next ~1 second (these are computed "
         "facts, not estimates): the gripper stays open throughout; the end-effector keeps "
@@ -46,8 +43,6 @@ FACTS_EXAMPLE = {
         "with something held; it is not decelerating to a stop.\n"
     ),
     "libero": (
-        "# scripts/libero_checks.py: facts\n"
-        "# 에피소드 지시문 한 줄이 먼저 오고 그 다음이 계산 사실이다.\n"
         "\n"
         "pick up the black bowl on the cookie box and place it on the plate\n"
         "MEASURED FROM THE PLANNED MOTION over the chunk ahead (these are computed facts, "
@@ -56,13 +51,10 @@ FACTS_EXAMPLE = {
         "it is holding something while creeping along; it is decelerating to a near stop.\n"
     ),
     "allex": (
-        "# scripts/allex_facts.py: facts(descriptors(A, WR, WL, f, 16))\n"
-        "# 압축 요구는 한계 위반이 아니라 녹화 분포 대비로 말한다 -- 데이터셋에 없는 값이\n"
-        "# 로봇의 한계를 뜻하지는 않기 때문이다.\n"
         "\n"
         "The robot was told: Bring the package over, orient barcode up, then place it on "
         "the conveyor.\n"
-        "(계산 사실은 청크마다 다르다. allex_facts.py 를 직접 호출해 확인할 것.)\n"
+        "(the computed facts differ per chunk; call allex_facts.py to see them)\n"
     ),
 }
 
@@ -98,107 +90,36 @@ def read_source(src):
 
 
 def assembled(name, ver, note, where, g, q, sign, weight, nm, ngrade, nviews, path):
-    """판정기가 실제로 받는 순서 그대로 한 파일에 담는다.
+    """FULL 파일 내용 -- **실제 프롬프트만.** 설명은 README 로 보낸다.
 
-    조립은 `scripts/vlm_gate.py: build_messages` 가 한다. 단순히
-    사실+GUIDANCE+QUESTION 이 아니다 -- SYSTEM 이 먼저 있고, GUIDANCE 는 그 뒤에
-    "Additional learned guidance" 로 붙고, 이미지 개수에 따라 view_note 가 또 붙고,
-    사용자 쪽은 "Task: {지시문+사실}" + view_note + QUESTION 순서다. 쪼개 놓으면
-    이 순서가 안 보여서, 합친본을 이 폴더의 대표 파일로 둔다.
+    사람이 읽을 주석을 여기 섞으면 그 파일을 그대로 인용할 수 없다. 역할 표시
+    ([SYSTEM]/[USER])와 이미지 자리, 청크마다 바뀌는 자리의 중괄호만 남긴다.
+
+    조립은 라벨러와 같은 함수를 따른다 -- Cosmos 경로는 vlm_gate.build_messages,
+    allex 는 allex_litellm_run.py 가 직접 조립한다.
     """
-    tbl = "\n".join(
-        f"  {k}  {'감점' if sign[k] < 0 else '가점'}  {weight.get(k, float('nan')):.3f}"
-        f"  {nm.get(k, '')}" for k in sorted(sign))
-    weights_block = f"""==================== 부호 · 가중치 ====================
-등급 수 {ngrade} · 문항 {len(sign)}개
-
-{tbl}
-
-conf = (1 + Σ_가점 w·g - Σ_감점 w·g) / 2       g = (기댓값등급 - 1) / (등급수 - 1)
-기댓값 등급은 등급 토큰 자리의 softmax 에서 Σ (i+1)·p(i). 정수 등급으로 계산하면
-conf 가 계단이 되어 역치가 안 먹는다(하네스 R4). Gemini 경로는 logprob 을 못 받으므로
-정수 등급을 그대로 쓴다 -- conf 가 계단이다.
-"""
-    facts_block = f"""==================== 계산 사실 (실제로 나간 형태) ====================
-{FACTS_EXAMPLE[name].rstrip()}
-"""
-
     if path == "gemini_api":
-        # Gemini/Sonnet API 판정기는 vlm_gate 를 거치지 않는다. role:user 하나뿐이고
-        # SYSTEM 블록도 view_note 도 없다 -- 과제 틀은 GUIDANCE 가 담당한다.
-        # scripts/allex_litellm_run.py 의 조립을 그대로 따른다.
-        return f"""# {name} {ver} -- {note}
-# 판정기가 실제로 받는 순서 그대로 조립한 것이다.
-# 조립 코드: scripts/allex_litellm_run.py (LiteLLM 프록시 경유 Gemini 3.8 Flash)
-# 문구 원본: {where}
-# 이 파일은 scripts/sync_prompts_folder.py 가 생성한다. 여기를 고치지 말 것.
-#
-# **SYSTEM 블록이 없다.** 이 경로는 vlm_gate 를 거치지 않으므로 vlm_gate.SYSTEM
-# ("Answer with exactly one word: YES or NO.") 이 나가지 않는다. 과제 틀은 아래
-# GUIDANCE 가 담당하고, 정답표를 주지 않는다 -- 그것이 이 경로의 설계다.
-# robocasa/libero (Cosmos 경로) 는 SYSTEM 이 함께 나가며 그 SYSTEM 이 답 매핑을
-# 유출한다 (docs/PROMPT_SYSTEM_LEAK.md).
-#
-# 이미지 {nviews}장이 아래 글 앞, 같은 user 메시지 안에 들어간다.
-
-==================== [USER] 이미지 {nviews}장 + 아래 글 (메시지 하나) ====================
-{g}
-
-The two images are the left and right camera views of this one moment.
-
-The robot was told: {{에피소드 지시문}}
-
-{{계산 사실 -- 아래 절 참조}}
-
-{q}
-
-{facts_block}
-{weights_block}"""
+        return (f"[USER]\n"
+                f"<{nviews} images>\n"
+                f"{g}\n\n"
+                f"The two images are the left and right camera views of this one moment.\n\n"
+                f"The robot was told: {{instruction}}\n\n"
+                f"{{computed facts}}\n\n"
+                f"{q}\n")
 
     import vlm_gate as VG
-    sys_text = VG.SYSTEM
-    if g:
-        sys_text = (VG.SYSTEM + "\n\nAdditional learned guidance (from prior "
-                    "evaluations):\n" + g.strip())
-    # view_note 는 이미지 개수로 갈린다. build_messages 의 분기를 그대로 읽어 온다.
-    import re as _re
-    src = open(os.path.join(HERE, "vlm_gate.py")).read()
-    body = src[src.index("def build_messages"):src.index("def parse_decision")]
-    notes = _re.findall(r'view_note = \(?\s*("(?:[^"\\]|\\.)*"(?:\s*"(?:[^"\\]|\\.)*")*)\)?',
-                        body)
-    def lit(x):
-        return "".join(_re.findall(r'"((?:[^"\\]|\\.)*)"', x)).replace('\\n', '\n')
-    view_note = lit(notes[0 if nviews == 6 else (1 if nviews >= 3 else 2)]) if notes else "?"
-
-    return f"""# {name} {ver} -- {note}
-# 판정기가 실제로 받는 순서 그대로 조립한 것이다.
-# 조립 코드: scripts/vlm_gate.py: build_messages
-# 문구 원본: {where}
-# 부호·가중치: 아래 맨 끝
-# 이 파일은 scripts/sync_prompts_folder.py 가 생성한다. 여기를 고치지 말 것.
-#
-# 이미지 {nviews}장이 SYSTEM 다음, 아래 [USER] 글 앞에 들어간다.
-
-==================== [SYSTEM] ====================
-{sys_text}
-
-==================== [USER] 이미지 {nviews}장 + 아래 글 ====================
-Task: {{지시문 + 계산 사실 -- 아래 '계산 사실' 절 참조}}
-{view_note}
-{q}
-
-==================== 계산 사실 (Task: 줄에 들어가는 실제 형태) ====================
-{FACTS_EXAMPLE[name].rstrip()}
-
-==================== 부호 · 가중치 ====================
-등급 수 {ngrade} · 문항 {len(sign)}개
-
-{tbl}
-
-conf = (1 + Σ_가점 w·g - Σ_감점 w·g) / 2       g = (기댓값등급 - 1) / (등급수 - 1)
-기댓값 등급은 등급 토큰 자리의 softmax 에서 Σ (i+1)·p(i). 정수 등급으로 계산하면
-conf 가 계단이 되어 역치가 안 먹는다(하네스 R4).
-"""
+    import numpy as np
+    from PIL import Image
+    imgs = [Image.fromarray(np.zeros((8, 8, 3), dtype=np.uint8)) for _ in range(nviews)]
+    msgs = VG.build_messages(imgs, "{instruction}\n{computed facts}", g, q)
+    sys_text = next((m["content"][0]["text"] for m in msgs if m["role"] == "system"), "")
+    usr_text = next(x["text"] for m in msgs if m["role"] == "user"
+                    for x in m["content"] if x.get("type") == "text")
+    out = ""
+    if sys_text:
+        out += f"[SYSTEM]\n{sys_text}\n\n"
+    out += f"[USER]\n<{nviews} images>\n{usr_text}\n"
+    return out
 
 
 def build():
@@ -210,10 +131,9 @@ def build():
         nm = getattr(M, "NAME", {})
         where = (f"scripts/{src[1]}.py 의 GUIDANCE / ASK" if src[0] == "module"
                  else f"{src[1]} · {src[2]}")
-        head = (f"# {name} {ver} -- {note}\n"
-                f"# 권위 있는 원본: {where}\n"
-                f"# 이 파일은 scripts/sync_prompts_folder.py 가 생성한 사본이다. "
-                f"여기를 고치지 말 것.\n\n")
+        # 조각 파일에도 설명을 넣지 않는다. 어느 파일이 무엇이고 원본이 어디인지는
+        # README 가 말한다. 프롬프트 파일은 그대로 인용할 수 있어야 한다.
+        head = ""
         files[f"{name}_{ver}_FULL.txt"] = assembled(
             name, ver, note, where, g, q, sign, weight, nm,
             getattr(M, "NGRADE", "?"), nviews, path)
@@ -221,10 +141,10 @@ def build():
         files[f"{name}_{ver}_questions.txt"] = head + q + "\n"
         files[f"{name}_{ver}_facts_example.txt"] = FACTS_EXAMPLE[name]
         tbl = "\n".join(
-            f"  {k}  {'감점' if sign[k] < 0 else '가점'}  {weight.get(k, float('nan')):.3f}"
+            f"  {k}  {'risk' if sign[k] < 0 else 'safe'}  {weight.get(k, float('nan')):.3f}"
             f"  {nm.get(k, '')}" for k in sorted(sign))
         files[f"{name}_{ver}_sign_weight.txt"] = (
-            head + f"등급 수 {getattr(M, 'NGRADE', '?')} · 문항 {len(sign)}개\n\n" + tbl + "\n")
+            f"NGRADE {getattr(M, 'NGRADE', '?')}   questions {len(sign)}\n\n" + tbl + "\n")
         rows.append((name, ver, where, sha(g), sha(q), wmod))
     return files, rows
 

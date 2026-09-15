@@ -1,5 +1,3 @@
-# scripts/libero_checks.py: facts
-# 에피소드 지시문 한 줄이 먼저 오고 그 다음이 계산 사실이다.
 
 pick up the black bowl on the cookie box and place it on the plate
 MEASURED FROM THE PLANNED MOTION over the chunk ahead (these are computed facts, not estimates): the gripper stays closed throughout; the end-effector keeps a consistent direction; it is moving at a normal pace (mean step 0.42, peak 0.61); it is holding something while creeping along; it is decelerating to a near stop.

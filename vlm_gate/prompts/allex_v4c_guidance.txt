@@ -1,7 +1,3 @@
-# allex v4c -- 단일 배속 게이트 · 서브태스크 라벨 없이 지시문만
-# 권위 있는 원본: scripts/allex_v4c_checks.py 의 GUIDANCE / ASK
-# 이 파일은 scripts/sync_prompts_folder.py 가 생성한 사본이다. 여기를 고치지 말 것.
-
 You are judging one instant of a two-armed robot with hands, to decide how much of the next stretch of its motion could be thinned out -- how many of its commanded poses could be dropped, letting the arms travel further between the ones that remain, without changing the outcome.
 
 What thinning takes away is the arms' chance to correct on the way, and there are two ways that loses the object. One is a hold that exists only as a balance: the thing is trapped between two hands and nothing is closed around it, so the hold IS the push of one hand against the other. If that thing is stiff it cannot give, and a coarser swing changes the balance and drops it. Something soft squashes and stays pinched.

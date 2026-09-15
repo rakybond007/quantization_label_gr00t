@@ -1,18 +1,5 @@
-# allex v4c -- 단일 배속 게이트 · 서브태스크 라벨 없이 지시문만
-# 판정기가 실제로 받는 순서 그대로 조립한 것이다.
-# 조립 코드: scripts/allex_litellm_run.py (LiteLLM 프록시 경유 Gemini 3.8 Flash)
-# 문구 원본: scripts/allex_v4c_checks.py 의 GUIDANCE / ASK
-# 이 파일은 scripts/sync_prompts_folder.py 가 생성한다. 여기를 고치지 말 것.
-#
-# **SYSTEM 블록이 없다.** 이 경로는 vlm_gate 를 거치지 않으므로 vlm_gate.SYSTEM
-# ("Answer with exactly one word: YES or NO.") 이 나가지 않는다. 과제 틀은 아래
-# GUIDANCE 가 담당하고, 정답표를 주지 않는다 -- 그것이 이 경로의 설계다.
-# robocasa/libero (Cosmos 경로) 는 SYSTEM 이 함께 나가며 그 SYSTEM 이 답 매핑을
-# 유출한다 (docs/PROMPT_SYSTEM_LEAK.md).
-#
-# 이미지 2장이 아래 글 앞, 같은 user 메시지 안에 들어간다.
-
-==================== [USER] 이미지 2장 + 아래 글 (메시지 하나) ====================
+[USER]
+<2 images>
 You are judging one instant of a two-armed robot with hands, to decide how much of the next stretch of its motion could be thinned out -- how many of its commanded poses could be dropped, letting the arms travel further between the ones that remain, without changing the outcome.
 
 What thinning takes away is the arms' chance to correct on the way, and there are two ways that loses the object. One is a hold that exists only as a balance: the thing is trapped between two hands and nothing is closed around it, so the hold IS the push of one hand against the other. If that thing is stiff it cannot give, and a coarser swing changes the balance and drops it. Something soft squashes and stays pinched.
@@ -25,9 +12,9 @@ Judge the moment in front of you, not the name of the job. One segment passes th
 
 The two images are the left and right camera views of this one moment.
 
-The robot was told: {에피소드 지시문}
+The robot was told: {instruction}
 
-{계산 사실 -- 아래 절 참조}
+{computed facts}
 
 The measurements above are stated as fact -- do not re-estimate or repeat them. Answer each check from what the cameras show about the MOMENT in front of you, read together with those measurements.
 Answer each check on its own line as "A) 3", in order, nothing else -- one digit from 1 to 5 per check, rating how far that check describes this moment:
@@ -46,24 +33,3 @@ C) Is the thing only being SENT ACROSS -- slid or passed over to the other side,
 D) Are the hands ON THEIR WAY -- reaching out towards something, or drawing back
    from what they have finished, carrying nothing between them?
 Answer:
-
-==================== 계산 사실 (실제로 나간 형태) ====================
-# scripts/allex_facts.py: facts(descriptors(A, WR, WL, f, 16))
-# 압축 요구는 한계 위반이 아니라 녹화 분포 대비로 말한다 -- 데이터셋에 없는 값이
-# 로봇의 한계를 뜻하지는 않기 때문이다.
-
-The robot was told: Bring the package over, orient barcode up, then place it on the conveyor.
-(계산 사실은 청크마다 다르다. allex_facts.py 를 직접 호출해 확인할 것.)
-
-==================== 부호 · 가중치 ====================
-등급 수 5 · 문항 4개
-
-  A  감점  0.700  PINCH_RIGID
-  B  감점  0.300  POUCH
-  C  가점  0.800  FREE_END
-  D  가점  0.200  IN_TRANSIT
-
-conf = (1 + Σ_가점 w·g - Σ_감점 w·g) / 2       g = (기댓값등급 - 1) / (등급수 - 1)
-기댓값 등급은 등급 토큰 자리의 softmax 에서 Σ (i+1)·p(i). 정수 등급으로 계산하면
-conf 가 계단이 되어 역치가 안 먹는다(하네스 R4). Gemini 경로는 logprob 을 못 받으므로
-정수 등급을 그대로 쓴다 -- conf 가 계단이다.

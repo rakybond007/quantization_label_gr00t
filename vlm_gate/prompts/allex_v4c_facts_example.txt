@@ -1,6 +1,3 @@
-# scripts/allex_facts.py: facts(descriptors(A, WR, WL, f, 16))
-# 압축 요구는 한계 위반이 아니라 녹화 분포 대비로 말한다 -- 데이터셋에 없는 값이
-# 로봇의 한계를 뜻하지는 않기 때문이다.
 
 The robot was told: Bring the package over, orient barcode up, then place it on the conveyor.
-(계산 사실은 청크마다 다르다. allex_facts.py 를 직접 호출해 확인할 것.)
+(the computed facts differ per chunk; call allex_facts.py to see them)

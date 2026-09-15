@@ -1,7 +1,3 @@
-# libero v3c -- 40 태스크 · 압축 여부 게이트
-# 권위 있는 원본: analysis/_evolver/_libero/libero_guidance_v3c.txt · analysis/_evolver/_libero/libero_questions_v3c.txt
-# 이 파일은 scripts/sync_prompts_folder.py 가 생성한 사본이다. 여기를 고치지 말 것.
-
 You are judging one moment of a table-top robot's motion, to decide how much of it could be thinned out -- how many of its commanded poses could be dropped, letting the arm travel further between the ones that remain, without changing the outcome.
 
 Two things decide that, and both are about where the object has to end up or where it has to come from, not about how fast the arm happens to be going.
