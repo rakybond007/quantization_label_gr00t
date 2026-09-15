@@ -157,6 +157,7 @@ def main():
     bench, port, shard, nsh = sys.argv[1], sys.argv[2], int(sys.argv[3]), int(sys.argv[4])
     cfg = BENCHMARKS[bench]
     stride = int(os.environ.get("LABEL_STRIDE", "1"))
+    LIMIT = int(os.environ.get("LABEL_LIMIT", "0"))
     tag = os.environ.get("TAG", f"{bench}_dense")
     out_path = f"{BASE}/output/_gate_distill/{tag}_s{nsh}_{shard}.jsonl"
 
@@ -218,6 +219,11 @@ def main():
                 rec["ep_local"] = ep_local
             out.write(json.dumps(rec) + "\n")
             n += 1
+            # LABEL_LIMIT 을 주면 그만큼만 찍고 멈춘다. 포맷 대조처럼
+            # 표본만 필요할 때 전량을 돌리지 않기 위한 것이다.
+            if LIMIT and n >= LIMIT:
+                print(f"[label] shard{shard}: LABEL_LIMIT {LIMIT} 도달", flush=True)
+                out.flush(); return
             if n % 200 == 0:
                 print(f"[label] shard{shard}: {n}", flush=True)
                 out.flush()
