@@ -85,8 +85,51 @@ NEUTRAL_SYSTEM = (
     "changing the outcome. Decide from the camera views and the task. "
     "Answer with exactly one word: YES (can run at half rate) or NO (needs full rate)."
 )
+# 등급 문항 경로용 SYSTEM. **기존 라벨을 보존하기 위한 최소 수정이다.**
+#
+# 원래 SYSTEM 은 이진 게이트용이라 두 가지가 등급 경로와 맞지 않았다.
+#   1) "Answer with exactly one word: YES or NO." -- 문항은 다섯 줄 등급을 요구한다
+#   2) "reaching/carrying = YES, closing the gripper = NO" -- 문항이 재려던 것의
+#      정답표를 미리 준다
+#
+# 여기서는 **틀은 그대로 남기고 그 둘만 걷어낸다.** 무엇을 판단하는 일인지(압축이
+# 무엇을 빼앗는지)는 유지하므로 판정이 크게 흔들리지 않을 것으로 기대하고, 실제로
+# 얼마나 흔들리는지는 표본으로 재서 기록한다. 벤치마크 이름(kitchen/table-top)과
+# 배율("HALF the control rate")을 넣지 않아 셋이 같은 글을 쓸 수 있다.
+GRADED_SYSTEM = (
+    "You are judging one moment of a robot arm's motion, to decide how much of the "
+    "next stretch of it could be thinned out -- how many of its commanded poses "
+    "could be dropped, letting the arm travel further between the ones that "
+    "remain, without changing the outcome.\n"
+    "What thinning takes away is the arm's chance to correct itself on the way. "
+    "Judge the moment in front of you, not the task as a whole: one task passes "
+    "through several kinds of motion from one second to the next.\n"
+    "Below you are given measurements computed from the planned motion, then a "
+    "list of checks. Answer the checks in the form the checks themselves ask for, "
+    "and nothing else. Do not decide the compression yourself -- each check is one "
+    "piece of evidence, and they are combined afterwards."
+)
+
+if os.environ.get("JUDGE_GRADED_SYSTEM") == "1":
+    SYSTEM = GRADED_SYSTEM
+
 if os.environ.get("JUDGE_NEUTRAL_SYSTEM") == "1":
     SYSTEM = NEUTRAL_SYSTEM
+
+# 등급 문항 경로에서는 SYSTEM 을 비울 수 있어야 한다.
+#
+# SYSTEM 은 이진 게이트(YES/NO)를 위해 쓴 것이고 마지막 줄이
+# "Answer with exactly one word: YES or NO." 다. 그런데 등급 문항(A~E 를 1~5 로)
+# 경로도 build_messages 를 거치므로 그 문장이 같이 나간다 -- 한 프롬프트 안에서
+# 한 단어를 요구하고 다섯 줄을 요구한다. 형식은 마지막 지시를 따라 깨지지 않았지만,
+# SYSTEM 이 "reaching/carrying = YES, closing the gripper = NO" 라는 **답 매핑을
+# 미리 알려준다.** 문항이 재려던 것을 SYSTEM 이 먼저 말해 주므로 문항 설계 실험이
+# 독립적이지 못하다.
+#
+# JUDGE_NO_SYSTEM=1 이면 SYSTEM 블록 자체가 빠진다 (build_messages 가 빈 문자열이면
+# 블록을 넣지 않는다). 등급 경로의 기본값으로 삼아야 하는지는 측정으로 정한다.
+if os.environ.get("JUDGE_NO_SYSTEM") == "1":
+    SYSTEM = ""
 
 
 def build_messages(pil_imgs, instruction, guidance="", question=""):

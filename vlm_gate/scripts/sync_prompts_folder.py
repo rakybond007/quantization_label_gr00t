@@ -69,13 +69,18 @@ FACTS_EXAMPLE = {
 BENCH = [
     # (이름, 판, 문구 출처, 부호·가중치 모듈, 설명)
     ("robocasa", "v7", ("module", "phase9_checks_v7"), "phase9_checks_v7",
-     "24 태스크 · 압축 여부 게이트", 6),
+     # 이미지 3장이다. scripts/phase9_two_sided.py:122 가 타일을 3등분해
+     # gate.judge(views, ...) 로 넘긴다. build_messages 에 6장 분기가 있지만
+     # robocasa 라벨링은 그 경로를 타지 않는다 -- 여기에 6 을 적었다가 실제로
+     # 나가지 않는 "Images 1-3 are NOW / 4-6 are LATER" 문구를 전문에 싣는
+     # 사고가 있었다. **장수는 라벨러 코드에서 확인하고 적는다.**
+     "24 태스크 · 압축 여부 게이트", 3, "cosmos"),
     ("libero", "v3c",
      ("files", "analysis/_evolver/_libero/libero_guidance_v3c.txt",
       "analysis/_evolver/_libero/libero_questions_v3c.txt"),
-     "libero_v3c_checks", "40 태스크 · 압축 여부 게이트", 3),
+     "libero_v3c_checks", "40 태스크 · 압축 여부 게이트", 3, "cosmos"),
     ("allex", "v4c", ("module", "allex_v4c_checks"), "allex_v4c_checks",
-     "단일 배속 게이트 · 서브태스크 라벨 없이 지시문만", 2),
+     "단일 배속 게이트 · 서브태스크 라벨 없이 지시문만", 2, "gemini_api"),
 ]
 
 
@@ -92,7 +97,7 @@ def read_source(src):
     return g, q
 
 
-def assembled(name, ver, note, where, g, q, sign, weight, nm, ngrade, nviews):
+def assembled(name, ver, note, where, g, q, sign, weight, nm, ngrade, nviews, path):
     """판정기가 실제로 받는 순서 그대로 한 파일에 담는다.
 
     조립은 `scripts/vlm_gate.py: build_messages` 가 한다. 단순히
@@ -101,6 +106,55 @@ def assembled(name, ver, note, where, g, q, sign, weight, nm, ngrade, nviews):
     사용자 쪽은 "Task: {지시문+사실}" + view_note + QUESTION 순서다. 쪼개 놓으면
     이 순서가 안 보여서, 합친본을 이 폴더의 대표 파일로 둔다.
     """
+    tbl = "\n".join(
+        f"  {k}  {'감점' if sign[k] < 0 else '가점'}  {weight.get(k, float('nan')):.3f}"
+        f"  {nm.get(k, '')}" for k in sorted(sign))
+    weights_block = f"""==================== 부호 · 가중치 ====================
+등급 수 {ngrade} · 문항 {len(sign)}개
+
+{tbl}
+
+conf = (1 + Σ_가점 w·g - Σ_감점 w·g) / 2       g = (기댓값등급 - 1) / (등급수 - 1)
+기댓값 등급은 등급 토큰 자리의 softmax 에서 Σ (i+1)·p(i). 정수 등급으로 계산하면
+conf 가 계단이 되어 역치가 안 먹는다(하네스 R4). Gemini 경로는 logprob 을 못 받으므로
+정수 등급을 그대로 쓴다 -- conf 가 계단이다.
+"""
+    facts_block = f"""==================== 계산 사실 (실제로 나간 형태) ====================
+{FACTS_EXAMPLE[name].rstrip()}
+"""
+
+    if path == "gemini_api":
+        # Gemini/Sonnet API 판정기는 vlm_gate 를 거치지 않는다. role:user 하나뿐이고
+        # SYSTEM 블록도 view_note 도 없다 -- 과제 틀은 GUIDANCE 가 담당한다.
+        # scripts/allex_litellm_run.py 의 조립을 그대로 따른다.
+        return f"""# {name} {ver} -- {note}
+# 판정기가 실제로 받는 순서 그대로 조립한 것이다.
+# 조립 코드: scripts/allex_litellm_run.py (LiteLLM 프록시 경유 Gemini 3.8 Flash)
+# 문구 원본: {where}
+# 이 파일은 scripts/sync_prompts_folder.py 가 생성한다. 여기를 고치지 말 것.
+#
+# **SYSTEM 블록이 없다.** 이 경로는 vlm_gate 를 거치지 않으므로 vlm_gate.SYSTEM
+# ("Answer with exactly one word: YES or NO.") 이 나가지 않는다. 과제 틀은 아래
+# GUIDANCE 가 담당하고, 정답표를 주지 않는다 -- 그것이 이 경로의 설계다.
+# robocasa/libero (Cosmos 경로) 는 SYSTEM 이 함께 나가며 그 SYSTEM 이 답 매핑을
+# 유출한다 (docs/PROMPT_SYSTEM_LEAK.md).
+#
+# 이미지 {nviews}장이 아래 글 앞, 같은 user 메시지 안에 들어간다.
+
+==================== [USER] 이미지 {nviews}장 + 아래 글 (메시지 하나) ====================
+{g}
+
+The two images are the left and right camera views of this one moment.
+
+The robot was told: {{에피소드 지시문}}
+
+{{계산 사실 -- 아래 절 참조}}
+
+{q}
+
+{facts_block}
+{weights_block}"""
+
     import vlm_gate as VG
     sys_text = VG.SYSTEM
     if g:
@@ -116,9 +170,6 @@ def assembled(name, ver, note, where, g, q, sign, weight, nm, ngrade, nviews):
         return "".join(_re.findall(r'"((?:[^"\\]|\\.)*)"', x)).replace('\\n', '\n')
     view_note = lit(notes[0 if nviews == 6 else (1 if nviews >= 3 else 2)]) if notes else "?"
 
-    tbl = "\n".join(
-        f"  {k}  {'감점' if sign[k] < 0 else '가점'}  {weight.get(k, float('nan')):.3f}"
-        f"  {nm.get(k, '')}" for k in sorted(sign))
     return f"""# {name} {ver} -- {note}
 # 판정기가 실제로 받는 순서 그대로 조립한 것이다.
 # 조립 코드: scripts/vlm_gate.py: build_messages
@@ -152,7 +203,7 @@ conf 가 계단이 되어 역치가 안 먹는다(하네스 R4).
 
 def build():
     files, rows = {}, []
-    for name, ver, src, wmod, note, nviews in BENCH:
+    for name, ver, src, wmod, note, nviews, path in BENCH:
         g, q = read_source(src)
         M = importlib.import_module(wmod)
         sign, weight = getattr(M, "SIGN", {}), getattr(M, "WEIGHT", {})
@@ -165,7 +216,7 @@ def build():
                 f"여기를 고치지 말 것.\n\n")
         files[f"{name}_{ver}_FULL.txt"] = assembled(
             name, ver, note, where, g, q, sign, weight, nm,
-            getattr(M, "NGRADE", "?"), nviews)
+            getattr(M, "NGRADE", "?"), nviews, path)
         files[f"{name}_{ver}_guidance.txt"] = head + g + "\n"
         files[f"{name}_{ver}_questions.txt"] = head + q + "\n"
         files[f"{name}_{ver}_facts_example.txt"] = FACTS_EXAMPLE[name]

@@ -21,8 +21,12 @@ HERE=os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0,HERE)
 BASE=os.path.dirname(HERE)
 import importlib
 from allex_v2_common import descriptors
-from allex_facts import facts as _facts
+from allex_facts import facts as _shared_facts
 CK = importlib.import_module(os.environ.get("ALLEX_CHECKS_MODULE", "allex_v4c_checks"))
+# A question module may define its own facts(). The contact probe returns "" on
+# purpose: feeding it numbers derived from hand torque would make "can the VLM see
+# contact from the scene alone" unanswerable.
+_facts = getattr(CK, "facts", _shared_facts)
 
 D=os.environ.get("ALLEX_DS","/rlwrld2/home/david/frontier_demo_cumul/v1_v2_v3_v4")
 SCENES, OUT = sys.argv[1], sys.argv[2]
