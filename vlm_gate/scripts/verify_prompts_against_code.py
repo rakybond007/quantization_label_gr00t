@@ -57,15 +57,22 @@ def main():
         full = open(f"{ROOT}/prompts/{name}_{ver}_FULL.txt").read()
 
         # 1) 이미지 장수
-        if f"이미지 {n_img}장" not in full:
+        if f"<{n_img} images>" not in full:
             bad.append(f"{name}: 전문이 말하는 장수가 실제({n_img})와 다르다")
-        # 2) SYSTEM 전문이 통째로 들어 있나
-        if sys_text and sys_text.split("\n")[0][:60] not in full:
-            bad.append(f"{name}: SYSTEM 첫 줄이 전문에 없다")
+        # 2) SYSTEM 을 **줄 단위로 전부** 대조한다. 첫 줄 60자만 보면 본문 한가운데를
+        #    바꿔도 못 잡는다 -- 자기검사가 실제로 그 미탐을 잡아냈다.
+        for ln in sys_text.splitlines():
+            ln = ln.strip()
+            if len(ln) > 12 and ln not in full:
+                bad.append(f"{name}: SYSTEM 줄이 전문에 없다 -- {ln[:60]}")
+                break
         # 3) view_note 가 실제 것과 같나 -- 장수로 갈리므로 여기서 틀리기 쉽다
-        note = [l for l in usr_text.splitlines() if l.startswith("You are shown")]
-        if note and note[0][:70] not in full:
-            bad.append(f"{name}: view_note 가 실제와 다르다 (실제: {note[0][:70]}...)")
+        # 3) USER 글도 줄 단위로 전부. view_note 는 장수로 갈리므로 여기서 틀리기 쉽다.
+        for ln in usr_text.splitlines():
+            ln = ln.strip()
+            if len(ln) > 12 and "{" not in ln and ln not in full:
+                bad.append(f"{name}: USER 줄이 전문에 없다 -- {ln[:60]}")
+                break
         # 4) 문항 각 줄
         for line in q.splitlines():
             s = line.strip()
@@ -88,6 +95,65 @@ def main():
             bad.append(f"allex: 문항 줄이 전문에 없다 -- {s[:50]}")
     print(f"  allex v4c: SYSTEM 없음(라벨러가 안 보냄) · 라벨러 scripts/allex_litellm_run.py")
 
+    return bad
+
+
+def selftest():
+    """**검증기 자체를 검증한다.**
+
+    검사가 오탐/미탐이면 통과했다는 말이 아무 의미가 없다. 실제로 그런 일이 있었다 --
+    한글 "이미지 3장" 을 찾는 검사를 남겨둔 채 전문 형식을 "<3 images>" 로 바꿨고,
+    그러자 검사가 **항상 실패**했다. 망가뜨리지 않은 벤치마크까지 어긋났다고 말했으므로
+    탐지가 아니라 오탐이었다.
+
+    그래서 두 방향을 다 본다.
+      음성 대조: 손대지 않은 전문은 통과해야 한다 (오탐 없음)
+      양성 대조: 한 글자 바꾼 전문은 반드시 걸려야 한다 (미탐 없음)
+    """
+    import shutil, tempfile
+    base = main()
+    if base:
+        print("  [자기검사] 음성 대조 실패 -- 손대지 않은 전문이 어긋난다고 나온다:")
+        for b in base:
+            print("    -", b)
+        return False
+    print("  [자기검사] 음성 대조 통과 (손대지 않은 전문 = 어긋남 0)")
+
+    cases = [
+        ("prompts/robocasa_v7_FULL.txt", "<3 images>", "<6 images>", "이미지 장수"),
+        ("prompts/robocasa_v7_FULL.txt", "YES or NO", "YES or MAYBE", "SYSTEM 본문"),
+        ("prompts/libero_v3c_FULL.txt", "You are shown 3 camera views", "You are shown 9 camera views", "view_note"),
+        ("prompts/allex_v4c_FULL.txt", "PINCH_RIGID" if False else "SQUEEZING", "SQUEEZINGX", "문항 줄"),
+    ]
+    ok = True
+    for rel, old, new, what in cases:
+        path = f"{ROOT}/{rel}"
+        orig = open(path).read()
+        if old not in orig:
+            print(f"  [자기검사] 건너뜀 -- {rel} 에 {old!r} 가 없다")
+            continue
+        try:
+            open(path, "w").write(orig.replace(old, new, 1))
+            got = main()
+            if got:
+                print(f"  [자기검사] 양성 대조 통과 ({what}) -- {len(got)}건 잡음")
+            else:
+                print(f"  [자기검사] **미탐** ({what}) -- {old!r} -> {new!r} 를 못 잡는다")
+                ok = False
+        finally:
+            open(path, "w").write(orig)
+    return ok
+
+
+if __name__ == "__main__":
+    import sys as _s
+    if "--selftest" in _s.argv:
+        print("=== 검증기 자기 검사")
+        if not selftest():
+            raise SystemExit(1)
+        print("\n검증기가 오탐도 미탐도 없다.")
+        raise SystemExit(0)
+    bad = main()
     if bad:
         print("\n어긋남:")
         for b in bad:
@@ -96,5 +162,3 @@ def main():
     print("\n세 전문 모두 실제 코드가 내보내는 것과 일치한다.")
 
 
-if __name__ == "__main__":
-    main()
