@@ -67,8 +67,17 @@ EPS = sorted(int(p.split("episode_")[1][:6])
 # 에피를 골라 돌릴 수 있다. 앞에서부터 N 개만 보면 표본이 한쪽에 몰린다 --
 # ep0~14 는 잡은구간 손바닥 간격이 전부 0.352~0.404 로 넓은 쪽이었고, 그래서
 # "늘어진 짐" 문항이 한 번도 안 떴다. 물체가 갈리는 축을 일부러 덮어야 한다.
+# 청크를 프레임 단위로 지정할 수 있다: {"52": [0, 144, ...], ...}
+PICK = None
+_pf = os.environ.get("ALLEX_FRAMES", "")
+if _pf:
+    PICK = {int(k): set(v) for k, v in json.load(open(_pf)).items()}
+    print(f"[i] 프레임 목록 지정: {sum(len(v) for v in PICK.values())}청크 / {len(PICK)}에피", flush=True)
+
 _pick = os.environ.get("ALLEX_EPS", "")
-if _pick:
+if PICK is not None:
+    EPS = [e for e in EPS if e in PICK]
+elif _pick:
     want = {int(x) for x in _pick.replace(",", " ").split()}
     EPS = [e for e in EPS if e in want]
 elif NEP:
@@ -120,7 +129,12 @@ for ep in EPS:
     WR = np.stack(d["action.right_wrist_wrt_base"].values)
     WL = np.stack(d["action.left_wrist_wrt_base"].values)
     ti = d["task_index"].values
-    starts = [f for f in range(0, len(d) - CHUNK, STRIDE) if (ep, f) not in done]
+    if PICK is not None:                      # 프레임 목록을 직접 받는 경로.
+        # 판정기끼리 비교하려면 **똑같은 청크**를 봐야 한다. stride 로 고르면
+        # 판정기마다 다른 청크를 보게 되어 비교가 성립하지 않는다.
+        starts = [f for f in sorted(PICK.get(ep, ())) if (ep, f) not in done]
+    else:
+        starts = [f for f in range(0, len(d) - CHUNK, STRIDE) if (ep, f) not in done]
     if not starts:
         continue
     L = grab(ep, starts, "left")
