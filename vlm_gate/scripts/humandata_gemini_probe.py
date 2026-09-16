@@ -32,14 +32,35 @@ _C_OLD = ("C) Is an object being put into something that would catch it -- a bas
 _C_NEW = ("C) Is the place this object has to end up ROOMY FOR IT -- a wide bowl, an open\n"
           "   basket, a broad plate with slack all round -- rather than a cup, a jar or a\n"
           "   slot barely wider than the thing itself?")
+# HD_D_TIGHT=1 이면 D 한 문항만 좁힌다. `or about to` 때문에 아직 쥔 채 내려가는
+# 중에도 켜져서 conf 를 위로 민다(4내려놓으러에서 3.3).
+_D_OLD = ("D) Is the hand letting go, or about to -- the object already resting where it is\n"
+          "   meant to end up, so that what remains is only to open and withdraw?")
+_D_NEW = ("D) Is the object ALREADY RESTING where it is meant to end up, taking its own\n"
+          "   weight, with nothing left but to open the hand and draw back?")
+if os.environ.get("HD_D_TIGHT") == "1":
+    assert _D_OLD in ASK, "D 문항 원문을 못 찾았다"
+    ASK = ASK.replace(_D_OLD, _D_NEW, 1)
+
 if os.environ.get("HD_C_WIDTH") == "1":
     assert _C_OLD in ASK, "C 문항 원문을 못 찾았다 -- 파일이 바뀌었나"
     ASK = ASK.replace(_C_OLD, _C_NEW, 1)
+# HD_F_MIRROR=1 이면 B 의 거울 문항 F 를 더한다. 부호 −1.
+# D 는 부호가 +1 이라 "안 올리는 것" 까지가 한계다 -- 내려놓는 순간을 운반 아래로
+# 내리려면 그 순간에 켜지면서 감점인 문항이 있어야 한다(분해로 확인).
+_F = ("F) Is the robot LOWERING what it still holds onto its target right now -- the object\n"
+      "   still in the hand, coming down onto the spot it must end up, not yet let go?")
+if os.environ.get("HD_F_MIRROR") == "1":
+    ASK = ASK.replace("\nAnswer:", "\n" + _F + "\nAnswer:", 1)
+    Q_EXTRA = ("F",)
+else:
+    Q_EXTRA = ()
+
 VIEW = ("You are shown 2 camera views of this one moment: a scene view and a wrist "
         "(eye-in-hand) close-up. The wrist camera is mounted on the gripper, so objects "
         "normally look close in it -- general closeness is normal. Use the wrist view "
         "only to spot the actual grasp-closure or fine-insertion instant.")
-Q = tuple("ABCDE")
+Q = tuple("ABCDE") + Q_EXTRA
 MODEL = os.environ.get("HD_MODEL", "gemini/gemini-3.8-flash")
 EFFORT = os.environ.get("HD_EFFORT", "low")
 PER = int(os.environ.get("HD_PER_DS", "30"))
