@@ -74,16 +74,35 @@ _lock = threading.Lock()
 STAT = {"n": 0, "bad": 0, "cost": 0.0}
 
 
+# HD_MASK_DEST=1 이면 지시문에서 **목적지 단어만** 가린다. C 가 화면을 읽는지
+# 지시문 단어를 읽는지 가르는 확인용이다 (C 문항이 "cup" 을 적는데 long 지시문에도
+# "red cup" 이 있다). 나머지는 글자까지 그대로 -- 한 번에 하나만 바꾼다.
+_MASK = {"red cup": "marked spot", "the plate": "the marked spot",
+         "red cups": "marked spots"}
+
+
+def mask_dest(t):
+    for k, v in _MASK.items():
+        t = t.replace(k, v)
+    return t
+
+
 def ask_one(imgs, fx, instr):
     content = [{"type": "image_url",
                 "image_url": {"url": "data:image/png;base64," + base64.b64encode(i).decode()}}
                for i in imgs]
     content.append({"type": "text",
-                    "text": f"{GUID}\n\n{VIEW}\n\nThe robot was told: {instr}\n\n{fx}\n\n{ASK}"})
-    body = {"model": MODEL, "max_tokens": 1024, "temperature": 0,
+                    "text": f"{GUID}\n\n{VIEW}\n\nThe robot was told: "
+                            f"{mask_dest(instr) if os.environ.get('HD_MASK_DEST')=='1' else instr}"
+                            f"\n\n{fx}\n\n{ASK}"})
+    # reasoning_effort 는 Anthropic 경로에서 400 을 낸다. Gemini 계열에만 붙인다.
+    body = {"model": MODEL, "max_tokens": 1024,
             "messages": [{"role": "user", "content": content}]}
-    if EFFORT:
-        body["reasoning_effort"] = EFFORT
+    # temperature 는 최신 Anthropic 모델(opus-4-7 이상, opus-5)에서 거부된다.
+    if not any(k in MODEL for k in ("opus-5", "opus-4-7", "opus-4-8", "fable")):
+        body["temperature"] = 0
+    if "gemini" in MODEL or "gpt" in MODEL:
+        body["reasoning_effort"] = os.environ.get("HD_EFFORT", "low")
     data = json.dumps(body).encode()
     for a in range(5):
         try:
@@ -132,7 +151,7 @@ def collect(ds):
         t = [x for x in d.get("tasks", []) if isinstance(x, str) and len(x.split()) > 1]
         if t:
             instr[d["episode_index"]] = t[0]
-    eps = sorted(instr)[:PER // 3 + 2]
+    eps = sorted(instr)[:max(8, PER // 4)]
     jobs = []
     for ep in eps:
         ch = ep // info["chunks_size"]
@@ -141,29 +160,35 @@ def collect(ds):
         n = len(a) - 20
         if n <= 0:
             continue
-        # **국면은 비율이 아니라 그리퍼 신호로 찍는다.** 앞 판에서 0.15/0.45/0.80 을
-        # 썼더니 pnp 의 0.80 은 아직 닫힌 운반 중이었고 long 은 표본의 67% 가 그리퍼가
-        # 내내 열린 창이었다 -- 놓는 순간을 한 번도 안 뽑아서 A·C·D 를 판정할 수 없었다.
-        gz = a[:, 7] > D._th(ds)[2]        # 문턱은 이 데이터셋 분포에서
+        # **국면은 그리퍼 전이로 찍되, 문턱은 에피소드별로 정규화한다.**
+        # 전역 상수(pnp 0.70)를 쓰면 101에피 중 33에피가 문턱을 못 넘는다 -- 물체마다
+        # 쥐는 폭이 달라(0.62 vs 0.95) 닫힘 상태 자체가 양봉이다. 0.5 x 그 에피의
+        # 최대값으로 잡으면 주기 0인 에피가 없어진다(pnp 101 · long 153 주기).
+        #
+        # **모든 주기를 쓴다.** 앞 판에서 첫 주기만 썼는데 long 은 물건이 셋이라
+        # 154주기 중 103개(67%)를 버리고 있었다.
+        g = a[:, 7]
+        t = max(0.15, 0.5 * float(g.max()))
+        gz = g > t
         tr = np.flatnonzero(np.diff(gz.astype(int)))
-        close = [t for t in tr if gz[t + 1]]          # 열림 -> 닫힘 = 파지
-        openi = [t for t in tr if not gz[t + 1]]      # 닫힘 -> 열림 = 놓기
+        cl = [x for x in tr if gz[x + 1]]
+        op = [x for x in tr if not gz[x + 1]]
+        cyc = []
+        for c in cl:
+            nx = [o for o in op if o > c]
+            # 주기가 24스텝보다 짧으면 접근·운반·내려놓기가 겹친다
+            if nx and (not cyc or c > cyc[-1][1]) and nx[0] - c >= 24:
+                cyc.append((c, nx[0]))
         picks = []
-        if close:
-            picks += [max(0, close[0] - 12), close[0]]                 # 접근 · 파지
-        if close and openi:
-            mid = [o for o in openi if o > close[0]]
-            if mid:
-                # **내려놓으러 내려가는 구간을 반드시 넣는다.** 앞 판에서 열림 지점만
-                # 뽑았더니 그건 물건이 이미 내려놓인 뒤라 conf 가 높게 나오는 게
-                # 맞는 자리였다. 정밀이 필요한 곳은 그 직전, 목표 위로 가져가
-                # 내려놓는 구간이다.
-                picks += [(close[0] + mid[0]) // 2,          # 운반
-                          max(close[0] + 1, mid[0] - 12),    # 내려놓으러
-                          mid[0]]                            # 놓는 순간
+        for c0, o0 in cyc:
+            picks += [max(0, c0 - 12),            # 1 집으러
+                      c0,                          # 2 파지
+                      (c0 + o0) // 2,              # 3 운반
+                      max(c0 + 1, o0 - 12),        # 4 내려놓으러
+                      o0]                          # 5 놓고 물러남
         if not picks:
-            picks = [int(n * r) for r in (0.15, 0.45, 0.80)]
-        picks = sorted({min(max(0, p), n - 1) for p in picks})
+            continue
+        picks = sorted({min(max(0, x), n - 1) for x in picks})
         frames = {}
         for key, slot in (("exterior_image_1_left", "scene"), ("wrist_image_left", "wrist")):
             p = f"{R}/videos/chunk-{ch:03d}/observation.images.{key}/episode_{ep:06d}.mp4"
