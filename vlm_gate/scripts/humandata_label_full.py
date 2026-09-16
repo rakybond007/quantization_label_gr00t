@@ -19,6 +19,7 @@
   python humandata_label_full.py <출력디렉터리>
 """
 import base64
+import importlib
 import io
 import json
 import os
@@ -36,34 +37,50 @@ from PIL import Image
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, f"{BASE}/scripts")
-import humandata_descriptors as D  # noqa: E402
 
 ROOT = "/sjw_alinlab2/home/taekwan/Data/human_data"
-EV = f"{BASE}/analysis/_evolver/_libero"
-GUID = open(f"{EV}/libero_guidance_v3c.txt").read().strip()
-_ASK = open(f"{EV}/libero_questions_v3c.txt").read().strip()
 
-_C_OLD = ("C) Is an object being put into something that would catch it -- a basket, a bin,\n"
-          "   a bowl -- so that landing off-centre changes nothing?")
-_C_NEW = ("C) Is the place this object has to end up ROOMY FOR IT -- a wide bowl, an open\n"
-          "   basket, a broad plate with slack all round -- rather than a cup, a jar or a\n"
-          "   slot barely wider than the thing itself?")
-_D_OLD = ("D) Is the hand letting go, or about to -- the object already resting where it is\n"
-          "   meant to end up, so that what remains is only to open and withdraw?")
-_D_NEW = ("D) Is the object ALREADY RESTING where it is meant to end up, taking its own\n"
-          "   weight, with nothing left but to open the hand and draw back?")
-_F = ("F) Is the robot LOWERING what it still holds onto its target right now -- the object\n"
-      "   still in the hand, coming down onto the spot it must end up, not yet let go?")
-assert _C_OLD in _ASK and _D_OLD in _ASK, "문항 원문을 못 찾았다 -- 파일이 바뀌었나"
-ASK = _ASK.replace(_C_OLD, _C_NEW, 1).replace(_D_OLD, _D_NEW, 1)
-ASK = ASK.replace("\nAnswer:", "\n" + _F + "\nAnswer:", 1)
+# **판본이 GUIDANCE/VIEW/ASK 를 들고 있으면 그것을 쓴다.** v1 은 libero v3c 파일을
+# 읽어 문자열로 세 군데를 갈아끼웠다 -- 어떤 문항으로 만든 라벨인지 이 파일을 읽어야만
+# 알 수 있었고, 부호·가중은 아예 어디에도 없어 humandata_tau.py 가 런타임에 만들었다.
+# v2 부터는 humandata_v2_checks.py 하나에 다 있다.
+#
+#   CHECKS=humandata_v2_checks DESCRIPTORS=humandata_v2_descriptors \
+#     python humandata_label_full.py <출력디렉터리>
+_CK_NAME = os.environ.get("CHECKS", "")
+CK = importlib.import_module(_CK_NAME) if _CK_NAME else None
+D = importlib.import_module(os.environ.get("DESCRIPTORS", "humandata_descriptors"))
 
-VIEW = ("You are shown 2 camera views of this one moment: a scene view and a wrist "
-        "(eye-in-hand) close-up. The wrist camera is mounted on the gripper, so objects "
-        "normally look close in it -- general closeness is normal. Use the wrist view "
-        "only to spot the actual grasp-closure or fine-insertion instant.")
+if CK is not None:
+    GUID, VIEW, ASK = CK.GUIDANCE, CK.VIEW, CK.ASK
+    Q = tuple(sorted(CK.SIGN))
+    NGRADE = CK.NGRADE
+else:
+    # v1 경로 -- libero v3c 에 문자열 패치. 재현용으로만 남긴다.
+    EV = f"{BASE}/analysis/_evolver/_libero"
+    GUID = open(f"{EV}/libero_guidance_v3c.txt").read().strip()
+    _ASK = open(f"{EV}/libero_questions_v3c.txt").read().strip()
+    _C_OLD = ("C) Is an object being put into something that would catch it -- a basket, a bin,\n"
+              "   a bowl -- so that landing off-centre changes nothing?")
+    _C_NEW = ("C) Is the place this object has to end up ROOMY FOR IT -- a wide bowl, an open\n"
+              "   basket, a broad plate with slack all round -- rather than a cup, a jar or a\n"
+              "   slot barely wider than the thing itself?")
+    _D_OLD = ("D) Is the hand letting go, or about to -- the object already resting where it is\n"
+              "   meant to end up, so that what remains is only to open and withdraw?")
+    _D_NEW = ("D) Is the object ALREADY RESTING where it is meant to end up, taking its own\n"
+              "   weight, with nothing left but to open the hand and draw back?")
+    _F = ("F) Is the robot LOWERING what it still holds onto its target right now -- the object\n"
+          "   still in the hand, coming down onto the spot it must end up, not yet let go?")
+    assert _C_OLD in _ASK and _D_OLD in _ASK, "문항 원문을 못 찾았다 -- 파일이 바뀌었나"
+    ASK = _ASK.replace(_C_OLD, _C_NEW, 1).replace(_D_OLD, _D_NEW, 1)
+    ASK = ASK.replace("\nAnswer:", "\n" + _F + "\nAnswer:", 1)
+    VIEW = ("You are shown 2 camera views of this one moment: a scene view and a wrist "
+            "(eye-in-hand) close-up. The wrist camera is mounted on the gripper, so objects "
+            "normally look close in it -- general closeness is normal. Use the wrist view "
+            "only to spot the actual grasp-closure or fine-insertion instant.")
+    Q = tuple("ABCDEF")
+    NGRADE = 5
 
-Q = tuple("ABCDEF")
 CHUNK = 16
 # stride 16 이면 청크 길이와 같아 전 프레임을 겹침도 빈틈도 없이 한 번씩 덮는다.
 # allex 배달본도 stride 16 이다. 8 로 주면 절반씩 겹치는 2배 밀도가 된다.
@@ -118,7 +135,7 @@ def parse(t):
         if len(s) >= 3 and s[0] in Q and s[1] == ")":
             d = "".join(c for c in s[2:] if c.isdigit())
             if d:
-                g[s[0]] = max(1, min(5, int(d[0])))
+                g[s[0]] = max(1, min(NGRADE, int(d[0])))
     return g if len(g) == len(Q) else None
 
 
@@ -232,6 +249,16 @@ def main():
     open(f"{out}/PROMPT.txt", "w").write(
         "[USER]\n<2 images>\n" + GUID + "\n\n" + VIEW + "\n\n"
         "The robot was told: {instruction}\n\n{computed facts}\n\n" + ASK + "\n")
+    # **부호·가중도 같이 남긴다.** v1 은 남기지 않아서 humandata_tau.py 가 libero 것을
+    # 가져와 런타임에 만들었고, 어떤 가중으로 계산한 conf 인지 복구할 수 없었다.
+    json.dump({"checks": _CK_NAME or "(v1 libero 문자열 패치)",
+               "descriptors": os.environ.get("DESCRIPTORS", "humandata_descriptors"),
+               "model": MODEL, "stride": STRIDE, "conc": CONC, "ngrade": NGRADE,
+               "questions": list(Q),
+               "sign": (CK.SIGN if CK is not None else None),
+               "weight": (CK.WEIGHT if CK is not None else None),
+               "name": (CK.NAME if CK is not None else None)},
+              open(f"{out}/meta.json", "w"), indent=1, ensure_ascii=False)
     fp = f"{out}/labels.jsonl"
     done = set()
     if os.path.exists(fp):

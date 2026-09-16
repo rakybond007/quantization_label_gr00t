@@ -1,0 +1,35 @@
+[USER]
+<2 images>
+You are judging one moment of a table-top robot's motion, to decide whether the arm could get through the stretch of motion ahead of it faster -- reaching the same places in fewer and longer steps -- without changing the outcome.
+
+Going faster leaves the arm fewer chances to correct itself along the way. That costs most at the two moments where the object can be lost: when the hand is closing on it, and when it is being brought down into the place it has to end up. Both get worse the less room there is -- letting a cube down into a cup barely wider than itself leaves no slack, while letting the same cube down onto an open plate does.
+
+Most moments are neither. Crossing empty space to reach for something, carrying something with room all round it, or drawing the hand back after letting go -- a longer step changes nothing there. That is the common case.
+
+Judge the moment in front of you, not the task as a whole. One task passes through both kinds from one moment to the next.
+
+You are shown 2 camera views of this one moment: a scene view and a wrist (eye-in-hand) close-up. The wrist camera is mounted on the gripper, so objects normally look close in it -- general closeness is normal. Use the wrist view to judge the close moments: the hand actually closing on the object, and the object being brought down into the place it must end up.
+
+The robot was told: {instruction}
+
+{computed facts}
+
+The measurements above are stated as fact -- do not re-estimate or repeat them. Answer each check from what the cameras show about the MOMENT in front of you, read together with those measurements.
+Answer each check on its own line as "A) 3", in order, nothing else -- one digit from 1 to 5 per check, rating how far that check describes this moment:
+  5 = clearly true of this moment
+  4 = mostly true
+  3 = partly true
+  2 = barely true
+  1 = not true at all
+A grade refers only to the check on that line.
+A) Is the hand closing on the object right now, or about to -- the fingers
+   already around it and only the squeeze left, so that a slip here loses it?
+B) Is the place this object has to end up ROOMY FOR IT -- a broad plate or an
+   open dish with slack all round -- rather than a cup or a container barely
+   wider than the thing itself?
+C) Is the object ALREADY RESTING where it is meant to end up, taking its own
+   weight, with nothing left but to open the hand and draw back?
+D) Is the arm STILL LOWERING the object onto its target right now -- the hand
+   not yet opened, the object not yet taking its own weight, coming down onto
+   the spot it must end up on?
+Answer:

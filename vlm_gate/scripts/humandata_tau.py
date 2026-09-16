@@ -10,13 +10,20 @@ conf 는 그 판의 부호·가중으로 계산한다. 가중은 아직 확정�
 
   python humandata_tau.py <labels.jsonl>
 """
+import importlib
 import json
+import os
 import sys
 
 import numpy as np
 
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
-import libero_v3c_checks as CK  # noqa: E402
+# **판본을 환경변수로 고른다.** 기본은 v1 재현용(libero 가중을 런타임에 패치)이고,
+# v2 부터는 판본이 부호·가중을 직접 들고 있어 패치가 필요 없다.
+#   CHECKS=humandata_v2_checks python humandata_tau.py output/humandata_v2/labels.jsonl
+_CK_NAME = os.environ.get("CHECKS", "libero_v3c_checks")
+CK = importlib.import_module(_CK_NAME)
+_OWNS = hasattr(CK, "NAME") and "F" not in CK.SIGN and _CK_NAME != "libero_v3c_checks"
 
 ORD = ["1집으러", "2파지", "3운반", "4내려놓으러", "5물러남"]
 
@@ -24,10 +31,16 @@ ORD = ["1집으러", "2파지", "3운반", "4내려놓으러", "5물러남"]
 def main():
     path = sys.argv[1]
     R = [r for r in map(json.loads, open(path)) if r.get("A")]
-    has_F = any("F" in r for r in R)
-    Q = tuple("ABCDEF") if has_F else tuple("ABCDE")
-    S = dict(CK.SIGN)
-    W = dict(CK.WEIGHT)
+    if _OWNS:
+        # 판본이 부호·가중을 직접 들고 있다 -- 손대지 않는다.
+        Q = tuple(sorted(CK.SIGN))
+        S, W = dict(CK.SIGN), dict(CK.WEIGHT)
+        has_F = False
+    else:
+        has_F = any("F" in r for r in R)
+        Q = tuple("ABCDEF") if has_F else tuple("ABCDE")
+        S = dict(CK.SIGN)
+        W = dict(CK.WEIGHT)
     if has_F:
         S["F"] = -1
         W["F"] = W["B"]
@@ -35,7 +48,8 @@ def main():
         t = sum(W[q] for q in risk)
         for q in risk:
             W[q] /= t
-    conf = lambda r: 0.5 * (1 + sum(S[q] * W[q] * ((r[q] - 1) / 4) for q in Q))
+    _g = CK.NGRADE - 1
+    conf = lambda r: 0.5 * (1 + sum(S[q] * W[q] * ((r[q] - 1) / _g) for q in Q))
 
     # 국면은 라벨에 실려 있으면 그것을 쓰고(전량 스크립트), 없으면 액션에서 다시 낸다
     # (표본 스크립트는 phase 를 안 적는다). 문턱은 에피소드별 최대값으로 정규화한다.
