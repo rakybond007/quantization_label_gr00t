@@ -25,6 +25,8 @@ COSMOS = [
     # 2장이다. front_view 와 left_wrist_view 뿐 -- label_chunks.py 의
     # BENCHMARKS["libero"]["views"] 도 ("front", "wrist") 다.
     ("robocasa", "v8", "phase9_checks_v8", 3, "scripts/phase9_two_sided.py"),
+    ("robocasa", "v9", "phase9_checks_v9", 3, "scripts/phase9_two_sided.py"),
+    ("robocasa", "v10", "phase9_checks_v10", 3, "scripts/phase9_two_sided.py"),
     ("libero", "v3c", "libero_v3c_checks", 2, "scripts/label_chunks.py"),
 ]
 

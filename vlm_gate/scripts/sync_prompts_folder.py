@@ -88,6 +88,11 @@ BENCH = [
     # 가리키는 것이 바뀐다(실제로 그 사고가 있었다).
     ("robocasa", "v8", ("module", "phase9_checks_v8"), "phase9_checks_v8",
      "24 태스크 · v7 문항 그대로, 포맷만 정규화", 3, "cosmos"),
+    # v9·v10 은 **후보다. 아직 라벨을 만들지 않았다.**
+    ("robocasa", "v9", ("module", "phase9_checks_v9"), "phase9_checks_v9",
+     "후보 · v8 + F(내려놓는 순간) 추가 + D 좁힘", 3, "cosmos"),
+    ("robocasa", "v10", ("module", "phase9_checks_v10"), "phase9_checks_v10",
+     "후보 · v9 + A 를 순간 문항으로 좁힘", 3, "cosmos"),
     ("robocasa", "v7", ("module", "phase9_checks_v7"), "phase9_checks_v7",
      # 이미지 3장이다. scripts/phase9_two_sided.py:122 가 타일을 3등분해
      # gate.judge(views, ...) 로 넘긴다. build_messages 에 6장 분기가 있지만

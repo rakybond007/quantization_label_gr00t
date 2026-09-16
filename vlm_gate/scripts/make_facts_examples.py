@@ -67,7 +67,8 @@ def libero():
 
 
 MAKERS = {("allex", "v4c"): allex, ("robocasa", "v7"): robocasa_v7,
-          ("robocasa", "v8"): robocasa_v8, ("libero", "v3c"): libero}
+          ("robocasa", "v8"): robocasa_v8, ("robocasa", "v9"): robocasa_v8,
+          ("robocasa", "v10"): robocasa_v8, ("libero", "v3c"): libero}
 
 
 def main():

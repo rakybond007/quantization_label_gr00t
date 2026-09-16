@@ -1,0 +1,42 @@
+# 자리표시를 실제 값으로 채운 판. 원본 틀은 robocasa_v10_FULL.txt 이다.
+# 계산 사실은 에피 52 · 프레임 161 에서 나온 것이다 (make_facts_examples.py).
+
+[USER]
+<3 images>
+You are judging one moment of a kitchen robot's motion, to decide how much of it could be thinned out -- how many of its commanded poses could be dropped, letting the arm travel further between the ones that remain, without changing the outcome.
+
+What thinning takes away is the arm's chance to correct itself on the way. That matters most where the gripper has to close on one exact spot, and it matters most of all when that spot is hemmed in. It matters least where the arm only pushes or turns something that is already held in place by its own hinge, rail or mount.
+
+Judge the moment in front of you, not the task as a whole. One task passes through both kinds from one moment to the next.
+
+You are shown 3 camera views: agentview-left, agentview-right, and a wrist (eye-in-hand) close-up. The wrist camera is mounted on the gripper, so objects normally look close in it — general closeness is normal. Use the wrist view only to spot the actual grasp-closure or fine-insertion instant.
+
+The robot was told: turn on the front right burner of the stove
+
+MEASURED FROM THE PLANNED MOTION over the chunk ahead (these are computed facts, not estimates): the gripper stays closed throughout; the end-effector keeps a consistent direction; it is among the slowest motions in this dataset -- faster than 0% of all moments here (mean step 0.02, peak 0.03); it is holding something while creeping along; it is decelerating to a near stop.
+
+The measurements above are stated as fact -- do not re-estimate or repeat them. Answer each check from what the cameras show about the MOMENT in front of you, read together with those measurements.
+Answer each check on its own line as "A) 3", in order, nothing else -- one digit from 1 to 5 per check, rating how far that check describes this moment:
+  5 = clearly true of this moment
+  4 = mostly true
+  3 = partly true
+  2 = barely true
+  1 = not true at all
+A grade refers only to the check on that line.
+A) Is the gripper CLOSING on its target right now, or about to -- the fingers
+   already around the handle, rim or object and only the squeeze left, so that a
+   slip here loses it?
+B) Is that closing spot hemmed in -- reached into a cabinet, a microwave, an oven or
+   a sink, or lined up with a slot or a handle -- so the gripper has little room
+   around it as it closes?
+C) Is the thing being acted on held in place by the furniture or appliance itself
+   -- a door or drawer on its hinge or rail, a knob, switch, button or lever on its
+   mount -- so the mechanism, not the arm, decides where it ends up?
+D) Is the object ALREADY RESTING where it is meant to end up, taking its own
+   weight, with nothing left but to open the hand and draw back?
+E) Is the gripper carrying something through open space -- already holding it,
+   still well away from wherever it is going?
+F) Is the arm LOWERING what it still holds onto its target right now -- the
+   object still in the gripper, coming down onto the spot it must end up, not
+   yet let go?
+Answer:

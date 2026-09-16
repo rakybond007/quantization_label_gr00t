@@ -1,0 +1,13 @@
+# robocasa v10 계산 사실 예시 -- **실제 데이터에서 뽑았다**
+# make_facts_examples.py 가 만든다. 손으로 고치지 말 것.
+# 전문의 {computed facts} 자리에 이런 문장이 들어간다.
+
+[에피 52 · 프레임 0]
+MEASURED FROM THE PLANNED MOTION over the chunk ahead (these are computed facts, not estimates): the gripper stays open throughout; the end-effector keeps a consistent direction; it is middling in speed for this dataset -- faster than 42% of all moments here (mean step 0.47, peak 1.32); it is not creeping along with something held; it is not decelerating to a stop.
+
+[에피 52 · 프레임 80]
+MEASURED FROM THE PLANNED MOTION over the chunk ahead (these are computed facts, not estimates): the gripper stays open throughout; the end-effector reverses direction sharply; it is on the slow side for this dataset -- faster than 38% of all moments here (mean step 0.45, peak 0.62); it is not creeping along with something held; it is not decelerating to a stop.
+
+[에피 52 · 프레임 161]
+MEASURED FROM THE PLANNED MOTION over the chunk ahead (these are computed facts, not estimates): the gripper stays closed throughout; the end-effector keeps a consistent direction; it is among the slowest motions in this dataset -- faster than 0% of all moments here (mean step 0.02, peak 0.03); it is holding something while creeping along; it is decelerating to a near stop.
+
