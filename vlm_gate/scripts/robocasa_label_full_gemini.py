@@ -143,8 +143,8 @@ def main():
     open(f"{out_dir}/PROMPT.txt", "w").write(
         "[USER]\n<3 images>\n" + CK.GUIDANCE + "\n\n" + VIEW + "\n\n"
         "The robot was told: {instruction}\n\n{computed facts}\n\n" + CK.ASK + "\n")
-    json.dump({"checks": os.environ.get("CHECKS", "phase9_checks_v10"),
-               "descriptors": os.environ.get("DESCRIPTORS", "robocasa_v8_descriptors"),
+    json.dump({"checks": CK.__name__,
+               "descriptors": D.__name__,
                "model": MODEL, "stride": STRIDE, "conc": CONC,
                "sign": CK.SIGN, "weight": CK.WEIGHT, "ngrade": CK.NGRADE},
               open(f"{out_dir}/meta.json", "w"), indent=1)

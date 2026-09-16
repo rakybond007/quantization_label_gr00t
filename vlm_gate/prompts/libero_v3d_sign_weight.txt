@@ -1,0 +1,22 @@
+libero v3d — 부호·가중
+
+**가중은 잠정이다.** v3c 의 값은 v2 성질(CROWDED_PICK·WIDE_SURFACE)이 덮는
+태스크 수로 유도된 것인데 그 두 문항이 v3c 에서 교체됐으므로 새 문항에는 근거가
+없다. 여기서는 양쪽 합만 1 로 맞춘 잠정값이다. 라벨링 뒤 실측 적합(R5).
+
+  A  ROOMY_TARGET     가점  0.50
+  B  GRASP_CLOSING    감점  0.60
+  C  THREADED_PICK    감점  0.40
+  D  HAND_OFF         가점  0.30
+  E  NO_HOLD          가점  0.20
+
+  위험쪽 합 1.00 · 안전쪽 합 1.00
+  NGRADE 5 · conf = (1 + Σ_safe w·g − Σ_risk w·g)/2, g=(등급−1)/(NGRADE−1)
+
+v3c -> v3d 대응
+  v3c A 작고 고정된 자리(감점) ┐
+  v3c C 받아 주는 통(가점)     ┴-> v3d A ROOMY_TARGET (가점 하나로 -- 상쇄 해소)
+  v3c B 파지 순간              -> v3d B GRASP_CLOSING
+  (없음)                       -> v3d C THREADED_PICK (되살림)
+  v3c D 손 떼는 순간           -> v3d D HAND_OFF (관측 상태로)
+  v3c E 붙들 필요 없는 일       -> v3d E NO_HOLD

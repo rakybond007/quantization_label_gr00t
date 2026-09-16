@@ -1,0 +1,1 @@
+MEASURED FROM THE PLANNED MOTION over the chunk ahead (these are computed facts, not estimates): the gripper stays closed throughout; it is going down toward something; it is among the slowest motions in this dataset -- faster than 18% of all moments here; it is decelerating to a near stop.

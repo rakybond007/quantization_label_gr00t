@@ -85,6 +85,8 @@ CHUNK = 16
 # stride 16 이면 청크 길이와 같아 전 프레임을 겹침도 빈틈도 없이 한 번씩 덮는다.
 # allex 배달본도 stride 16 이다. 8 로 주면 절반씩 겹치는 2배 밀도가 된다.
 STRIDE = int(os.environ.get("HD_STRIDE", "16"))
+# 데이터셋당 상한. 0 이면 전량. 문구 A/B 팔을 같은 청크에서 돌릴 때 쓴다.
+_LIMIT = int(os.environ.get("HD_LIMIT", "0"))
 MODEL = os.environ.get("HD_MODEL", "gemini/gemini-3.8-flash")
 CONC = int(os.environ.get("HD_CONC", "16"))
 KEY = open(os.path.expanduser("~/.config/litellm/key")).read().strip()
@@ -190,6 +192,10 @@ def collect(ds, done):
             instr[d["episode_index"]] = t[0]
     jobs = []
     for ep in sorted(instr):
+        # **상한은 디코딩 전에 건다.** 아래에서 영상을 열기 때문에, 다 모은 뒤
+        # 자르면 프로브가 전량과 같은 메모리·시간을 쓴다(실제로 그래서 죽었다).
+        if _LIMIT and len(jobs) >= _LIMIT:
+            break
         ch = ep // info["chunks_size"]
         try:
             a = np.stack(pd.read_parquet(
@@ -274,6 +280,8 @@ def main():
     fh = open(fp, "a")
     for ds in ("pnp_task", "long_horizon_task"):
         j = collect(ds, done)
+        # **HD_LIMIT 은 앞에서 자른다.** collect 가 에피 순서대로 쌓으므로 같은 값을
+        # 주면 두 팔이 같은 (ds, ep, f) 를 본다 -- 문구 변경만 분리해 재려면 필요하다.
         print(f"[{ds}] 남은 청크 {len(j)}", flush=True)
         with ThreadPoolExecutor(CONC) as ex:
             for r in ex.map(run, j):

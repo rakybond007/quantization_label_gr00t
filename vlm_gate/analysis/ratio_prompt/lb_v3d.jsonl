@@ -1,0 +1,380 @@
+{"ep": 632, "f": 58, "phase": "1집으러", "instr": "put the cream cheese in the bowl", "A": 4, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 632, "f": 70, "phase": "2파지", "instr": "put the cream cheese in the bowl", "A": 3, "B": 4, "C": 2, "D": 2, "E": 2}
+{"ep": 632, "f": 91, "phase": "3운반", "instr": "put the cream cheese in the bowl", "A": 4, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 632, "f": 101, "phase": "4내려놓으러", "instr": "put the cream cheese in the bowl", "A": 4, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 302, "f": 121, "phase": "1집으러", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 2, "B": 1, "C": 1, "D": 2, "E": 1}
+{"ep": 302, "f": 133, "phase": "2파지", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 1, "B": 1, "C": 1, "D": 4, "E": 1}
+{"ep": 302, "f": 167, "phase": "3운반", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 4, "B": 2, "C": 1, "D": 1, "E": 1}
+{"ep": 302, "f": 189, "phase": "4내려놓으러", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 4, "B": 4, "C": 1, "D": 1, "E": 1}
+{"ep": 302, "f": 201, "phase": "5물러남", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 4, "B": 4, "C": 2, "D": 2, "E": 2}
+{"ep": 63, "f": 48, "phase": "1집으러", "instr": "put both the alphabet soup and the cream cheese box in the basket", "A": 4, "B": 4, "C": 2, "D": 2, "E": 2}
+{"ep": 63, "f": 60, "phase": "2파지", "instr": "put both the alphabet soup and the cream cheese box in the basket", "A": 5, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 63, "f": 88, "phase": "3운반", "instr": "put both the alphabet soup and the cream cheese box in the basket", "A": 5, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 63, "f": 104, "phase": "4내려놓으러", "instr": "put both the alphabet soup and the cream cheese box in the basket", "A": 5, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 63, "f": 116, "phase": "5물러남", "instr": "put both the alphabet soup and the cream cheese box in the basket", "A": 4, "B": 2, "C": 2, "D": 3, "E": 2}
+{"ep": 63, "f": 167, "phase": "1집으러", "instr": "put both the alphabet soup and the cream cheese box in the basket", "A": 5, "B": 4, "C": 1, "D": 1, "E": 1}
+{"ep": 63, "f": 179, "phase": "2파지", "instr": "put both the alphabet soup and the cream cheese box in the basket", "A": 4, "B": 4, "C": 2, "D": 2, "E": 2}
+{"ep": 63, "f": 204, "phase": "3운반", "instr": "put both the alphabet soup and the cream cheese box in the basket", "A": 5, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 63, "f": 217, "phase": "4내려놓으러", "instr": "put both the alphabet soup and the cream cheese box in the basket", "A": 4, "B": 2, "C": 2, "D": 3, "E": 2}
+{"ep": 340, "f": 29, "phase": "1집으러", "instr": "put both the alphabet soup and the tomato sauce in the basket", "A": 5, "B": 5, "C": 2, "D": 1, "E": 1}
+{"ep": 340, "f": 41, "phase": "2파지", "instr": "put both the alphabet soup and the tomato sauce in the basket", "A": 4, "B": 4, "C": 2, "D": 2, "E": 2}
+{"ep": 340, "f": 78, "phase": "3운반", "instr": "put both the alphabet soup and the tomato sauce in the basket", "A": 4, "B": 2, "C": 2, "D": 2, "E": 2}
+{"ep": 340, "f": 104, "phase": "4내려놓으러", "instr": "put both the alphabet soup and the tomato sauce in the basket", "A": 4, "B": 2, "C": 2, "D": 2, "E": 2}
+{"ep": 340, "f": 116, "phase": "5물러남", "instr": "put both the alphabet soup and the tomato sauce in the basket", "A": 4, "B": 2, "C": 2, "D": 4, "E": 2}
+{"ep": 340, "f": 208, "phase": "1집으러", "instr": "put both the alphabet soup and the tomato sauce in the basket", "A": 4, "B": 4, "C": 2, "D": 2, "E": 2}
+{"ep": 340, "f": 220, "phase": "2파지", "instr": "put both the alphabet soup and the tomato sauce in the basket", "A": 4, "B": 4, "C": 2, "D": 2, "E": 2}
+{"ep": 340, "f": 241, "phase": "3운반", "instr": "put both the alphabet soup and the tomato sauce in the basket", "A": 5, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 340, "f": 250, "phase": "4내려놓으러", "instr": "put both the alphabet soup and the tomato sauce in the basket", "A": 4, "B": 2, "C": 2, "D": 2, "E": 2}
+{"ep": 1036, "f": 66, "phase": "1집으러", "instr": "pick up the cream cheese and place it in the basket", "A": 5, "B": 5, "C": 2, "D": 1, "E": 1}
+{"ep": 1036, "f": 78, "phase": "2파지", "instr": "pick up the cream cheese and place it in the basket", "A": 5, "B": 5, "C": 2, "D": 1, "E": 1}
+{"ep": 1036, "f": 110, "phase": "3운반", "instr": "pick up the cream cheese and place it in the basket", "A": 4, "B": 2, "C": 2, "D": 2, "E": 2}
+{"ep": 1036, "f": 130, "phase": "4내려놓으러", "instr": "pick up the cream cheese and place it in the basket", "A": 5, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 249, "f": 89, "phase": "1집으러", "instr": "put the white mug on the left plate and put the yellow and white mug on the right plate", "A": 1, "B": 5, "C": 2, "D": 1, "E": 1}
+{"ep": 249, "f": 101, "phase": "2파지", "instr": "put the white mug on the left plate and put the yellow and white mug on the right plate", "A": 2, "B": 2, "C": 2, "D": 4, "E": 2}
+{"ep": 249, "f": 136, "phase": "3운반", "instr": "put the white mug on the left plate and put the yellow and white mug on the right plate", "A": 1, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 249, "f": 160, "phase": "4내려놓으러", "instr": "put the white mug on the left plate and put the yellow and white mug on the right plate", "A": 1, "B": 5, "C": 2, "D": 1, "E": 1}
+{"ep": 249, "f": 172, "phase": "5물러남", "instr": "put the white mug on the left plate and put the yellow and white mug on the right plate", "A": 2, "B": 4, "C": 3, "D": 2, "E": 2}
+{"ep": 1303, "f": 35, "phase": "1집으러", "instr": "pick up the black bowl on the cookie box and place it on the plate", "A": 2, "B": 4, "C": 4, "D": 2, "E": 2}
+{"ep": 1303, "f": 47, "phase": "2파지", "instr": "pick up the black bowl on the cookie box and place it on the plate", "A": 2, "B": 5, "C": 4, "D": 1, "E": 1}
+{"ep": 1303, "f": 69, "phase": "3운반", "instr": "pick up the black bowl on the cookie box and place it on the plate", "A": 1, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 1303, "f": 79, "phase": "4내려놓으러", "instr": "pick up the black bowl on the cookie box and place it on the plate", "A": 1, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 1303, "f": 91, "phase": "5물러남", "instr": "pick up the black bowl on the cookie box and place it on the plate", "A": 1, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 777, "f": 27, "phase": "1집으러", "instr": "put the cream cheese in the bowl", "A": 4, "B": 4, "C": 1, "D": 1, "E": 1}
+{"ep": 777, "f": 39, "phase": "2파지", "instr": "put the cream cheese in the bowl", "A": 3, "B": 4, "C": 2, "D": 2, "E": 2}
+{"ep": 777, "f": 57, "phase": "3운반", "instr": "put the cream cheese in the bowl", "A": 4, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 777, "f": 64, "phase": "4내려놓으러", "instr": "put the cream cheese in the bowl", "A": 3, "B": 4, "C": 2, "D": 2, "E": 2}
+{"ep": 414, "f": 109, "phase": "1집으러", "instr": "open the top drawer and put the bowl inside", "A": 4, "B": 4, "C": 1, "D": 1, "E": 1}
+{"ep": 414, "f": 121, "phase": "2파지", "instr": "open the top drawer and put the bowl inside", "A": 4, "B": 4, "C": 2, "D": 1, "E": 1}
+{"ep": 414, "f": 155, "phase": "3운반", "instr": "open the top drawer and put the bowl inside", "A": 4, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 414, "f": 177, "phase": "4내려놓으러", "instr": "open the top drawer and put the bowl inside", "A": 4, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 244, "f": 40, "phase": "1집으러", "instr": "put both the cream cheese box and the butter in the basket", "A": 5, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 244, "f": 52, "phase": "2파지", "instr": "put both the cream cheese box and the butter in the basket", "A": 4, "B": 4, "C": 2, "D": 2, "E": 2}
+{"ep": 244, "f": 88, "phase": "3운반", "instr": "put both the cream cheese box and the butter in the basket", "A": 4, "B": 2, "C": 2, "D": 2, "E": 2}
+{"ep": 244, "f": 112, "phase": "4내려놓으러", "instr": "put both the cream cheese box and the butter in the basket", "A": 4, "B": 4, "C": 2, "D": 2, "E": 2}
+{"ep": 244, "f": 124, "phase": "5물러남", "instr": "put both the cream cheese box and the butter in the basket", "A": 4, "B": 2, "C": 2, "D": 4, "E": 2}
+{"ep": 244, "f": 170, "phase": "1집으러", "instr": "put both the cream cheese box and the butter in the basket", "A": 4, "B": 4, "C": 3, "D": 2, "E": 2}
+{"ep": 244, "f": 182, "phase": "2파지", "instr": "put both the cream cheese box and the butter in the basket", "A": 5, "B": 4, "C": 2, "D": 1, "E": 1}
+{"ep": 244, "f": 204, "phase": "3운반", "instr": "put both the cream cheese box and the butter in the basket", "A": 4, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 244, "f": 215, "phase": "4내려놓으러", "instr": "put both the cream cheese box and the butter in the basket", "A": 4, "B": 1, "C": 1, "D": 2, "E": 1}
+{"ep": 428, "f": 59, "phase": "1집으러", "instr": "put the wine bottle on the rack", "A": 2, "B": 4, "C": 3, "D": 2, "E": 2}
+{"ep": 428, "f": 71, "phase": "2파지", "instr": "put the wine bottle on the rack", "A": 1, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 428, "f": 106, "phase": "3운반", "instr": "put the wine bottle on the rack", "A": 2, "B": 2, "C": 2, "D": 2, "E": 2}
+{"ep": 428, "f": 129, "phase": "4내려놓으러", "instr": "put the wine bottle on the rack", "A": 2, "B": 4, "C": 3, "D": 2, "E": 2}
+{"ep": 231, "f": 111, "phase": "1집으러", "instr": "put the white mug on the left plate and put the yellow and white mug on the right plate", "A": 1, "B": 1, "C": 1, "D": 4, "E": 1}
+{"ep": 231, "f": 123, "phase": "2파지", "instr": "put the white mug on the left plate and put the yellow and white mug on the right plate", "A": 2, "B": 2, "C": 2, "D": 4, "E": 2}
+{"ep": 231, "f": 157, "phase": "3운반", "instr": "put the white mug on the left plate and put the yellow and white mug on the right plate", "A": 1, "B": 2, "C": 1, "D": 1, "E": 1}
+{"ep": 231, "f": 180, "phase": "4내려놓으러", "instr": "put the white mug on the left plate and put the yellow and white mug on the right plate", "A": 1, "B": 5, "C": 2, "D": 1, "E": 1}
+{"ep": 231, "f": 192, "phase": "5물러남", "instr": "put the white mug on the left plate and put the yellow and white mug on the right plate", "A": 1, "B": 5, "C": 3, "D": 1, "E": 1}
+{"ep": 1544, "f": 47, "phase": "1집으러", "instr": "pick up the black bowl next to the cookie box and place it on the plate", "A": 1, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 1544, "f": 59, "phase": "2파지", "instr": "pick up the black bowl next to the cookie box and place it on the plate", "A": 1, "B": 4, "C": 2, "D": 1, "E": 1}
+{"ep": 1544, "f": 85, "phase": "3운반", "instr": "pick up the black bowl next to the cookie box and place it on the plate", "A": 1, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 1544, "f": 99, "phase": "4내려놓으러", "instr": "pick up the black bowl next to the cookie box and place it on the plate", "A": 1, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 163, "f": 43, "phase": "1집으러", "instr": "put both the alphabet soup and the cream cheese box in the basket", "A": 4, "B": 5, "C": 2, "D": 1, "E": 1}
+{"ep": 163, "f": 55, "phase": "2파지", "instr": "put both the alphabet soup and the cream cheese box in the basket", "A": 5, "B": 4, "C": 2, "D": 1, "E": 1}
+{"ep": 163, "f": 82, "phase": "3운반", "instr": "put both the alphabet soup and the cream cheese box in the basket", "A": 5, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 163, "f": 98, "phase": "4내려놓으러", "instr": "put both the alphabet soup and the cream cheese box in the basket", "A": 5, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 163, "f": 110, "phase": "5물러남", "instr": "put both the alphabet soup and the cream cheese box in the basket", "A": 4, "B": 1, "C": 1, "D": 3, "E": 1}
+{"ep": 163, "f": 158, "phase": "1집으러", "instr": "put both the alphabet soup and the cream cheese box in the basket", "A": 4, "B": 4, "C": 2, "D": 2, "E": 2}
+{"ep": 163, "f": 170, "phase": "2파지", "instr": "put both the alphabet soup and the cream cheese box in the basket", "A": 5, "B": 4, "C": 1, "D": 1, "E": 1}
+{"ep": 163, "f": 196, "phase": "3운반", "instr": "put both the alphabet soup and the cream cheese box in the basket", "A": 5, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 163, "f": 210, "phase": "4내려놓으러", "instr": "put both the alphabet soup and the cream cheese box in the basket", "A": 5, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 950, "f": 65, "phase": "1집으러", "instr": "pick up the bbq sauce and place it in the basket", "A": 4, "B": 4, "C": 3, "D": 1, "E": 1}
+{"ep": 950, "f": 77, "phase": "2파지", "instr": "pick up the bbq sauce and place it in the basket", "A": 5, "B": 5, "C": 3, "D": 1, "E": 1}
+{"ep": 950, "f": 113, "phase": "3운반", "instr": "pick up the bbq sauce and place it in the basket", "A": 5, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 950, "f": 137, "phase": "4내려놓으러", "instr": "pick up the bbq sauce and place it in the basket", "A": 5, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 122, "f": 48, "phase": "1집으러", "instr": "put both the cream cheese box and the butter in the basket", "A": 5, "B": 5, "C": 2, "D": 1, "E": 1}
+{"ep": 122, "f": 60, "phase": "2파지", "instr": "put both the cream cheese box and the butter in the basket", "A": 5, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 122, "f": 97, "phase": "3운반", "instr": "put both the cream cheese box and the butter in the basket", "A": 4, "B": 2, "C": 2, "D": 2, "E": 2}
+{"ep": 122, "f": 122, "phase": "4내려놓으러", "instr": "put both the cream cheese box and the butter in the basket", "A": 5, "B": 1, "C": 1, "D": 2, "E": 1}
+{"ep": 122, "f": 134, "phase": "5물러남", "instr": "put both the cream cheese box and the butter in the basket", "A": 4, "B": 1, "C": 1, "D": 2, "E": 1}
+{"ep": 122, "f": 191, "phase": "1집으러", "instr": "put both the cream cheese box and the butter in the basket", "A": 4, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 122, "f": 203, "phase": "2파지", "instr": "put both the cream cheese box and the butter in the basket", "A": 5, "B": 5, "C": 2, "D": 1, "E": 1}
+{"ep": 122, "f": 230, "phase": "3운반", "instr": "put both the cream cheese box and the butter in the basket", "A": 4, "B": 2, "C": 2, "D": 2, "E": 2}
+{"ep": 122, "f": 245, "phase": "4내려놓으러", "instr": "put both the cream cheese box and the butter in the basket", "A": 4, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 909, "f": 38, "phase": "1집으러", "instr": "pick up the tomato sauce and place it in the basket", "A": 4, "B": 4, "C": 2, "D": 2, "E": 2}
+{"ep": 909, "f": 50, "phase": "2파지", "instr": "pick up the tomato sauce and place it in the basket", "A": 5, "B": 5, "C": 3, "D": 1, "E": 1}
+{"ep": 909, "f": 82, "phase": "3운반", "instr": "pick up the tomato sauce and place it in the basket", "A": 5, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 909, "f": 103, "phase": "4내려놓으러", "instr": "pick up the tomato sauce and place it in the basket", "A": 5, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 356, "f": 27, "phase": "1집으러", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 1, "B": 5, "C": 2, "D": 1, "E": 1}
+{"ep": 356, "f": 39, "phase": "2파지", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 2, "B": 4, "C": 2, "D": 2, "E": 2}
+{"ep": 356, "f": 71, "phase": "3운반", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 2, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 356, "f": 91, "phase": "4내려놓으러", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 2, "B": 2, "C": 2, "D": 4, "E": 2}
+{"ep": 356, "f": 103, "phase": "5물러남", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 2, "B": 1, "C": 1, "D": 4, "E": 1}
+{"ep": 356, "f": 154, "phase": "1집으러", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 5, "B": 4, "C": 1, "D": 1, "E": 1}
+{"ep": 356, "f": 166, "phase": "2파지", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 5, "B": 4, "C": 1, "D": 1, "E": 1}
+{"ep": 356, "f": 178, "phase": "4내려놓으러", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 5, "B": 1, "C": 1, "D": 5, "E": 1}
+{"ep": 356, "f": 190, "phase": "5물러남", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 5, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 1463, "f": 31, "phase": "1집으러", "instr": "pick up the black bowl on the cookie box and place it on the plate", "A": 1, "B": 5, "C": 4, "D": 1, "E": 1}
+{"ep": 1463, "f": 43, "phase": "2파지", "instr": "pick up the black bowl on the cookie box and place it on the plate", "A": 2, "B": 4, "C": 4, "D": 2, "E": 2}
+{"ep": 1463, "f": 63, "phase": "3운반", "instr": "pick up the black bowl on the cookie box and place it on the plate", "A": 1, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 1463, "f": 71, "phase": "4내려놓으러", "instr": "pick up the black bowl on the cookie box and place it on the plate", "A": 1, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 576, "f": 87, "phase": "1집으러", "instr": "open the top drawer and put the bowl inside", "A": 4, "B": 5, "C": 2, "D": 1, "E": 1}
+{"ep": 576, "f": 99, "phase": "2파지", "instr": "open the top drawer and put the bowl inside", "A": 3, "B": 4, "C": 3, "D": 1, "E": 1}
+{"ep": 576, "f": 130, "phase": "3운반", "instr": "open the top drawer and put the bowl inside", "A": 4, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 439, "f": 25, "phase": "1집으러", "instr": "put the cream cheese in the bowl", "A": 4, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 439, "f": 37, "phase": "2파지", "instr": "put the cream cheese in the bowl", "A": 4, "B": 1, "C": 1, "D": 5, "E": 1}
+{"ep": 439, "f": 57, "phase": "3운반", "instr": "put the cream cheese in the bowl", "A": 4, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 439, "f": 65, "phase": "4내려놓으러", "instr": "put the cream cheese in the bowl", "A": 3, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 700, "f": 32, "phase": "1집으러", "instr": "turn on the stove", "A": 1, "B": 4, "C": 1, "D": 1, "E": 5}
+{"ep": 700, "f": 44, "phase": "2파지", "instr": "turn on the stove", "A": 2, "B": 4, "C": 2, "D": 2, "E": 4}
+{"ep": 700, "f": 65, "phase": "3운반", "instr": "turn on the stove", "A": 1, "B": 2, "C": 1, "D": 1, "E": 5}
+{"ep": 435, "f": 35, "phase": "1집으러", "instr": "turn on the stove", "A": 1, "B": 5, "C": 2, "D": 1, "E": 5}
+{"ep": 435, "f": 47, "phase": "2파지", "instr": "turn on the stove", "A": 1, "B": 5, "C": 2, "D": 1, "E": 4}
+{"ep": 435, "f": 71, "phase": "3운반", "instr": "turn on the stove", "A": 1, "B": 1, "C": 1, "D": 1, "E": 5}
+{"ep": 155, "f": 69, "phase": "1집으러", "instr": "put the black bowl in the bottom drawer of the cabinet and close it", "A": 4, "B": 4, "C": 1, "D": 1, "E": 1}
+{"ep": 155, "f": 81, "phase": "2파지", "instr": "put the black bowl in the bottom drawer of the cabinet and close it", "A": 4, "B": 4, "C": 1, "D": 1, "E": 1}
+{"ep": 155, "f": 137, "phase": "3운반", "instr": "put the black bowl in the bottom drawer of the cabinet and close it", "A": 3, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 155, "f": 181, "phase": "4내려놓으러", "instr": "put the black bowl in the bottom drawer of the cabinet and close it", "A": 3, "B": 4, "C": 2, "D": 2, "E": 2}
+{"ep": 155, "f": 193, "phase": "5물러남", "instr": "put the black bowl in the bottom drawer of the cabinet and close it", "A": 4, "B": 1, "C": 1, "D": 5, "E": 1}
+{"ep": 624, "f": 96, "phase": "1집으러", "instr": "open the top drawer and put the bowl inside", "A": 3, "B": 3, "C": 2, "D": 2, "E": 2}
+{"ep": 624, "f": 108, "phase": "2파지", "instr": "open the top drawer and put the bowl inside", "A": 3, "B": 4, "C": 3, "D": 2, "E": 2}
+{"ep": 624, "f": 139, "phase": "3운반", "instr": "open the top drawer and put the bowl inside", "A": 4, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 624, "f": 159, "phase": "4내려놓으러", "instr": "open the top drawer and put the bowl inside", "A": 4, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 1213, "f": 40, "phase": "1집으러", "instr": "pick up the cream cheese and place it in the basket", "A": 5, "B": 4, "C": 1, "D": 1, "E": 1}
+{"ep": 1213, "f": 52, "phase": "2파지", "instr": "pick up the cream cheese and place it in the basket", "A": 4, "B": 4, "C": 3, "D": 2, "E": 2}
+{"ep": 1213, "f": 78, "phase": "3운반", "instr": "pick up the cream cheese and place it in the basket", "A": 4, "B": 2, "C": 2, "D": 2, "E": 2}
+{"ep": 1213, "f": 92, "phase": "4내려놓으러", "instr": "pick up the cream cheese and place it in the basket", "A": 5, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 900, "f": 44, "phase": "1집으러", "instr": "pick up the cream cheese and place it in the basket", "A": 5, "B": 4, "C": 1, "D": 1, "E": 1}
+{"ep": 900, "f": 56, "phase": "2파지", "instr": "pick up the cream cheese and place it in the basket", "A": 5, "B": 5, "C": 2, "D": 1, "E": 1}
+{"ep": 900, "f": 88, "phase": "3운반", "instr": "pick up the cream cheese and place it in the basket", "A": 5, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 900, "f": 108, "phase": "4내려놓으러", "instr": "pick up the cream cheese and place it in the basket", "A": 5, "B": 1, "C": 1, "D": 2, "E": 1}
+{"ep": 1011, "f": 70, "phase": "1집으러", "instr": "pick up the alphabet soup and place it in the basket", "A": 4, "B": 4, "C": 3, "D": 2, "E": 2}
+{"ep": 1011, "f": 82, "phase": "2파지", "instr": "pick up the alphabet soup and place it in the basket", "A": 5, "B": 5, "C": 4, "D": 1, "E": 1}
+{"ep": 1011, "f": 120, "phase": "3운반", "instr": "pick up the alphabet soup and place it in the basket", "A": 4, "B": 2, "C": 2, "D": 2, "E": 2}
+{"ep": 1011, "f": 146, "phase": "4내려놓으러", "instr": "pick up the alphabet soup and place it in the basket", "A": 4, "B": 2, "C": 2, "D": 3, "E": 2}
+{"ep": 85, "f": 98, "phase": "1집으러", "instr": "put the white mug on the left plate and put the yellow and white mug on the right plate", "A": 1, "B": 5, "C": 3, "D": 1, "E": 1}
+{"ep": 85, "f": 110, "phase": "2파지", "instr": "put the white mug on the left plate and put the yellow and white mug on the right plate", "A": 1, "B": 1, "C": 1, "D": 3, "E": 1}
+{"ep": 85, "f": 146, "phase": "3운반", "instr": "put the white mug on the left plate and put the yellow and white mug on the right plate", "A": 1, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 85, "f": 171, "phase": "4내려놓으러", "instr": "put the white mug on the left plate and put the yellow and white mug on the right plate", "A": 1, "B": 4, "C": 2, "D": 1, "E": 1}
+{"ep": 85, "f": 183, "phase": "5물러남", "instr": "put the white mug on the left plate and put the yellow and white mug on the right plate", "A": 2, "B": 4, "C": 3, "D": 2, "E": 2}
+{"ep": 1425, "f": 26, "phase": "1집으러", "instr": "pick up the black bowl between the plate and the ramekin and place it on the plate", "A": 1, "B": 4, "C": 4, "D": 1, "E": 1}
+{"ep": 1425, "f": 38, "phase": "2파지", "instr": "pick up the black bowl between the plate and the ramekin and place it on the plate", "A": 2, "B": 4, "C": 3, "D": 2, "E": 2}
+{"ep": 1425, "f": 57, "phase": "3운반", "instr": "pick up the black bowl between the plate and the ramekin and place it on the plate", "A": 2, "B": 2, "C": 2, "D": 2, "E": 2}
+{"ep": 1425, "f": 64, "phase": "4내려놓으러", "instr": "pick up the black bowl between the plate and the ramekin and place it on the plate", "A": 2, "B": 4, "C": 3, "D": 2, "E": 2}
+{"ep": 1357, "f": 28, "phase": "1집으러", "instr": "pick up the black bowl on the cookie box and place it on the plate", "A": 2, "B": 4, "C": 4, "D": 1, "E": 1}
+{"ep": 1357, "f": 40, "phase": "2파지", "instr": "pick up the black bowl on the cookie box and place it on the plate", "A": 1, "B": 5, "C": 4, "D": 1, "E": 1}
+{"ep": 1357, "f": 62, "phase": "3운반", "instr": "pick up the black bowl on the cookie box and place it on the plate", "A": 2, "B": 2, "C": 2, "D": 2, "E": 2}
+{"ep": 1357, "f": 72, "phase": "4내려놓으러", "instr": "pick up the black bowl on the cookie box and place it on the plate", "A": 1, "B": 2, "C": 1, "D": 2, "E": 1}
+{"ep": 295, "f": 36, "phase": "1집으러", "instr": "put the white mug on the left plate and put the yellow and white mug on the right plate", "A": 2, "B": 5, "C": 2, "D": 1, "E": 1}
+{"ep": 295, "f": 48, "phase": "2파지", "instr": "put the white mug on the left plate and put the yellow and white mug on the right plate", "A": 1, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 295, "f": 78, "phase": "3운반", "instr": "put the white mug on the left plate and put the yellow and white mug on the right plate", "A": 1, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 295, "f": 96, "phase": "4내려놓으러", "instr": "put the white mug on the left plate and put the yellow and white mug on the right plate", "A": 1, "B": 5, "C": 2, "D": 1, "E": 1}
+{"ep": 295, "f": 108, "phase": "5물러남", "instr": "put the white mug on the left plate and put the yellow and white mug on the right plate", "A": 2, "B": 2, "C": 2, "D": 4, "E": 2}
+{"ep": 295, "f": 169, "phase": "1집으러", "instr": "put the white mug on the left plate and put the yellow and white mug on the right plate", "A": 1, "B": 5, "C": 2, "D": 1, "E": 1}
+{"ep": 295, "f": 181, "phase": "2파지", "instr": "put the white mug on the left plate and put the yellow and white mug on the right plate", "A": 1, "B": 4, "C": 2, "D": 1, "E": 1}
+{"ep": 295, "f": 217, "phase": "3운반", "instr": "put the white mug on the left plate and put the yellow and white mug on the right plate", "A": 1, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 295, "f": 241, "phase": "4내려놓으러", "instr": "put the white mug on the left plate and put the yellow and white mug on the right plate", "A": 1, "B": 5, "C": 2, "D": 1, "E": 1}
+{"ep": 277, "f": 44, "phase": "1집으러", "instr": "turn on the stove and put the moka pot on it", "A": 3, "B": 4, "C": 2, "D": 2, "E": 4}
+{"ep": 277, "f": 56, "phase": "2파지", "instr": "turn on the stove and put the moka pot on it", "A": 1, "B": 5, "C": 2, "D": 1, "E": 4}
+{"ep": 277, "f": 73, "phase": "3운반", "instr": "turn on the stove and put the moka pot on it", "A": 2, "B": 2, "C": 2, "D": 2, "E": 4}
+{"ep": 277, "f": 78, "phase": "4내려놓으러", "instr": "turn on the stove and put the moka pot on it", "A": 1, "B": 5, "C": 1, "D": 1, "E": 5}
+{"ep": 277, "f": 90, "phase": "5물러남", "instr": "turn on the stove and put the moka pot on it", "A": 1, "B": 1, "C": 1, "D": 1, "E": 5}
+{"ep": 277, "f": 155, "phase": "1집으러", "instr": "turn on the stove and put the moka pot on it", "A": 2, "B": 4, "C": 3, "D": 2, "E": 2}
+{"ep": 277, "f": 167, "phase": "2파지", "instr": "turn on the stove and put the moka pot on it", "A": 2, "B": 4, "C": 3, "D": 2, "E": 2}
+{"ep": 277, "f": 201, "phase": "3운반", "instr": "turn on the stove and put the moka pot on it", "A": 1, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 401, "f": 30, "phase": "1집으러", "instr": "put the bowl on the stove", "A": 2, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 401, "f": 42, "phase": "2파지", "instr": "put the bowl on the stove", "A": 3, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 401, "f": 66, "phase": "3운반", "instr": "put the bowl on the stove", "A": 3, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 401, "f": 78, "phase": "4내려놓으러", "instr": "put the bowl on the stove", "A": 3, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 204, "f": 97, "phase": "1집으러", "instr": "put both moka pots on the stove", "A": 2, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 204, "f": 109, "phase": "2파지", "instr": "put both moka pots on the stove", "A": 2, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 204, "f": 148, "phase": "3운반", "instr": "put both moka pots on the stove", "A": 2, "B": 4, "C": 2, "D": 1, "E": 1}
+{"ep": 204, "f": 176, "phase": "4내려놓으러", "instr": "put both moka pots on the stove", "A": 1, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 204, "f": 188, "phase": "5물러남", "instr": "put both moka pots on the stove", "A": 1, "B": 1, "C": 1, "D": 5, "E": 1}
+{"ep": 204, "f": 293, "phase": "1집으러", "instr": "put both moka pots on the stove", "A": 2, "B": 4, "C": 2, "D": 2, "E": 2}
+{"ep": 204, "f": 305, "phase": "2파지", "instr": "put both moka pots on the stove", "A": 1, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 204, "f": 349, "phase": "3운반", "instr": "put both moka pots on the stove", "A": 2, "B": 2, "C": 2, "D": 2, "E": 2}
+{"ep": 153, "f": 31, "phase": "1집으러", "instr": "turn on the stove and put the moka pot on it", "A": 2, "B": 4, "C": 2, "D": 2, "E": 4}
+{"ep": 153, "f": 43, "phase": "2파지", "instr": "turn on the stove and put the moka pot on it", "A": 2, "B": 4, "C": 2, "D": 2, "E": 4}
+{"ep": 153, "f": 65, "phase": "3운반", "instr": "turn on the stove and put the moka pot on it", "A": 1, "B": 1, "C": 1, "D": 1, "E": 5}
+{"ep": 153, "f": 75, "phase": "4내려놓으러", "instr": "turn on the stove and put the moka pot on it", "A": 1, "B": 4, "C": 2, "D": 1, "E": 4}
+{"ep": 153, "f": 87, "phase": "5물러남", "instr": "turn on the stove and put the moka pot on it", "A": 1, "B": 1, "C": 1, "D": 1, "E": 5}
+{"ep": 153, "f": 183, "phase": "1집으러", "instr": "turn on the stove and put the moka pot on it", "A": 2, "B": 4, "C": 3, "D": 2, "E": 2}
+{"ep": 153, "f": 195, "phase": "2파지", "instr": "turn on the stove and put the moka pot on it", "A": 2, "B": 5, "C": 2, "D": 1, "E": 1}
+{"ep": 153, "f": 222, "phase": "3운반", "instr": "turn on the stove and put the moka pot on it", "A": 2, "B": 2, "C": 2, "D": 2, "E": 2}
+{"ep": 462, "f": 95, "phase": "1집으러", "instr": "open the top drawer and put the bowl inside", "A": 4, "B": 4, "C": 2, "D": 1, "E": 1}
+{"ep": 462, "f": 107, "phase": "2파지", "instr": "open the top drawer and put the bowl inside", "A": 4, "B": 1, "C": 1, "D": 5, "E": 1}
+{"ep": 462, "f": 147, "phase": "3운반", "instr": "open the top drawer and put the bowl inside", "A": 4, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 462, "f": 176, "phase": "4내려놓으러", "instr": "open the top drawer and put the bowl inside", "A": 4, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 52, "f": 120, "phase": "1집으러", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 1, "B": 1, "C": 1, "D": 4, "E": 1}
+{"ep": 52, "f": 132, "phase": "2파지", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 1, "B": 1, "C": 1, "D": 4, "E": 1}
+{"ep": 52, "f": 161, "phase": "3운반", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 2, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 52, "f": 179, "phase": "4내려놓으러", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 4, "B": 4, "C": 1, "D": 1, "E": 1}
+{"ep": 52, "f": 191, "phase": "5물러남", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 4, "B": 4, "C": 2, "D": 2, "E": 2}
+{"ep": 5, "f": 125, "phase": "1집으러", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 1, "B": 1, "C": 1, "D": 2, "E": 1}
+{"ep": 5, "f": 137, "phase": "2파지", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 1, "B": 1, "C": 1, "D": 4, "E": 1}
+{"ep": 5, "f": 168, "phase": "3운반", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 3, "B": 4, "C": 1, "D": 1, "E": 1}
+{"ep": 5, "f": 188, "phase": "4내려놓으러", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 3, "B": 4, "C": 2, "D": 2, "E": 2}
+{"ep": 5, "f": 200, "phase": "5물러남", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 5, "B": 4, "C": 1, "D": 1, "E": 1}
+{"ep": 24, "f": 48, "phase": "1집으러", "instr": "put both the cream cheese box and the butter in the basket", "A": 4, "B": 4, "C": 3, "D": 2, "E": 2}
+{"ep": 24, "f": 60, "phase": "2파지", "instr": "put both the cream cheese box and the butter in the basket", "A": 5, "B": 4, "C": 2, "D": 1, "E": 1}
+{"ep": 24, "f": 94, "phase": "3운반", "instr": "put both the cream cheese box and the butter in the basket", "A": 5, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 24, "f": 117, "phase": "4내려놓으러", "instr": "put both the cream cheese box and the butter in the basket", "A": 5, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 24, "f": 129, "phase": "5물러남", "instr": "put both the cream cheese box and the butter in the basket", "A": 4, "B": 2, "C": 2, "D": 4, "E": 2}
+{"ep": 24, "f": 169, "phase": "1집으러", "instr": "put both the cream cheese box and the butter in the basket", "A": 5, "B": 4, "C": 1, "D": 1, "E": 1}
+{"ep": 24, "f": 181, "phase": "2파지", "instr": "put both the cream cheese box and the butter in the basket", "A": 5, "B": 4, "C": 1, "D": 1, "E": 1}
+{"ep": 24, "f": 204, "phase": "3운반", "instr": "put both the cream cheese box and the butter in the basket", "A": 4, "B": 2, "C": 2, "D": 2, "E": 2}
+{"ep": 24, "f": 216, "phase": "4내려놓으러", "instr": "put both the cream cheese box and the butter in the basket", "A": 5, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 250, "f": 38, "phase": "1집으러", "instr": "put both the alphabet soup and the cream cheese box in the basket", "A": 5, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 250, "f": 50, "phase": "2파지", "instr": "put both the alphabet soup and the cream cheese box in the basket", "A": 4, "B": 4, "C": 2, "D": 1, "E": 1}
+{"ep": 250, "f": 78, "phase": "3운반", "instr": "put both the alphabet soup and the cream cheese box in the basket", "A": 5, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 250, "f": 94, "phase": "4내려놓으러", "instr": "put both the alphabet soup and the cream cheese box in the basket", "A": 5, "B": 1, "C": 1, "D": 2, "E": 1}
+{"ep": 250, "f": 106, "phase": "5물러남", "instr": "put both the alphabet soup and the cream cheese box in the basket", "A": 4, "B": 1, "C": 1, "D": 4, "E": 1}
+{"ep": 250, "f": 177, "phase": "1집으러", "instr": "put both the alphabet soup and the cream cheese box in the basket", "A": 5, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 250, "f": 189, "phase": "2파지", "instr": "put both the alphabet soup and the cream cheese box in the basket", "A": 4, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 250, "f": 215, "phase": "3운반", "instr": "put both the alphabet soup and the cream cheese box in the basket", "A": 5, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 250, "f": 230, "phase": "4내려놓으러", "instr": "put both the alphabet soup and the cream cheese box in the basket", "A": 4, "B": 2, "C": 2, "D": 2, "E": 2}
+{"ep": 634, "f": 30, "phase": "1집으러", "instr": "put the bowl on the plate", "A": 1, "B": 5, "C": 2, "D": 1, "E": 1}
+{"ep": 634, "f": 42, "phase": "2파지", "instr": "put the bowl on the plate", "A": 1, "B": 5, "C": 2, "D": 1, "E": 1}
+{"ep": 634, "f": 63, "phase": "3운반", "instr": "put the bowl on the plate", "A": 1, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 634, "f": 72, "phase": "4내려놓으러", "instr": "put the bowl on the plate", "A": 1, "B": 4, "C": 2, "D": 1, "E": 1}
+{"ep": 1230, "f": 37, "phase": "1집으러", "instr": "pick up the bbq sauce and place it in the basket", "A": 5, "B": 4, "C": 2, "D": 1, "E": 1}
+{"ep": 1230, "f": 49, "phase": "2파지", "instr": "pick up the bbq sauce and place it in the basket", "A": 4, "B": 4, "C": 3, "D": 2, "E": 2}
+{"ep": 1230, "f": 81, "phase": "3운반", "instr": "pick up the bbq sauce and place it in the basket", "A": 5, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 1230, "f": 101, "phase": "4내려놓으러", "instr": "pick up the bbq sauce and place it in the basket", "A": 5, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 880, "f": 36, "phase": "1집으러", "instr": "pick up the orange juice and place it in the basket", "A": 5, "B": 4, "C": 2, "D": 1, "E": 1}
+{"ep": 880, "f": 48, "phase": "2파지", "instr": "pick up the orange juice and place it in the basket", "A": 4, "B": 4, "C": 3, "D": 2, "E": 2}
+{"ep": 880, "f": 78, "phase": "3운반", "instr": "pick up the orange juice and place it in the basket", "A": 5, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 880, "f": 97, "phase": "4내려놓으러", "instr": "pick up the orange juice and place it in the basket", "A": 3, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 675, "f": 98, "phase": "1집으러", "instr": "put the wine bottle on the rack", "A": 1, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 675, "f": 110, "phase": "2파지", "instr": "put the wine bottle on the rack", "A": 1, "B": 5, "C": 2, "D": 1, "E": 1}
+{"ep": 675, "f": 156, "phase": "3운반", "instr": "put the wine bottle on the rack", "A": 1, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 675, "f": 190, "phase": "4내려놓으러", "instr": "put the wine bottle on the rack", "A": 2, "B": 4, "C": 3, "D": 2, "E": 2}
+{"ep": 179, "f": 97, "phase": "1집으러", "instr": "put both moka pots on the stove", "A": 2, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 179, "f": 109, "phase": "2파지", "instr": "put both moka pots on the stove", "A": 1, "B": 5, "C": 2, "D": 1, "E": 1}
+{"ep": 179, "f": 146, "phase": "3운반", "instr": "put both moka pots on the stove", "A": 2, "B": 2, "C": 2, "D": 2, "E": 2}
+{"ep": 179, "f": 172, "phase": "4내려놓으러", "instr": "put both moka pots on the stove", "A": 2, "B": 2, "C": 1, "D": 2, "E": 1}
+{"ep": 179, "f": 184, "phase": "5물러남", "instr": "put both moka pots on the stove", "A": 2, "B": 1, "C": 1, "D": 4, "E": 1}
+{"ep": 179, "f": 287, "phase": "1집으러", "instr": "put both moka pots on the stove", "A": 2, "B": 4, "C": 2, "D": 2, "E": 2}
+{"ep": 179, "f": 299, "phase": "2파지", "instr": "put both moka pots on the stove", "A": 1, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 179, "f": 344, "phase": "3운반", "instr": "put both moka pots on the stove", "A": 2, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 179, "f": 378, "phase": "4내려놓으러", "instr": "put both moka pots on the stove", "A": 1, "B": 5, "C": 4, "D": 1, "E": 1}
+{"ep": 274, "f": 65, "phase": "1집으러", "instr": "put the black bowl in the bottom drawer of the cabinet and close it", "A": 4, "B": 4, "C": 1, "D": 1, "E": 1}
+{"ep": 274, "f": 77, "phase": "2파지", "instr": "put the black bowl in the bottom drawer of the cabinet and close it", "A": 4, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 274, "f": 115, "phase": "3운반", "instr": "put the black bowl in the bottom drawer of the cabinet and close it", "A": 4, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 274, "f": 141, "phase": "4내려놓으러", "instr": "put the black bowl in the bottom drawer of the cabinet and close it", "A": 3, "B": 4, "C": 1, "D": 1, "E": 1}
+{"ep": 274, "f": 153, "phase": "5물러남", "instr": "put the black bowl in the bottom drawer of the cabinet and close it", "A": 3, "B": 1, "C": 1, "D": 5, "E": 1}
+{"ep": 383, "f": 118, "phase": "1집으러", "instr": "open the top drawer and put the bowl inside", "A": 4, "B": 4, "C": 1, "D": 1, "E": 1}
+{"ep": 383, "f": 130, "phase": "2파지", "instr": "open the top drawer and put the bowl inside", "A": 3, "B": 4, "C": 2, "D": 2, "E": 2}
+{"ep": 383, "f": 166, "phase": "3운반", "instr": "open the top drawer and put the bowl inside", "A": 4, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 383, "f": 190, "phase": "4내려놓으러", "instr": "open the top drawer and put the bowl inside", "A": 3, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 108, "f": 122, "phase": "1집으러", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 1, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 108, "f": 134, "phase": "2파지", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 1, "B": 1, "C": 1, "D": 4, "E": 1}
+{"ep": 108, "f": 163, "phase": "3운반", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 4, "B": 4, "C": 1, "D": 1, "E": 1}
+{"ep": 108, "f": 180, "phase": "4내려놓으러", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 4, "B": 4, "C": 1, "D": 1, "E": 1}
+{"ep": 108, "f": 192, "phase": "5물러남", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 5, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 1022, "f": 83, "phase": "1집으러", "instr": "pick up the bbq sauce and place it in the basket", "A": 5, "B": 4, "C": 2, "D": 1, "E": 1}
+{"ep": 1022, "f": 95, "phase": "2파지", "instr": "pick up the bbq sauce and place it in the basket", "A": 4, "B": 4, "C": 3, "D": 2, "E": 2}
+{"ep": 1022, "f": 128, "phase": "3운반", "instr": "pick up the bbq sauce and place it in the basket", "A": 5, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 1022, "f": 149, "phase": "4내려놓으러", "instr": "pick up the bbq sauce and place it in the basket", "A": 5, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 433, "f": 30, "phase": "1집으러", "instr": "put the bowl on the plate", "A": 1, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 433, "f": 42, "phase": "2파지", "instr": "put the bowl on the plate", "A": 1, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 433, "f": 66, "phase": "3운반", "instr": "put the bowl on the plate", "A": 1, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 433, "f": 78, "phase": "4내려놓으러", "instr": "put the bowl on the plate", "A": 1, "B": 2, "C": 1, "D": 1, "E": 1}
+{"ep": 1618, "f": 25, "phase": "1집으러", "instr": "pick up the black bowl on the cookie box and place it on the plate", "A": 2, "B": 4, "C": 3, "D": 2, "E": 2}
+{"ep": 1618, "f": 37, "phase": "2파지", "instr": "pick up the black bowl on the cookie box and place it on the plate", "A": 2, "B": 5, "C": 4, "D": 1, "E": 1}
+{"ep": 1618, "f": 59, "phase": "3운반", "instr": "pick up the black bowl on the cookie box and place it on the plate", "A": 2, "B": 2, "C": 2, "D": 2, "E": 2}
+{"ep": 1618, "f": 69, "phase": "4내려놓으러", "instr": "pick up the black bowl on the cookie box and place it on the plate", "A": 1, "B": 5, "C": 3, "D": 1, "E": 1}
+{"ep": 1099, "f": 27, "phase": "1집으러", "instr": "pick up the milk and place it in the basket", "A": 5, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 1099, "f": 39, "phase": "2파지", "instr": "pick up the milk and place it in the basket", "A": 4, "B": 4, "C": 2, "D": 2, "E": 2}
+{"ep": 1099, "f": 76, "phase": "3운반", "instr": "pick up the milk and place it in the basket", "A": 5, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 1099, "f": 102, "phase": "4내려놓으러", "instr": "pick up the milk and place it in the basket", "A": 4, "B": 2, "C": 2, "D": 2, "E": 2}
+{"ep": 1099, "f": 114, "phase": "5물러남", "instr": "pick up the milk and place it in the basket", "A": 4, "B": 1, "C": 1, "D": 2, "E": 1}
+{"ep": 224, "f": 117, "phase": "1집으러", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 2, "B": 2, "C": 2, "D": 2, "E": 2}
+{"ep": 224, "f": 129, "phase": "2파지", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 2, "B": 2, "C": 2, "D": 4, "E": 2}
+{"ep": 224, "f": 155, "phase": "3운반", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 2, "B": 2, "C": 1, "D": 1, "E": 1}
+{"ep": 224, "f": 170, "phase": "4내려놓으러", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 4, "B": 4, "C": 1, "D": 1, "E": 1}
+{"ep": 224, "f": 182, "phase": "5물러남", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 5, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 892, "f": 75, "phase": "1집으러", "instr": "pick up the cream cheese and place it in the basket", "A": 5, "B": 4, "C": 2, "D": 1, "E": 1}
+{"ep": 892, "f": 87, "phase": "2파지", "instr": "pick up the cream cheese and place it in the basket", "A": 5, "B": 5, "C": 2, "D": 1, "E": 1}
+{"ep": 892, "f": 121, "phase": "3운반", "instr": "pick up the cream cheese and place it in the basket", "A": 4, "B": 2, "C": 2, "D": 2, "E": 2}
+{"ep": 892, "f": 143, "phase": "4내려놓으러", "instr": "pick up the cream cheese and place it in the basket", "A": 5, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 1151, "f": 46, "phase": "1집으러", "instr": "pick up the alphabet soup and place it in the basket", "A": 5, "B": 4, "C": 2, "D": 1, "E": 1}
+{"ep": 1151, "f": 58, "phase": "2파지", "instr": "pick up the alphabet soup and place it in the basket", "A": 4, "B": 4, "C": 2, "D": 2, "E": 2}
+{"ep": 1151, "f": 96, "phase": "3운반", "instr": "pick up the alphabet soup and place it in the basket", "A": 5, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 1151, "f": 123, "phase": "4내려놓으러", "instr": "pick up the alphabet soup and place it in the basket", "A": 4, "B": 2, "C": 2, "D": 2, "E": 2}
+{"ep": 1151, "f": 135, "phase": "5물러남", "instr": "pick up the alphabet soup and place it in the basket", "A": 4, "B": 2, "C": 2, "D": 3, "E": 2}
+{"ep": 1129, "f": 41, "phase": "1집으러", "instr": "pick up the bbq sauce and place it in the basket", "A": 5, "B": 4, "C": 3, "D": 1, "E": 1}
+{"ep": 1129, "f": 53, "phase": "2파지", "instr": "pick up the bbq sauce and place it in the basket", "A": 5, "B": 5, "C": 2, "D": 1, "E": 1}
+{"ep": 1129, "f": 87, "phase": "3운반", "instr": "pick up the bbq sauce and place it in the basket", "A": 5, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 1129, "f": 109, "phase": "4내려놓으러", "instr": "pick up the bbq sauce and place it in the basket", "A": 5, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 614, "f": 95, "phase": "1집으러", "instr": "open the top drawer and put the bowl inside", "A": 4, "B": 4, "C": 2, "D": 2, "E": 2}
+{"ep": 614, "f": 107, "phase": "2파지", "instr": "open the top drawer and put the bowl inside", "A": 4, "B": 4, "C": 2, "D": 2, "E": 2}
+{"ep": 614, "f": 135, "phase": "3운반", "instr": "open the top drawer and put the bowl inside", "A": 4, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 614, "f": 152, "phase": "4내려놓으러", "instr": "open the top drawer and put the bowl inside", "A": 4, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 737, "f": 105, "phase": "1집으러", "instr": "open the top drawer and put the bowl inside", "A": 3, "B": 3, "C": 2, "D": 2, "E": 2}
+{"ep": 737, "f": 117, "phase": "2파지", "instr": "open the top drawer and put the bowl inside", "A": 3, "B": 4, "C": 2, "D": 2, "E": 2}
+{"ep": 737, "f": 149, "phase": "3운반", "instr": "open the top drawer and put the bowl inside", "A": 4, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 737, "f": 170, "phase": "4내려놓으러", "instr": "open the top drawer and put the bowl inside", "A": 4, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 540, "f": 36, "phase": "1집으러", "instr": "put the cream cheese in the bowl", "A": 4, "B": 4, "C": 2, "D": 2, "E": 2}
+{"ep": 540, "f": 48, "phase": "2파지", "instr": "put the cream cheese in the bowl", "A": 4, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 540, "f": 67, "phase": "3운반", "instr": "put the cream cheese in the bowl", "A": 3, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 540, "f": 74, "phase": "4내려놓으러", "instr": "put the cream cheese in the bowl", "A": 3, "B": 1, "C": 1, "D": 2, "E": 1}
+{"ep": 540, "f": 86, "phase": "5물러남", "instr": "put the cream cheese in the bowl", "A": 3, "B": 1, "C": 1, "D": 2, "E": 1}
+{"ep": 714, "f": 33, "phase": "1집으러", "instr": "put the cream cheese in the bowl", "A": 4, "B": 4, "C": 1, "D": 1, "E": 1}
+{"ep": 714, "f": 45, "phase": "2파지", "instr": "put the cream cheese in the bowl", "A": 4, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 714, "f": 69, "phase": "3운반", "instr": "put the cream cheese in the bowl", "A": 3, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 714, "f": 82, "phase": "4내려놓으러", "instr": "put the cream cheese in the bowl", "A": 4, "B": 1, "C": 1, "D": 2, "E": 1}
+{"ep": 650, "f": 28, "phase": "1집으러", "instr": "put the cream cheese in the bowl", "A": 4, "B": 4, "C": 1, "D": 1, "E": 1}
+{"ep": 650, "f": 40, "phase": "2파지", "instr": "put the cream cheese in the bowl", "A": 3, "B": 4, "C": 1, "D": 1, "E": 1}
+{"ep": 650, "f": 56, "phase": "3운반", "instr": "put the cream cheese in the bowl", "A": 4, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 650, "f": 60, "phase": "4내려놓으러", "instr": "put the cream cheese in the bowl", "A": 3, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 650, "f": 72, "phase": "5물러남", "instr": "put the cream cheese in the bowl", "A": 4, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 650, "f": 80, "phase": "1집으러", "instr": "put the cream cheese in the bowl", "A": 3, "B": 4, "C": 2, "D": 2, "E": 2}
+{"ep": 650, "f": 92, "phase": "2파지", "instr": "put the cream cheese in the bowl", "A": 4, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 650, "f": 110, "phase": "3운반", "instr": "put the cream cheese in the bowl", "A": 4, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 650, "f": 116, "phase": "4내려놓으러", "instr": "put the cream cheese in the bowl", "A": 3, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 49, "f": 45, "phase": "1집으러", "instr": "turn on the stove and put the moka pot on it", "A": 2, "B": 4, "C": 2, "D": 2, "E": 4}
+{"ep": 49, "f": 57, "phase": "2파지", "instr": "turn on the stove and put the moka pot on it", "A": 2, "B": 4, "C": 3, "D": 2, "E": 3}
+{"ep": 49, "f": 81, "phase": "3운반", "instr": "turn on the stove and put the moka pot on it", "A": 1, "B": 1, "C": 1, "D": 1, "E": 5}
+{"ep": 49, "f": 94, "phase": "4내려놓으러", "instr": "turn on the stove and put the moka pot on it", "A": 3, "B": 4, "C": 2, "D": 2, "E": 4}
+{"ep": 49, "f": 106, "phase": "5물러남", "instr": "turn on the stove and put the moka pot on it", "A": 1, "B": 1, "C": 1, "D": 4, "E": 5}
+{"ep": 49, "f": 179, "phase": "1집으러", "instr": "turn on the stove and put the moka pot on it", "A": 2, "B": 4, "C": 3, "D": 2, "E": 2}
+{"ep": 49, "f": 191, "phase": "2파지", "instr": "turn on the stove and put the moka pot on it", "A": 1, "B": 5, "C": 2, "D": 1, "E": 1}
+{"ep": 49, "f": 228, "phase": "3운반", "instr": "turn on the stove and put the moka pot on it", "A": 2, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 49, "f": 253, "phase": "4내려놓으러", "instr": "turn on the stove and put the moka pot on it", "A": 2, "B": 4, "C": 3, "D": 2, "E": 2}
+{"ep": 49, "f": 265, "phase": "5물러남", "instr": "turn on the stove and put the moka pot on it", "A": 1, "B": 1, "C": 1, "D": 5, "E": 1}
+{"ep": 1429, "f": 41, "phase": "1집으러", "instr": "pick up the black bowl next to the cookie box and place it on the plate", "A": 2, "B": 4, "C": 3, "D": 2, "E": 2}
+{"ep": 1429, "f": 53, "phase": "2파지", "instr": "pick up the black bowl next to the cookie box and place it on the plate", "A": 2, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 1429, "f": 80, "phase": "3운반", "instr": "pick up the black bowl next to the cookie box and place it on the plate", "A": 2, "B": 2, "C": 2, "D": 2, "E": 2}
+{"ep": 1429, "f": 95, "phase": "4내려놓으러", "instr": "pick up the black bowl next to the cookie box and place it on the plate", "A": 2, "B": 4, "C": 3, "D": 2, "E": 2}
+{"ep": 384, "f": 36, "phase": "1집으러", "instr": "put the cream cheese in the bowl", "A": 4, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 384, "f": 48, "phase": "2파지", "instr": "put the cream cheese in the bowl", "A": 3, "B": 4, "C": 1, "D": 1, "E": 1}
+{"ep": 384, "f": 70, "phase": "3운반", "instr": "put the cream cheese in the bowl", "A": 3, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 384, "f": 80, "phase": "4내려놓으러", "instr": "put the cream cheese in the bowl", "A": 3, "B": 2, "C": 2, "D": 2, "E": 2}
+{"ep": 247, "f": 32, "phase": "1집으러", "instr": "put the white mug on the left plate and put the yellow and white mug on the right plate", "A": 2, "B": 4, "C": 2, "D": 2, "E": 2}
+{"ep": 247, "f": 44, "phase": "2파지", "instr": "put the white mug on the left plate and put the yellow and white mug on the right plate", "A": 1, "B": 5, "C": 2, "D": 1, "E": 1}
+{"ep": 247, "f": 73, "phase": "3운반", "instr": "put the white mug on the left plate and put the yellow and white mug on the right plate", "A": 1, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 247, "f": 91, "phase": "4내려놓으러", "instr": "put the white mug on the left plate and put the yellow and white mug on the right plate", "A": 1, "B": 5, "C": 4, "D": 1, "E": 1}
+{"ep": 247, "f": 103, "phase": "5물러남", "instr": "put the white mug on the left plate and put the yellow and white mug on the right plate", "A": 2, "B": 2, "C": 2, "D": 4, "E": 2}
+{"ep": 247, "f": 173, "phase": "1집으러", "instr": "put the white mug on the left plate and put the yellow and white mug on the right plate", "A": 2, "B": 4, "C": 2, "D": 2, "E": 2}
+{"ep": 247, "f": 185, "phase": "2파지", "instr": "put the white mug on the left plate and put the yellow and white mug on the right plate", "A": 1, "B": 4, "C": 2, "D": 1, "E": 1}
+{"ep": 247, "f": 211, "phase": "3운반", "instr": "put the white mug on the left plate and put the yellow and white mug on the right plate", "A": 2, "B": 2, "C": 2, "D": 2, "E": 2}
+{"ep": 247, "f": 225, "phase": "4내려놓으러", "instr": "put the white mug on the left plate and put the yellow and white mug on the right plate", "A": 2, "B": 4, "C": 3, "D": 2, "E": 2}
+{"ep": 39, "f": 50, "phase": "1집으러", "instr": "put both the alphabet soup and the tomato sauce in the basket", "A": 5, "B": 5, "C": 2, "D": 1, "E": 1}
+{"ep": 39, "f": 62, "phase": "2파지", "instr": "put both the alphabet soup and the tomato sauce in the basket", "A": 5, "B": 5, "C": 2, "D": 1, "E": 1}
+{"ep": 39, "f": 103, "phase": "3운반", "instr": "put both the alphabet soup and the tomato sauce in the basket", "A": 5, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 39, "f": 132, "phase": "4내려놓으러", "instr": "put both the alphabet soup and the tomato sauce in the basket", "A": 4, "B": 2, "C": 2, "D": 4, "E": 2}
+{"ep": 39, "f": 144, "phase": "5물러남", "instr": "put both the alphabet soup and the tomato sauce in the basket", "A": 4, "B": 2, "C": 2, "D": 3, "E": 2}
+{"ep": 39, "f": 206, "phase": "1집으러", "instr": "put both the alphabet soup and the tomato sauce in the basket", "A": 4, "B": 4, "C": 2, "D": 2, "E": 2}
+{"ep": 39, "f": 218, "phase": "2파지", "instr": "put both the alphabet soup and the tomato sauce in the basket", "A": 4, "B": 4, "C": 2, "D": 2, "E": 2}
+{"ep": 39, "f": 242, "phase": "3운반", "instr": "put both the alphabet soup and the tomato sauce in the basket", "A": 4, "B": 2, "C": 2, "D": 2, "E": 2}
+{"ep": 39, "f": 255, "phase": "4내려놓으러", "instr": "put both the alphabet soup and the tomato sauce in the basket", "A": 5, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 39, "f": 267, "phase": "5물러남", "instr": "put both the alphabet soup and the tomato sauce in the basket", "A": 5, "B": 1, "C": 1, "D": 2, "E": 1}
+{"ep": 518, "f": 40, "phase": "1집으러", "instr": "put the cream cheese in the bowl", "A": 4, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 518, "f": 52, "phase": "2파지", "instr": "put the cream cheese in the bowl", "A": 3, "B": 5, "C": 1, "D": 1, "E": 1}
+{"ep": 518, "f": 72, "phase": "3운반", "instr": "put the cream cheese in the bowl", "A": 3, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 518, "f": 81, "phase": "4내려놓으러", "instr": "put the cream cheese in the bowl", "A": 2, "B": 5, "C": 3, "D": 1, "E": 1}
+{"ep": 1044, "f": 40, "phase": "1집으러", "instr": "pick up the orange juice and place it in the basket", "A": 5, "B": 5, "C": 2, "D": 1, "E": 1}
+{"ep": 1044, "f": 52, "phase": "2파지", "instr": "pick up the orange juice and place it in the basket", "A": 5, "B": 4, "C": 2, "D": 1, "E": 1}
+{"ep": 1044, "f": 87, "phase": "3운반", "instr": "pick up the orange juice and place it in the basket", "A": 4, "B": 2, "C": 2, "D": 2, "E": 2}
+{"ep": 1044, "f": 110, "phase": "4내려놓으러", "instr": "pick up the orange juice and place it in the basket", "A": 4, "B": 1, "C": 1, "D": 2, "E": 1}
+{"ep": 392, "f": 29, "phase": "1집으러", "instr": "put the bowl on the stove", "A": 3, "B": 5, "C": 2, "D": 1, "E": 1}
+{"ep": 392, "f": 41, "phase": "2파지", "instr": "put the bowl on the stove", "A": 3, "B": 4, "C": 3, "D": 1, "E": 1}
+{"ep": 392, "f": 65, "phase": "3운반", "instr": "put the bowl on the stove", "A": 3, "B": 1, "C": 1, "D": 1, "E": 1}
+{"ep": 392, "f": 78, "phase": "4내려놓으러", "instr": "put the bowl on the stove", "A": 1, "B": 2, "C": 1, "D": 4, "E": 1}
+{"ep": 212, "f": 100, "phase": "1집으러", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 1, "B": 1, "C": 1, "D": 2, "E": 1}
+{"ep": 212, "f": 112, "phase": "2파지", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 1, "B": 1, "C": 1, "D": 4, "E": 1}
+{"ep": 212, "f": 146, "phase": "3운반", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 4, "B": 4, "C": 1, "D": 1, "E": 1}
+{"ep": 212, "f": 168, "phase": "4내려놓으러", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 4, "B": 5, "C": 2, "D": 1, "E": 1}
+{"ep": 212, "f": 180, "phase": "5물러남", "instr": "put the white mug on the plate and put the chocolate pudding to the right of the plate", "A": 5, "B": 5, "C": 1, "D": 1, "E": 1}
