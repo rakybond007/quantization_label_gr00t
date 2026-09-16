@@ -178,7 +178,12 @@ def build():
             getattr(M, "NGRADE", "?"), nviews, path)
         files[f"{name}_{ver}_guidance.txt"] = head + g + "\n"
         files[f"{name}_{ver}_questions.txt"] = head + q + "\n"
-        files[f"{name}_{ver}_facts_example.txt"] = FACTS_EXAMPLE[name]
+        # 계산 사실 예시는 **실제 데이터에서** 뽑는다(make_facts_examples.py).
+        # 여기에 손으로 붙여넣으면 코드가 바뀔 때 조용히 어긋난다 -- allex 예시는
+        # "call allex_facts.py to see them" 이라는 빈 껍데기였다.
+        ex = f"{OUT}/{name}_{ver}_facts_example.txt"
+        if os.path.exists(ex):
+            files[f"{name}_{ver}_facts_example.txt"] = open(ex).read()
         tbl = "\n".join(
             f"  {k}  {'risk' if sign[k] < 0 else 'safe'}  {weight.get(k, float('nan')):.3f}"
             f"  {nm.get(k, '')}" for k in sorted(sign))

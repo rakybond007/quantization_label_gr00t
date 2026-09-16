@@ -1,3 +1,13 @@
+# allex v4c 계산 사실 예시 -- **실제 데이터에서 뽑았다**
+# make_facts_examples.py 가 만든다. 손으로 고치지 말 것.
+# 전문의 {computed facts} 자리에 이런 문장이 들어간다.
 
-The robot was told: Bring the package over, orient barcode up, then place it on the conveyor.
-(the computed facts differ per chunk; call allex_facts.py to see them)
+[에피 0 · 프레임 0]
+both arms are working together; the palms are a middling distance apart; and holding that distance; the fingers are working; the arms are barely moving; the wrists barely turn; at 2x this stretch would move 0.068 rad in one step, smaller than most; at 3x 0.099 rad, smaller than most.
+
+[에피 0 · 프레임 885]
+only one arm is working; the other is idle; the fingers are still; the arms are moving fast; the wrists turn a great deal; at 2x this stretch would move 0.196 rad in one step, much larger than most moments in this recording; at 3x 0.267 rad, much larger than most moments in this recording.
+
+[에피 0 · 프레임 1770]
+both arms are working together; the palms are a middling distance apart; and drawing together; the fingers are still; the arms are moving at a normal pace; the wrists barely turn; at 2x this stretch would move 0.072 rad in one step, smaller than most; at 3x 0.097 rad, smaller than most.
+

@@ -1,0 +1,38 @@
+# 자리표시를 실제 값으로 채운 판. 원본 틀은 allex_v4c_FULL.txt 이다.
+# 계산 사실은 에피 0 · 프레임 1770 에서 나온 것이다 (make_facts_examples.py).
+
+[USER]
+<2 images>
+You are judging one instant of a two-armed robot with hands, to decide how much of the next stretch of its motion could be thinned out -- how many of its commanded poses could be dropped, letting the arms travel further between the ones that remain, without changing the outcome.
+
+What thinning takes away is the arms' chance to correct on the way, and there are two ways that loses the object. One is a hold that exists only as a balance: the thing is trapped between two hands and nothing is closed around it, so the hold IS the push of one hand against the other. If that thing is stiff it cannot give, and a coarser swing changes the balance and drops it. Something soft squashes and stays pinched.
+
+The other is a load that does not hold its own shape. A bag or a sagging thing hangs, swings and shifts while it is carried, and the further the arms travel between commanded poses the further it swings.
+
+Most moments are neither. Sliding something across to the other side, pushing something that is still resting on a surface, or moving with nothing in the hands -- a longer step changes nothing.
+
+Judge the moment in front of you, not the name of the job. One segment passes through several of these from one second to the next.
+
+The two images are the left and right camera views of this one moment.
+
+The robot was told: Bring the package over, orient barcode up, then place it on the conveyor.
+
+both arms are working together; the palms are a middling distance apart; and drawing together; the fingers are still; the arms are moving at a normal pace; the wrists barely turn; at 2x this stretch would move 0.072 rad in one step, smaller than most; at 3x 0.097 rad, smaller than most.
+
+The measurements above are stated as fact -- do not re-estimate or repeat them. Answer each check from what the cameras show about the MOMENT in front of you, read together with those measurements.
+Answer each check on its own line as "A) 3", in order, nothing else -- one digit from 1 to 5 per check, rating how far that check describes this moment:
+  5 = clearly true of this moment
+  4 = mostly true
+  3 = partly true
+  2 = barely true
+  1 = not true at all
+A grade refers only to the check on that line.
+A) Are the two hands SQUEEZING something between them to hold it, and is that
+   thing HARD -- a box, a carton, something that will not squash?
+B) Is the item a POUCH OR PACKET -- a soft mailer, a padded envelope, a
+   plastic parcel -- rather than a rigid carton with square sides?
+C) Is the thing only being SENT ACROSS -- slid or passed over to the other side,
+   or shoved on its way -- with no particular spot it has to come to rest on?
+D) Are the hands ON THEIR WAY -- reaching out towards something, or drawing back
+   from what they have finished, carrying nothing between them?
+Answer:

@@ -1,3 +1,13 @@
+# libero v3c 계산 사실 예시 -- **실제 데이터에서 뽑았다**
+# make_facts_examples.py 가 만든다. 손으로 고치지 말 것.
+# 전문의 {computed facts} 자리에 이런 문장이 들어간다.
 
-pick up the black bowl on the cookie box and place it on the plate
-MEASURED FROM THE PLANNED MOTION over the chunk ahead (these are computed facts, not estimates): the gripper stays closed throughout; the end-effector keeps a consistent direction; it is moving at a normal pace (mean step 0.42, peak 0.61); it is holding something while creeping along; it is decelerating to a near stop.
+[에피 0 · 프레임 0]
+MEASURED FROM THE PLANNED MOTION over the chunk ahead (these are computed facts, not estimates): the gripper stays open throughout; it is moving across, not up or down; it is moving at a normal pace (mean step 0.34, peak 0.74); it keeps its pace to the end of the window.
+
+[에피 0 · 프레임 71]
+MEASURED FROM THE PLANNED MOTION over the chunk ahead (these are computed facts, not estimates): the gripper stays closed throughout; it is going down toward something; it is moving at a normal pace (mean step 0.40, peak 0.63); it is decelerating to a near stop.
+
+[에피 0 · 프레임 142]
+MEASURED FROM THE PLANNED MOTION over the chunk ahead (these are computed facts, not estimates): the gripper stays open throughout; it is going down toward something; it is moving at a normal pace (mean step 0.59, peak 0.68); it keeps its pace to the end of the window.
+
