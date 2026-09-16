@@ -133,7 +133,13 @@ def collect(ds):
         if close and openi:
             mid = [o for o in openi if o > close[0]]
             if mid:
-                picks += [(close[0] + mid[0]) // 2, mid[0]]            # 운반 · 놓기
+                # **내려놓으러 내려가는 구간을 반드시 넣는다.** 앞 판에서 열림 지점만
+                # 뽑았더니 그건 물건이 이미 내려놓인 뒤라 conf 가 높게 나오는 게
+                # 맞는 자리였다. 정밀이 필요한 곳은 그 직전, 목표 위로 가져가
+                # 내려놓는 구간이다.
+                picks += [(close[0] + mid[0]) // 2,          # 운반
+                          max(close[0] + 1, mid[0] - 12),    # 내려놓으러
+                          mid[0]]                            # 놓는 순간
         if not picks:
             picks = [int(n * r) for r in (0.15, 0.45, 0.80)]
         picks = sorted({min(max(0, p), n - 1) for p in picks})

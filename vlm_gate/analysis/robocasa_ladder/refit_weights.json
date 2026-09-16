@@ -1,0 +1,40 @@
+{
+ "sign": {
+  "A": -1,
+  "B": 1,
+  "C": -1,
+  "D": 1,
+  "E": -1
+ },
+ "weight": {
+  "B": 0.7677659499751567,
+  "D": 0.23223405002484346,
+  "A": 0.26649974584957314,
+  "C": 0.10239268557307461,
+  "E": 0.6311075685773523
+ },
+ "tasks": [
+  "CloseDoubleDoor",
+  "CloseDrawer",
+  "CloseSingleDoor",
+  "CoffeePressButton",
+  "CoffeeServeMug",
+  "OpenDoubleDoor",
+  "OpenDrawer",
+  "OpenSingleDoor",
+  "PnPCabToCounter",
+  "PnPCounterToCab",
+  "PnPCounterToSink",
+  "PnPCounterToStove",
+  "PnPMicrowaveToCounter",
+  "PnPSinkToCounter",
+  "PnPStoveToCounter",
+  "TurnOffMicrowave",
+  "TurnOffSinkFaucet",
+  "TurnOnMicrowave",
+  "TurnOnSinkFaucet",
+  "TurnSinkSpout"
+ ],
+ "rho_full": 0.6766917293233082,
+ "rho_loo": 0.6195488721804511
+}
