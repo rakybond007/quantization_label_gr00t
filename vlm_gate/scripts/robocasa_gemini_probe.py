@@ -32,10 +32,13 @@ sys.path.insert(0, f"{BASE}/scripts")
 
 CK = importlib.import_module(os.environ.get("CHECKS", "phase9_checks_v8"))
 # 계산 사실: v8 이상은 기간 문구를 뺀 판을 쓴다
-_D = ("robocasa_v8_descriptors"
-      if os.environ.get("CHECKS", "phase9_checks_v8") != "phase9_checks_v7"
-      else "robocasa_descriptors")
+_CK_NAME = os.environ.get("CHECKS", "phase9_checks_v8")
+_D = ("robocasa_descriptors" if _CK_NAME == "phase9_checks_v7"
+      else "robocasa_v14_descriptors" if _CK_NAME == "phase9_checks_v14"
+      else "robocasa_v8_descriptors")
 D = importlib.import_module(_D)
+# v14 의 계산 사실은 원본 액션과 시작 프레임이 있어야 낸다(압축 요구를 계산한다).
+_FACTS_NEEDS_ACTIONS = _CK_NAME == "phase9_checks_v14"
 
 DS = ("/sjw_alinlab2/home/myungkyu/.cache/huggingface/lerobot/kimtaey/"
       "robocasa_mg_gr00t_300")
@@ -154,11 +157,12 @@ def collect():
         h, w, _ = im.shape
         views = [png(im[:, k * w // 3:(k + 1) * w // 3]) for k in range(3)]
         x = D.descriptors(a, fr)
+        fx = D.facts_text(x, a, fr) if _FACTS_NEEDS_ACTIONS else D.facts_text(x)
         # 그리퍼가 아직 닫혀 있나 -- "쥔 채 내려놓는 중" 과 "이미 놓음" 을 가른다.
         # 사람 국면 라벨은 그 둘을 "해제" 하나로 묶는다.
         held = bool((a[fr:fr + 16, -1] > 0.5).mean() > 0.5)
         jobs.append((tile, ep, fr, ph, task, held, views,
-                     D.facts_text(x), instr.get(ep, "")))
+                     fx, instr.get(ep, "")))
     return jobs
 
 

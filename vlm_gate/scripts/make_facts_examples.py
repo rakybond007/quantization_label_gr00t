@@ -66,30 +66,8 @@ def libero():
             for fr in (0, len(a) // 3, 2 * len(a) // 3)]
 
 
-
-def humandata():
-    """리얼 Franka 두 데이터셋(pnp_task · long_horizon_task).
-
-    **libero 와 계산 사실이 다르다.** 액션이 joint_pos_abs 라 병합이 블록-라스트이고,
-    그리퍼가 연속값이며, allex 처럼 압축 요구 두 문장(`at 2x / at 3x`)이 붙는다 --
-    libero 에는 그 문장이 없다. 그래서 전문을 따로 둔다.
-    """
-    import humandata_descriptors as D
-    out = []
-    for ds in ("pnp_task", "long_horizon_task"):
-        R = f"/sjw_alinlab2/home/taekwan/Data/human_data/{ds}/lerobot"
-        f = sorted(glob.glob(R + "/data/*/*.parquet"))[0]
-        a = np.stack(pd.read_parquet(f)["action"].values)
-        ep = int(f.split("episode_")[1][:6])
-        for fr in (len(a) // 4, len(a) // 2, 3 * len(a) // 4):
-            out.append((f"{ds} 에피 {ep} · 프레임 {fr}",
-                        D.facts_text(D.descriptors(a, fr, dataset=ds))))
-    return out
-
 MAKERS = {("allex", "v4c"): allex, ("robocasa", "v7"): robocasa_v7,
-          ("robocasa", "v8"): robocasa_v8, ("robocasa", "v9"): robocasa_v8,
-          ("robocasa", "v10"): robocasa_v8, ("libero", "v3c"): libero,
-          ("humandata", "v1"): humandata}
+          ("robocasa", "v8"): robocasa_v8, ("libero", "v3c"): libero}
 
 
 def main():
