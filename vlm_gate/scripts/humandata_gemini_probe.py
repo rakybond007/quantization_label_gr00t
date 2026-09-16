@@ -22,6 +22,19 @@ EV = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..",
                   "analysis", "_evolver", "_libero")
 GUID = open(f"{EV}/libero_guidance_v3c.txt").read().strip()
 ASK = open(f"{EV}/libero_questions_v3c.txt").read().strip()
+
+# HD_C_WIDTH=1 이면 C 한 문항만 바꾼다. **한 번에 하나만**(R2) -- A 까지 같이 바꾸면
+# 무엇 때문에 달라졌는지 못 가린다. 지금 C 의 컷은 "받아주느냐" 인데 그 기준에서
+# 넓은 접시와 좁은 컵이 같은 편에 떨어진다(72청크에서 pnp 2.43 vs long 2.37).
+# 새 컷은 "입구가 물건에 비해 넉넉하냐" 다.
+_C_OLD = ("C) Is an object being put into something that would catch it -- a basket, a bin,\n"
+          "   a bowl -- so that landing off-centre changes nothing?")
+_C_NEW = ("C) Is the place this object has to end up ROOMY FOR IT -- a wide bowl, an open\n"
+          "   basket, a broad plate with slack all round -- rather than a cup, a jar or a\n"
+          "   slot barely wider than the thing itself?")
+if os.environ.get("HD_C_WIDTH") == "1":
+    assert _C_OLD in ASK, "C 문항 원문을 못 찾았다 -- 파일이 바뀌었나"
+    ASK = ASK.replace(_C_OLD, _C_NEW, 1)
 VIEW = ("You are shown 2 camera views of this one moment: a scene view and a wrist "
         "(eye-in-hand) close-up. The wrist camera is mounted on the gripper, so objects "
         "normally look close in it -- general closeness is normal. Use the wrist view "
