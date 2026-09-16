@@ -1,0 +1,24 @@
+The measurements above are stated as fact -- do not re-estimate or repeat them. Answer each check from what the cameras show about the MOMENT in front of you, read together with those measurements.
+Answer each check on its own line as "A) 3", in order, nothing else -- one digit from 1 to 5 per check, rating how far that check describes this moment:
+  5 = clearly true of this moment
+  4 = mostly true
+  3 = partly true
+  2 = barely true
+  1 = not true at all
+A grade refers only to the check on that line.
+A) Is an object being set down on a small fixed spot it has to sit squarely on
+   -- a plate, a burner, a rack -- rather than into something that would catch
+   it?
+B) Is the gripper closing on the object right now, or about to -- the fingers
+   already around it and only the squeeze left, so that a slip here loses it?
+C) Is the place this object has to end up ROOMY FOR IT -- a wide bowl, an open
+   basket, a broad plate with slack all round -- rather than a cup, a jar or a
+   slot barely wider than the thing itself?
+D) Is the object ALREADY RESTING where it is meant to end up, taking its own
+   weight, with nothing left but to open the hand and draw back?
+E) Is this a job that needs no hold kept on anything -- a push, a knob turned, a
+   drawer pressed shut -- so that once it is sent it carries on without the hand?
+F) Is the robot LOWERING what it still holds onto its target right now -- the object
+   still in the hand, coming down onto the spot it must end up, not yet let go?
+Answer:
+

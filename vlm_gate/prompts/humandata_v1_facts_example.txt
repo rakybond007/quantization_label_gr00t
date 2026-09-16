@@ -1,0 +1,22 @@
+# humandata v1 계산 사실 예시 -- **실제 데이터에서 뽑았다**
+# make_facts_examples.py 가 만든다. 손으로 고치지 말 것.
+# 전문의 {computed facts} 자리에 이런 문장이 들어간다.
+
+[pnp_task 에피 0 · 프레임 34]
+MEASURED FROM THE PLANNED MOTION over the chunk ahead (these are computed facts, not estimates): the hand stays open throughout; and its opening barely changes; the arm is moving at a normal pace; it keeps its pace to the end of the window; it is not creeping along with something held; at 2x this stretch would move 0.070 rad in one step, about average; at 3x 0.103 rad, about average.
+
+[pnp_task 에피 0 · 프레임 68]
+MEASURED FROM THE PLANNED MOTION over the chunk ahead (these are computed facts, not estimates): the hand stays closed on something throughout; and it is closing; the arm is moving fast; it keeps its pace to the end of the window; it is not creeping along with something held; at 2x this stretch would move 0.126 rad in one step, much larger than most moments in this recording; at 3x 0.183 rad, much larger than most moments in this recording.
+
+[pnp_task 에피 0 · 프레임 102]
+MEASURED FROM THE PLANNED MOTION over the chunk ahead (these are computed facts, not estimates): the hand closes or opens part-way through this window; and it is opening; the arm is barely moving; it is decelerating to a near stop; it is not creeping along with something held; at 2x this stretch would move 0.073 rad in one step, about average; at 3x 0.092 rad, about average.
+
+[long_horizon_task 에피 0 · 프레임 157]
+MEASURED FROM THE PLANNED MOTION over the chunk ahead (these are computed facts, not estimates): the hand stays closed on something throughout; and its opening barely changes; the arm is moving at a normal pace; it keeps its pace to the end of the window; it is not creeping along with something held; at 2x this stretch would move 0.068 rad in one step, larger than most; at 3x 0.071 rad, about average.
+
+[long_horizon_task 에피 0 · 프레임 314]
+MEASURED FROM THE PLANNED MOTION over the chunk ahead (these are computed facts, not estimates): the hand closes or opens part-way through this window; and it is closing; the arm is moving at a normal pace; it keeps its pace to the end of the window; it is not creeping along with something held; at 2x this stretch would move 0.072 rad in one step, larger than most; at 3x 0.103 rad, larger than most.
+
+[long_horizon_task 에피 0 · 프레임 471]
+MEASURED FROM THE PLANNED MOTION over the chunk ahead (these are computed facts, not estimates): the hand stays open throughout; and its opening barely changes; the arm is barely moving; it keeps its pace to the end of the window; it is not creeping along with something held; at 2x this stretch would move 0.022 rad in one step, much smaller than most moments in this recording; at 3x 0.022 rad, much smaller than most moments in this recording.
+
