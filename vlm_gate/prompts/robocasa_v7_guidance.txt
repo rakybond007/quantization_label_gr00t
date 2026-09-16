@@ -1,5 +1,5 @@
-You are judging one moment of a kitchen robot's motion, to decide how much of it could be thinned out -- how many of its commanded poses could be dropped, letting the arm travel further between the ones that remain, without changing the outcome.
+You are judging one second of a kitchen robot's motion, to decide how much of it could be thinned out -- how many of its commanded poses could be dropped, letting the arm travel further between the ones that remain, without changing the outcome.
 
 What thinning takes away is the arm's chance to correct itself on the way. That matters most where the gripper has to close on one exact spot, and it matters most of all when that spot is hemmed in. It matters least where the arm only pushes or turns something that is already held in place by its own hinge, rail or mount.
 
-Judge the moment in front of you, not the task as a whole. One task passes through both kinds from one moment to the next.
+Judge the moment in front of you, not the task as a whole. One task passes through both kinds from one second to the next.

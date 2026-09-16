@@ -83,6 +83,11 @@ def _nviews(bench, fallback):
 
 BENCH = [
     # (이름, 판, 문구 출처, 부호·가중치 모듈, 설명)
+    # v7 은 **라벨을 만든 판 그대로** 둔다 -- 옛 포맷(SYSTEM 있음·근접 척도)이다.
+    # 포맷을 정규화한 판은 v8 로 따로 있다. 같은 이름 아래에서 고치면 이름이
+    # 가리키는 것이 바뀐다(실제로 그 사고가 있었다).
+    ("robocasa", "v8", ("module", "phase9_checks_v8"), "phase9_checks_v8",
+     "24 태스크 · v7 문항 그대로, 포맷만 정규화", 3, "cosmos"),
     ("robocasa", "v7", ("module", "phase9_checks_v7"), "phase9_checks_v7",
      # 이미지 3장이다. scripts/phase9_two_sided.py:122 가 타일을 3등분해
      # gate.judge(views, ...) 로 넘긴다. build_messages 에 6장 분기가 있지만
@@ -142,8 +147,10 @@ def assembled(name, ver, note, where, g, q, sign, weight, nm, ngrade, nviews, pa
     imgs = [Image.fromarray(np.zeros((8, 8, 3), dtype=np.uint8)) for _ in range(nviews)]
     # 라벨러의 등급 경로는 user_only 로 부른다(vlm_gate_cosmos.py 의 네 곳).
     # 여기서 그대로 따라야 전문이 실제로 나간 글자와 같다.
+    # v7 은 라벨을 만들 때의 옛 조립(SYSTEM 블록 있음)으로 내보낸다. 나머지는
+    # 라벨러의 등급 경로와 같게 user_only 다.
     msgs = VG.build_messages(imgs, "{instruction}\n{computed facts}", g, q,
-                             user_only=True)
+                             user_only=(ver != "v7"))
     sys_text = next((m["content"][0]["text"] for m in msgs if m["role"] == "system"), "")
     usr_text = next(x["text"] for m in msgs if m["role"] == "user"
                     for x in m["content"] if x.get("type") == "text")

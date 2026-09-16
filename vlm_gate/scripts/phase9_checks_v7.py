@@ -63,12 +63,8 @@ NAME = {"A": "CLOSE_EXACT", "B": "HEMMED_IN", "C": "FIXTURE_HELD",
 WEIGHT = {"A": 0.60, "B": 0.40,
           "C": 0.50, "D": 0.15, "E": 0.35}
 
-# 기간을 글로 못 박지 않는다. 창은 16스텝인데 robocasa 는 20fps 라 0.80초,
-# libero 는 10fps 라 1.60초다. "one second" 라고 쓰면 robocasa 에서 25% 과장이고
-# 같은 문구를 libero 에 옮기면 배로 틀린다. allex 도 기간 대신 "the next stretch
-# of its motion" 이라고만 한다.
 GUIDANCE = (
-    "You are judging one moment of a kitchen robot's motion, to decide how much of it "
+    "You are judging one second of a kitchen robot's motion, to decide how much of it "
     "could be thinned out -- how many of its commanded poses could be dropped, letting "
     "the arm travel further between the ones that remain, without changing the outcome.\n\n"
     "What thinning takes away is the arm's chance to correct itself on the way. That "
@@ -76,28 +72,18 @@ GUIDANCE = (
     "of all when that spot is hemmed in. It matters least where the arm only pushes or "
     "turns something that is already held in place by its own hinge, rail or mount.\n\n"
     "Judge the moment in front of you, not the task as a whole. One task passes through "
-    "both kinds from one moment to the next."
+    "both kinds from one second to the next."
 )
 
-# 척도는 **allex(Gemini) 와 같은 값 척도**다. v7 까지는 물리적 근접 사다리였다
-# ("4 = 한 센티미터나 한 동작 거리"). 두 가지 때문에 바꿨다.
-#
-# 1. 근접 사다리는 사건 문항에만 맞고 성질 문항에는 대응되는 상태가 없다. C 는
-#    "이 물건이 기구에 붙어 있나" 를 묻는 것이라 "1cm 앞" 이 없다. SYSTEM 을 바꿔도
-#    robocasa C 가 94% 그대로였던 것이 그 흔적이다.
-# 2. 포맷을 벤치마크마다 다르게 가져갈 이유가 없다. allex 라벨은 값 척도로
-#    만들어졌고 다시 만들지 않는다 -- 새로 만드는 쪽이 맞춘다(`prompts/FORMAT.md` §2).
-#
-# 근접 사다리를 쓴 본래 이유는 값 척도의 2등급이 안 쓰인다는 것이었다(43/9,490 =
-# 0.45%). **그건 값 척도 자체가 아니라 옛 문구의 문제였다.** 옛 2등급은 "mostly does
-# not hold" 로 1등급과 눈으로 구분되지 않았다. allex 문구("2 = barely true")에서는
-# 48,086청크 실측 2등급 사용률이 52.2% 다.
 SCALE = (
-    "  5 = clearly true of this moment\n"
-    "  4 = mostly true\n"
-    "  3 = partly true\n"
-    "  2 = barely true\n"
-    "  1 = not true at all\n"
+    "  5 = it is happening right now -- the picture shows the contact, the grip or\n"
+    "      the position the check describes\n"
+    "  4 = not yet, but the hand is right up against it, a centimetre or a single\n"
+    "      motion away\n"
+    "  3 = the hand is heading for it and still some way off\n"
+    "  2 = the thing the check is about is there in the picture, but the arm is busy\n"
+    "      with something else\n"
+    "  1 = there is nothing in this picture the check could be about\n"
 )
 
 _AXES = (

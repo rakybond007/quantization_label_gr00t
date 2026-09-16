@@ -24,6 +24,7 @@ COSMOS = [
     ("robocasa", "v7", "phase9_checks_v7", 3, "scripts/phase9_two_sided.py"),
     # 2장이다. front_view 와 left_wrist_view 뿐 -- label_chunks.py 의
     # BENCHMARKS["libero"]["views"] 도 ("front", "wrist") 다.
+    ("robocasa", "v8", "phase9_checks_v8", 3, "scripts/phase9_two_sided.py"),
     ("libero", "v3c", "libero_v3c_checks", 2, "scripts/label_chunks.py"),
 ]
 
@@ -56,7 +57,7 @@ def main():
         # 걸러 주려면 자리표시가 중괄호 그대로여야 한다.
         msgs = build_messages(dummy(nviews),
                               "{instruction}\n{computed facts}", g, q,
-                              user_only=True)
+                              user_only=(ver != "v7"))
         sys_text = next((m["content"][0]["text"] for m in msgs if m["role"] == "system"), "")
         usr_text = next(x["text"] for m in msgs if m["role"] == "user"
                         for x in m["content"] if x.get("type") == "text")

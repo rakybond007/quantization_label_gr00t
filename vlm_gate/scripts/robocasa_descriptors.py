@@ -152,7 +152,7 @@ def facts_text(x):
     else:
         parts.append("it is decelerating to a near stop" if x["decel"]
                      else "it is not decelerating to a stop")
-    return ("MEASURED FROM THE PLANNED MOTION over the chunk ahead (these are computed "
+    return ("MEASURED FROM THE PLANNED MOTION over the next ~1 second (these are computed "
             "facts, not estimates): " + "; ".join(parts) + ".")
 
 

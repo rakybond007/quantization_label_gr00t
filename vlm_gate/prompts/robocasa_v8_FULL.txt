@@ -1,13 +1,24 @@
+[USER]
+<3 images>
+You are judging one moment of a kitchen robot's motion, to decide how much of it could be thinned out -- how many of its commanded poses could be dropped, letting the arm travel further between the ones that remain, without changing the outcome.
+
+What thinning takes away is the arm's chance to correct itself on the way. That matters most where the gripper has to close on one exact spot, and it matters most of all when that spot is hemmed in. It matters least where the arm only pushes or turns something that is already held in place by its own hinge, rail or mount.
+
+Judge the moment in front of you, not the task as a whole. One task passes through both kinds from one moment to the next.
+
+You are shown 3 camera views: agentview-left, agentview-right, and a wrist (eye-in-hand) close-up. The wrist camera is mounted on the gripper, so objects normally look close in it — general closeness is normal. Use the wrist view only to spot the actual grasp-closure or fine-insertion instant.
+
+The robot was told: {instruction}
+
+{computed facts}
+
 The measurements above are stated as fact -- do not re-estimate or repeat them. Answer each check from what the cameras show about the MOMENT in front of you, read together with those measurements.
 Answer each check on its own line as "A) 3", in order, nothing else -- one digit from 1 to 5 per check, rating how far that check describes this moment:
-  5 = it is happening right now -- the picture shows the contact, the grip or
-      the position the check describes
-  4 = not yet, but the hand is right up against it, a centimetre or a single
-      motion away
-  3 = the hand is heading for it and still some way off
-  2 = the thing the check is about is there in the picture, but the arm is busy
-      with something else
-  1 = there is nothing in this picture the check could be about
+  5 = clearly true of this moment
+  4 = mostly true
+  3 = partly true
+  2 = barely true
+  1 = not true at all
 A grade refers only to the check on that line.
 A) Does this motion need the gripper to CLOSE on one exact spot -- a handle, a rim,
    the body of an object it must pick up -- rather than only pushing or turning

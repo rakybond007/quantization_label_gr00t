@@ -1,0 +1,7 @@
+NGRADE 5   questions 5
+
+  A  risk  0.600  CLOSE_EXACT
+  B  risk  0.400  HEMMED_IN
+  C  safe  0.500  FIXTURE_HELD
+  D  safe  0.150  LETTING_GO
+  E  safe  0.350  CARRY_OPEN
