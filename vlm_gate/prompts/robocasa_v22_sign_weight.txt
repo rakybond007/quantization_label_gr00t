@@ -1,0 +1,12 @@
+robocasa v22 — 부호·가중 (가중은 **잠정**: v9 에서 물려받았고 실측에 맞춘 적이
+없다. 특히 C 0.50 은 v21 까지의 결함 위에서 정해진 값이다. 라벨링 뒤 적합 R5)
+
+  A  CLOSE_EXACT      감점  0.400
+  B  HEMMED_IN        감점  0.270
+  C  GUIDED_IN_PLACE  가점  0.500
+  D  LETTING_GO       가점  0.150
+  E  CARRY_OPEN       가점  0.350
+  F  SETTING_DOWN     감점  0.330
+
+  위험쪽 합 1.000 · 안전쪽 합 1.000
+  NGRADE 5 · conf = (1 + Σ_safe w·g − Σ_risk w·g)/2, g=(등급−1)/(NGRADE−1)

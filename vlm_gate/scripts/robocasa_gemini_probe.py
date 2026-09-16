@@ -35,6 +35,8 @@ CK = importlib.import_module(os.environ.get("CHECKS", "phase9_checks_v8"))
 _CK_NAME = os.environ.get("CHECKS", "phase9_checks_v8")
 _D = ("robocasa_descriptors" if _CK_NAME == "phase9_checks_v7"
       else "robocasa_v14_descriptors" if _CK_NAME == "phase9_checks_v14"
+      else "robocasa_v15_descriptors" if _CK_NAME == "phase9_checks_v15"
+      else "robocasa_v22_descriptors" if _CK_NAME == "phase9_checks_v22"
       else "robocasa_v8_descriptors")
 D = importlib.import_module(_D)
 # v14 의 계산 사실은 원본 액션과 시작 프레임이 있어야 낸다(압축 요구를 계산한다).
@@ -44,11 +46,17 @@ DS = ("/sjw_alinlab2/home/myungkyu/.cache/huggingface/lerobot/kimtaey/"
       "robocasa_mg_gr00t_300")
 TILES = f"{BASE}/output/_gate_distill/luna_robocasa_full/tiles"
 PHASE = f"{BASE}/analysis/ratio_prompt/phase_class.jsonl"
-VIEW = ("You are shown 3 camera views: agentview-left, agentview-right, "
+# **VIEW 는 판본이 가지고 있으면 그것을 쓴다.** 여기 하드코딩된 문장은
+# libero 의 것이 그대로 넘어온 것이다 -- robocasa 에 삽입 태스크가 없는데
+# "fine-insertion instant" 를 찾으라 하고, 손목 뷰를 파지 닫힘에만 쓰라고
+# 묶어 내려놓는 순간(F)을 배제한다. v22 부터 판본이 고친 VIEW 를 들고 있다.
+# 옛 판을 다시 돌리면 아래 문장이 그대로 쓰여 프로브 결과가 재현된다.
+_VIEW_LEGACY = ("You are shown 3 camera views: agentview-left, agentview-right, "
         "and a wrist (eye-in-hand) close-up. The wrist camera is mounted on "
         "the gripper, so objects normally look close in it — general closeness "
         "is normal. Use the wrist view only to spot the actual grasp-closure or "
         "fine-insertion instant.")
+VIEW = getattr(CK, "VIEW", _VIEW_LEGACY)
 
 Q = tuple(sorted(CK.SIGN))
 MODEL = os.environ.get("RC_MODEL", "gemini/gemini-3.8-flash")

@@ -1,0 +1,42 @@
+{
+ "approach": {
+  "lo": 3.17,
+  "hi": null
+ },
+ "carry": {
+  "lo": 1.83,
+  "hi": null
+ },
+ "contact_coarse": {
+  "lo": 3.17,
+  "hi": null
+ },
+ "contact_knob": {
+  "lo": 3.17,
+  "hi": null
+ },
+ "grasp_confined": {
+  "lo": 1.667,
+  "hi": null
+ },
+ "grasp_open": {
+  "lo": 1.83,
+  "hi": null
+ },
+ "place_catcher": {
+  "lo": 1.83,
+  "hi": null
+ },
+ "place_open": {
+  "lo": 1.25,
+  "hi": 1.667
+ },
+ "place_precise": {
+  "lo": 1.25,
+  "hi": 1.25
+ },
+ "pull_swing": {
+  "lo": 1.5,
+  "hi": 1.83
+ }
+}

@@ -1,0 +1,7 @@
+You are judging one moment of a kitchen robot's motion, to decide whether the arm could get through the stretch of motion ahead of it faster -- reaching the same places in fewer and longer steps -- without changing the outcome.
+
+Going faster leaves the arm fewer chances to correct itself along the way. That costs most where the arm still has to arrive somewhere exactly: setting down what it is carrying onto the spot it must end up on, or closing the gripper on one exact point -- and, when it is the gripper closing, more still if that spot is hemmed in. It costs least where the arm only acts on something that is anchored in place -- a button or switch pressed, a knob or tap turned, a door pushed shut. There a longer step just presses or turns a little harder and nothing is lost.
+
+Judge the moment in front of you, not the task as a whole. One task passes through both kinds from one moment to the next.
+
+You are shown 3 camera views: agentview-left, agentview-right, and a wrist (eye-in-hand) close-up. The wrist camera is mounted on the gripper, so objects normally look close in it -- general closeness is normal. Use the wrist view to judge the close moments: the gripper actually closing on something, and something being set down onto the spot it must end up on.

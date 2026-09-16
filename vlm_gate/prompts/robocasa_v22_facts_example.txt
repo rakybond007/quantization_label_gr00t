@@ -1,0 +1,1 @@
+MEASURED FROM THE PLANNED MOTION over the chunk ahead (these are computed facts, not estimates): the gripper stays open throughout; the end-effector keeps a consistent direction; it is on the slow side for this dataset -- faster than 34% of all moments here; it is not creeping along with something held; it is not decelerating to a stop.

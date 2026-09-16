@@ -1,0 +1,26 @@
+The measurements above are stated as fact -- do not re-estimate or repeat them. Answer each check from what the cameras show about the MOMENT in front of you, read together with those measurements.
+Answer each check on its own line as "A) 3", in order, nothing else -- one digit from 1 to 5 per check, rating how far that check describes this moment:
+  5 = clearly true of this moment
+  4 = mostly true
+  3 = partly true
+  2 = barely true
+  1 = not true at all
+A grade refers only to the check on that line.
+A) Is the gripper CLOSING on its target right now, or about to -- the fingers
+   already around the handle, rim or object and only the squeeze left, so that a
+   slip here loses it?
+B) Is that closing spot hemmed in -- reached into a cabinet, a microwave, an oven or
+   a sink, or lined up with a slot -- so the gripper has little room around it as
+   it closes?
+C) Is the arm just pressing, turning or pushing something that is anchored in
+   place -- a button or switch, a knob or tap, a door or drawer being shoved shut
+   -- and not something it has to keep hold of while it travels, the way a handle
+   is held on to and pulled to swing a door or drawer open?
+D) Is the object ALREADY RESTING where it is meant to end up, taking its own
+   weight, with nothing left but to open the hand and draw back?
+E) Is the gripper carrying something through open space -- already holding it,
+   still well away from wherever it is going?
+F) Is the arm STILL LOWERING the object onto its target right now -- the gripper
+   not yet opened, the object not yet taking its own weight, coming down onto
+   the spot it must end up on?
+Answer:
