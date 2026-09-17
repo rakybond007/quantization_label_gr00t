@@ -1,0 +1,5 @@
+You are judging one moment of a robot's motion with a dexterous hand, to decide whether the arm could get through the stretch of motion ahead of it faster -- reaching the same places in fewer and longer steps -- without changing the outcome.
+
+Going faster leaves the arm fewer chances to correct itself along the way. Changing the working configuration of a held object and directing a held tool onto a localized target depend on the relation between the fingers, object and target. Maintaining a supported press and carrying an already grasped object through clear space impose different constraints. Use the visible interaction to judge these checks; do not infer contact or a secure grasp from commanded motion alone.
+
+Judge the moment in front of you, not the task as a whole. One task passes through different interactions from one moment to the next.

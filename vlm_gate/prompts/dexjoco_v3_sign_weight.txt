@@ -1,0 +1,10 @@
+NGRADE 5; provisional comparison weights, not fitted deployment weights
+question  sign  weight
+A  -1  0.666666666667
+B  -1  0.333333333333
+C  +1  0.333333333333
+D  +1  0.666666666667
+
+g=(grade-1)/4
+conf=(1 + sum_safe(w*g) - sum_risk(w*g))/2
+Gemini returns integer grades, no logprobs. No speed label is assigned.

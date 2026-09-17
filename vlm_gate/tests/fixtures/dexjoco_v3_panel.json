@@ -1,0 +1,578 @@
+[
+  {
+    "task": "click_mouse",
+    "ep_local": 0,
+    "frame_index": 16,
+    "instruction": "Move the mouse to the purple mouse pad and click the left mouse button.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving quickly; the wrist target is moving quickly; the finger joints are moving at a moderate rate.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.ego_right",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "3769e479bfd7c48171a40c689bcd722afcf858880baeb179ddfac8fd2a344fda"
+  },
+  {
+    "task": "click_mouse",
+    "ep_local": 0,
+    "frame_index": 80,
+    "instruction": "Move the mouse to the purple mouse pad and click the left mouse button.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving at a moderate rate; the wrist target is moving at a moderate rate; the finger joints are moving slowly.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.ego_right",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "9ca491ea0b6cf61f3d6258e6d9829b90c19c5f683accc12bd40ee4f269ad8e20"
+  },
+  {
+    "task": "click_mouse",
+    "ep_local": 0,
+    "frame_index": 144,
+    "instruction": "Move the mouse to the purple mouse pad and click the left mouse button.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving at a moderate rate; the wrist target is moving at a moderate rate; the finger joints are moving at a moderate rate.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.ego_right",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "e91a8969f14102d93b5fea91c3e0f7e7c8b452f5cc97e477f4751e8ebf1e0e7c"
+  },
+  {
+    "task": "click_mouse",
+    "ep_local": 0,
+    "frame_index": 208,
+    "instruction": "Move the mouse to the purple mouse pad and click the left mouse button.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving at a moderate rate; the wrist target is moving quickly; the finger joints are moving at a moderate rate.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.ego_right",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "b376ac4f2a373a272bfc69844d23682e87990601ef88e67c88a7e84803268cb2"
+  },
+  {
+    "task": "click_mouse",
+    "ep_local": 0,
+    "frame_index": 272,
+    "instruction": "Move the mouse to the purple mouse pad and click the left mouse button.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving at a moderate rate; the wrist target is moving at a moderate rate; the finger joints are moving at a moderate rate.\nThe planned arm path has no substantial direction reversal; its later steps slow markedly.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.ego_right",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "1155c7bc405938a2aca013928fc9209dc7a859b62f4d341dd51c7182ff3dcaae"
+  },
+  {
+    "task": "click_mouse",
+    "ep_local": 0,
+    "frame_index": 336,
+    "instruction": "Move the mouse to the purple mouse pad and click the left mouse button.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving quickly; the wrist target is moving quickly; the finger joints are moving at a moderate rate.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.ego_right",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "3769e479bfd7c48171a40c689bcd722afcf858880baeb179ddfac8fd2a344fda"
+  },
+  {
+    "task": "click_mouse",
+    "ep_local": 0,
+    "frame_index": 400,
+    "instruction": "Move the mouse to the purple mouse pad and click the left mouse button.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving at a moderate rate; the wrist target is moving at a moderate rate; the finger joints are moving at a moderate rate.\nThe planned arm path has no substantial direction reversal; its later steps slow markedly.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.ego_right",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "1155c7bc405938a2aca013928fc9209dc7a859b62f4d341dd51c7182ff3dcaae"
+  },
+  {
+    "task": "click_mouse",
+    "ep_local": 0,
+    "frame_index": 480,
+    "instruction": "Move the mouse to the purple mouse pad and click the left mouse button.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving slowly; the wrist target is moving at a moderate rate; the finger joints are moving at a moderate rate.\nThe planned arm path has no substantial direction reversal; its later steps slow markedly.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.ego_right",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "a57c2674e949fc5cce0713ae84abc463596d6f1a9a886bb8b82dd30f8fa54dfb"
+  },
+  {
+    "task": "fold_glasses",
+    "ep_local": 0,
+    "frame_index": 0,
+    "instruction": "Fold the glasses and place them into the case.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving quickly; the wrist target is moving at a moderate rate; the finger joints are moving quickly.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "3c3e9b8f70b2aab9a70a8e206664d8c581541d4901b51f54e0b22a7948219b9c"
+  },
+  {
+    "task": "fold_glasses",
+    "ep_local": 0,
+    "frame_index": 64,
+    "instruction": "Fold the glasses and place them into the case.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving at a moderate rate; the wrist target is moving slowly; the finger joints are moving at a moderate rate.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "87b36f9a45ca59dcdd2dd027fa05393243413fb2b51c492b9f3c3db25dc86e1c"
+  },
+  {
+    "task": "fold_glasses",
+    "ep_local": 0,
+    "frame_index": 144,
+    "instruction": "Fold the glasses and place them into the case.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving at a moderate rate; the wrist target is moving at a moderate rate; the finger joints are moving at a moderate rate.\nThe planned arm path has no substantial direction reversal; its later steps slow markedly.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "91ae0af411cef3cce1757532a9743c7f7a569c140915c89db18da2f061176026"
+  },
+  {
+    "task": "fold_glasses",
+    "ep_local": 0,
+    "frame_index": 224,
+    "instruction": "Fold the glasses and place them into the case.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving at a moderate rate; the wrist target is moving at a moderate rate; the finger joints are moving at a moderate rate.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "ff04bef767e5c71d1dcb3738f08f24399ad450c1fe92e0c4ac65ed3f1f3b2cfc"
+  },
+  {
+    "task": "fold_glasses",
+    "ep_local": 0,
+    "frame_index": 304,
+    "instruction": "Fold the glasses and place them into the case.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving at a moderate rate; the wrist target is moving quickly; the finger joints are moving at a moderate rate.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "e1c1485d591ec0710816939fee2b5b16ba56808e953629825257acdac19f2d0a"
+  },
+  {
+    "task": "fold_glasses",
+    "ep_local": 0,
+    "frame_index": 384,
+    "instruction": "Fold the glasses and place them into the case.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving at a moderate rate; the wrist target is moving at a moderate rate; the finger joints are moving quickly.\nThe planned arm path has no substantial direction reversal; its later steps slow markedly.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "25fa8eb28f63078938817e61eb768758710e9a9e51dc1a325a30ac45bdbc3b31"
+  },
+  {
+    "task": "fold_glasses",
+    "ep_local": 0,
+    "frame_index": 464,
+    "instruction": "Fold the glasses and place them into the case.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving at a moderate rate; the wrist target is moving at a moderate rate; the finger joints are moving slowly.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "f5996ec1db5f36337e83dfb2e3d43db10d68c83382233f8a12d05b93d0dca1a2"
+  },
+  {
+    "task": "fold_glasses",
+    "ep_local": 0,
+    "frame_index": 544,
+    "instruction": "Fold the glasses and place them into the case.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving at a moderate rate; the wrist target is moving at a moderate rate; the finger joints are moving at a moderate rate.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "ff04bef767e5c71d1dcb3738f08f24399ad450c1fe92e0c4ac65ed3f1f3b2cfc"
+  },
+  {
+    "task": "hammer_nail",
+    "ep_local": 0,
+    "frame_index": 0,
+    "instruction": "Use the hammer to drive the nail into the wooden board.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving quickly; the wrist target is moving quickly; the finger joints are moving at a moderate rate.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "862f6708ac3bdfe418f8005f5533664b503399164a063b31fbe560acc6f15ff2"
+  },
+  {
+    "task": "hammer_nail",
+    "ep_local": 0,
+    "frame_index": 16,
+    "instruction": "Use the hammer to drive the nail into the wooden board.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving quickly; the wrist target is moving quickly; the finger joints are moving at a moderate rate.\nThe planned arm path has a substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "44b2a330ae6b05ed235eaa3222973a902151728e48f58c98f36ed45066f9f7c3"
+  },
+  {
+    "task": "hammer_nail",
+    "ep_local": 0,
+    "frame_index": 48,
+    "instruction": "Use the hammer to drive the nail into the wooden board.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving at a moderate rate; the wrist target is moving at a moderate rate; the finger joints are moving slowly.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "9477b2a5d69f5e4b89d54f297cd5790b8a360ac72927d3cdbf47ba4589437c82"
+  },
+  {
+    "task": "hammer_nail",
+    "ep_local": 0,
+    "frame_index": 64,
+    "instruction": "Use the hammer to drive the nail into the wooden board.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving at a moderate rate; the wrist target is moving at a moderate rate; the finger joints are moving quickly.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "5ec41b1d6f1fb859a74c7b3ebee0ccaa8a32a3f82cab099b7355d4c5239080bd"
+  },
+  {
+    "task": "hammer_nail",
+    "ep_local": 0,
+    "frame_index": 96,
+    "instruction": "Use the hammer to drive the nail into the wooden board.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving quickly; the wrist target is moving quickly; the finger joints are moving at a moderate rate.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "862f6708ac3bdfe418f8005f5533664b503399164a063b31fbe560acc6f15ff2"
+  },
+  {
+    "task": "hammer_nail",
+    "ep_local": 0,
+    "frame_index": 112,
+    "instruction": "Use the hammer to drive the nail into the wooden board.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving quickly; the wrist target is moving quickly; the finger joints are moving at a moderate rate.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "862f6708ac3bdfe418f8005f5533664b503399164a063b31fbe560acc6f15ff2"
+  },
+  {
+    "task": "hammer_nail",
+    "ep_local": 0,
+    "frame_index": 144,
+    "instruction": "Use the hammer to drive the nail into the wooden board.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving at a moderate rate; the wrist target is moving quickly; the finger joints are moving at a moderate rate.\nThe planned arm path has no substantial direction reversal; its later steps slow markedly.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "d16bf248b3892ce9b5a5e57f0fd307b6fabc110e1b7b719668068e6d333dfa54"
+  },
+  {
+    "task": "hammer_nail",
+    "ep_local": 0,
+    "frame_index": 176,
+    "instruction": "Use the hammer to drive the nail into the wooden board.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving quickly; the wrist target is moving quickly; the finger joints are moving slowly.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "68dd22cb41f4caa18b76ee94ed158be78cccaebd33b735179feb7af6709d1573"
+  },
+  {
+    "task": "pick_bucket",
+    "ep_local": 0,
+    "frame_index": 16,
+    "instruction": "Place the boxed food into the bucket and then lift the bucket.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving quickly; the wrist target is moving quickly; the finger joints are moving quickly.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "d008fde208127a4d3bf4a058cdd66b2dc0bfe3f09355a74cb4ebc8cb565356fa"
+  },
+  {
+    "task": "pick_bucket",
+    "ep_local": 0,
+    "frame_index": 80,
+    "instruction": "Place the boxed food into the bucket and then lift the bucket.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving at a moderate rate; the wrist target is moving at a moderate rate; the finger joints are moving at a moderate rate.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "493ff6a80d619431f19c83ccf2877580a2804d2a7f6a5ba3370f40ea89d459ed"
+  },
+  {
+    "task": "pick_bucket",
+    "ep_local": 0,
+    "frame_index": 144,
+    "instruction": "Place the boxed food into the bucket and then lift the bucket.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving at a moderate rate; the wrist target is moving at a moderate rate; the finger joints are moving slowly.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "4ba932ecde2bd8d3fa4b110643e985aff293cef8b4474f9957d7050247f6b8d2"
+  },
+  {
+    "task": "pick_bucket",
+    "ep_local": 0,
+    "frame_index": 224,
+    "instruction": "Place the boxed food into the bucket and then lift the bucket.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving at a moderate rate; the wrist target is moving slowly; the finger joints are moving slowly.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "fa0957aa0c58551b97fbdcc191906ce4bb731404820110778c5e2f90e2a0c88a"
+  },
+  {
+    "task": "pick_bucket",
+    "ep_local": 0,
+    "frame_index": 288,
+    "instruction": "Place the boxed food into the bucket and then lift the bucket.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving at a moderate rate; the wrist target is moving at a moderate rate; the finger joints are moving at a moderate rate.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "493ff6a80d619431f19c83ccf2877580a2804d2a7f6a5ba3370f40ea89d459ed"
+  },
+  {
+    "task": "pick_bucket",
+    "ep_local": 0,
+    "frame_index": 368,
+    "instruction": "Place the boxed food into the bucket and then lift the bucket.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving at a moderate rate; the wrist target is moving at a moderate rate; the finger joints are moving slowly.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "4ba932ecde2bd8d3fa4b110643e985aff293cef8b4474f9957d7050247f6b8d2"
+  },
+  {
+    "task": "pick_bucket",
+    "ep_local": 0,
+    "frame_index": 432,
+    "instruction": "Place the boxed food into the bucket and then lift the bucket.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving at a moderate rate; the wrist target is moving quickly; the finger joints are moving at a moderate rate.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "92851522af865c3b371810ff3584578839f9736cccf90fb617125e81ff0ee307"
+  },
+  {
+    "task": "pick_bucket",
+    "ep_local": 0,
+    "frame_index": 512,
+    "instruction": "Place the boxed food into the bucket and then lift the bucket.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving at a moderate rate; the wrist target is moving slowly; the finger joints are moving slowly.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "fa0957aa0c58551b97fbdcc191906ce4bb731404820110778c5e2f90e2a0c88a"
+  },
+  {
+    "task": "pinch_tongs",
+    "ep_local": 0,
+    "frame_index": 0,
+    "instruction": "Grasp the tongs and perform three consecutive open-close motions.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving quickly; the wrist target is moving quickly; the finger joints are moving quickly.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "0eddc70e6c77bacc113050cba79da587856eac93a8087be3f8ca246e4124c768"
+  },
+  {
+    "task": "pinch_tongs",
+    "ep_local": 0,
+    "frame_index": 32,
+    "instruction": "Grasp the tongs and perform three consecutive open-close motions.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving at a moderate rate; the wrist target is moving at a moderate rate; the finger joints are moving at a moderate rate.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "412ed2c00b016251160f56398fc7fbddb745d8f8c8c89dbecb60184ce40f98b3"
+  },
+  {
+    "task": "pinch_tongs",
+    "ep_local": 0,
+    "frame_index": 80,
+    "instruction": "Grasp the tongs and perform three consecutive open-close motions.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving at a moderate rate; the wrist target is moving at a moderate rate; the finger joints are moving at a moderate rate.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "412ed2c00b016251160f56398fc7fbddb745d8f8c8c89dbecb60184ce40f98b3"
+  },
+  {
+    "task": "pinch_tongs",
+    "ep_local": 0,
+    "frame_index": 128,
+    "instruction": "Grasp the tongs and perform three consecutive open-close motions.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving slowly; the wrist target is moving at a moderate rate; the finger joints are moving quickly.\nThe planned arm path has no substantial direction reversal; its later steps slow markedly.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "c6fe746d9acff004694c33224d65f7da7df53b8e179dcf0fad1a979fca1fe63b"
+  },
+  {
+    "task": "pinch_tongs",
+    "ep_local": 0,
+    "frame_index": 176,
+    "instruction": "Grasp the tongs and perform three consecutive open-close motions.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving slowly; the wrist target is moving slowly; the finger joints are moving at a moderate rate.\nThe planned arm path has no substantial direction reversal; its later steps slow markedly.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "416c85dd0d68908516d921d9869f8b7e694c3f7151e75c192243b2dc8c2db91f"
+  },
+  {
+    "task": "pinch_tongs",
+    "ep_local": 0,
+    "frame_index": 224,
+    "instruction": "Grasp the tongs and perform three consecutive open-close motions.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving slowly; the wrist target is moving slowly; the finger joints are moving at a moderate rate.\nThe planned arm path has no substantial direction reversal; its later steps slow markedly.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "416c85dd0d68908516d921d9869f8b7e694c3f7151e75c192243b2dc8c2db91f"
+  },
+  {
+    "task": "pinch_tongs",
+    "ep_local": 0,
+    "frame_index": 272,
+    "instruction": "Grasp the tongs and perform three consecutive open-close motions.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving slowly; the wrist target is moving slowly; the finger joints are moving at a moderate rate.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "c7eb0d316daf5769f688f5a5576b2daebdbe06a92f1718cfc4f0bc165de10b33"
+  },
+  {
+    "task": "pinch_tongs",
+    "ep_local": 0,
+    "frame_index": 320,
+    "instruction": "Grasp the tongs and perform three consecutive open-close motions.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving slowly; the wrist target is moving slowly; the finger joints are moving at a moderate rate.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "c7eb0d316daf5769f688f5a5576b2daebdbe06a92f1718cfc4f0bc165de10b33"
+  },
+  {
+    "task": "water_plant",
+    "ep_local": 0,
+    "frame_index": 0,
+    "instruction": "Grasp the watering can and apply water to the plant.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving quickly; the wrist target is moving quickly; the finger joints are moving at a moderate rate.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "59f04b3e39af51616015d1faeeefcffb782092c0b47eef768595f2b2d50f7499"
+  },
+  {
+    "task": "water_plant",
+    "ep_local": 0,
+    "frame_index": 32,
+    "instruction": "Grasp the watering can and apply water to the plant.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving at a moderate rate; the wrist target is moving at a moderate rate; the finger joints are moving at a moderate rate.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "79a9ca37939b0e047fff53c2bfa10527a999d8998c17ab65899eea9ca4d18900"
+  },
+  {
+    "task": "water_plant",
+    "ep_local": 0,
+    "frame_index": 80,
+    "instruction": "Grasp the watering can and apply water to the plant.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving at a moderate rate; the wrist target is moving at a moderate rate; the finger joints are moving quickly.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "49550ac978563f7d9b4b919558fdc7cdfc6d940a729c9ff04395a04a0e0419b0"
+  },
+  {
+    "task": "water_plant",
+    "ep_local": 0,
+    "frame_index": 112,
+    "instruction": "Grasp the watering can and apply water to the plant.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving at a moderate rate; the wrist target is moving quickly; the finger joints are moving at a moderate rate.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "de682a4015509a026d459217c3b3b54fcbd9553eb5e7ed19a32a90021ad6ffee"
+  },
+  {
+    "task": "water_plant",
+    "ep_local": 0,
+    "frame_index": 160,
+    "instruction": "Grasp the watering can and apply water to the plant.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving at a moderate rate; the wrist target is moving at a moderate rate; the finger joints are moving slowly.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "b0ea4f0db90064263b80097ce3d028f51f5b12fe0fac537bb19a1fd1260115c7"
+  },
+  {
+    "task": "water_plant",
+    "ep_local": 0,
+    "frame_index": 192,
+    "instruction": "Grasp the watering can and apply water to the plant.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving slowly; the wrist target is moving at a moderate rate; the finger joints are moving at a moderate rate.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "98f7c4ad062b1d153f2a4709db52c5999c69b2e629550cdc74c10cbe7e856be2"
+  },
+  {
+    "task": "water_plant",
+    "ep_local": 0,
+    "frame_index": 240,
+    "instruction": "Grasp the watering can and apply water to the plant.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving slowly; the wrist target is moving at a moderate rate; the finger joints are moving at a moderate rate.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "98f7c4ad062b1d153f2a4709db52c5999c69b2e629550cdc74c10cbe7e856be2"
+  },
+  {
+    "task": "water_plant",
+    "ep_local": 0,
+    "frame_index": 288,
+    "instruction": "Grasp the watering can and apply water to the plant.",
+    "facts": "COMPUTED FROM THE RECORDED ABSOLUTE ACTION TARGETS over the chunk ahead:\nThe arm is moving slowly; the wrist target is moving slowly; the finger joints are moving slowly.\nThe planned arm path has no substantial direction reversal; its later steps do not show marked slowing.\nThese comparisons describe command demands, not robot limits or measured contact.",
+    "views": [
+      "observation.images.front",
+      "observation.images.wrist"
+    ],
+    "prompt_sha256": "6f6e1d9a112b7cb6488abf82f14f28922668829c613aa3868b0380b7af4b669c"
+  }
+]

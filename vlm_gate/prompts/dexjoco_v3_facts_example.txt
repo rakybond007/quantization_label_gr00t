@@ -1,0 +1,4 @@
+MEASURED FROM THE PLANNED MOTION over the chunk ahead (these are computed facts, not estimates):
+The arm is moving quickly; the wrist target is moving quickly; the finger joints are moving at a moderate rate.
+The planned arm path has no substantial direction reversal; its later steps do not show marked slowing.
+These comparisons describe command demands, not robot limits or measured contact.

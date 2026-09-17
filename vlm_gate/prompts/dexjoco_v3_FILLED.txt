@@ -1,0 +1,41 @@
+[USER]
+[IMAGE]
+[IMAGE]
+You are judging one moment of a robot's motion with a dexterous hand, to decide whether the arm could get through the stretch of motion ahead of it faster -- reaching the same places in fewer and longer steps -- without changing the outcome.
+
+Going faster leaves the arm fewer chances to correct itself along the way. Changing the working configuration of a held object and directing a held tool onto a localized target depend on the relation between the fingers, object and target. Maintaining a supported press and carrying an already grasped object through clear space impose different constraints. Use the visible interaction to judge these checks; do not infer contact or a secure grasp from commanded motion alone.
+
+Judge the moment in front of you, not the task as a whole. One task passes through different interactions from one moment to the next.
+
+You are shown 2 camera views of this one moment: image 1 is the scene view (observation.images.ego_right), and image 2 is a wrist (eye-in-hand) close-up (observation.images.wrist). The wrist camera is mounted on the hand, so objects normally look close in it -- general closeness is normal. Use the wrist view to judge the close moments: the fingers operating the held object, a tool approaching its target, and a finger pressing a supported target.
+
+The robot was told: Move the mouse to the purple mouse pad and click the left mouse button.
+
+MEASURED FROM THE PLANNED MOTION over the chunk ahead (these are computed facts, not estimates):
+The arm is moving quickly; the wrist target is moving quickly; the finger joints are moving at a moderate rate.
+The planned arm path has no substantial direction reversal; its later steps do not show marked slowing.
+These comparisons describe command demands, not robot limits or measured contact.
+
+The measurements above are stated as fact -- do not re-estimate or repeat them. Answer each check from what the cameras show about the MOMENT in front of you, read together with those measurements.
+Answer each check on its own line as "A) 3", in order, nothing else -- one digit from 1 to 5 per check, rating how far that check describes this moment:
+  5 = clearly true of this moment
+  4 = mostly true
+  3 = partly true
+  2 = barely true
+  1 = not true at all
+A grade refers only to the check on that line.
+A) Are the fingers operating movable parts of the object being held—closing
+   jaws or folding an articulated part—so that changing the relation between
+   those parts is the operation, rather than merely holding the object?
+B) Is a held tool being directed into an impact on a localized target, rather
+   than making a sustained supported press? Use visible held-tool/target geometry together with the command motion to judge
+   preparation for or execution of a targeted strike. Command targets do not establish
+   that an impact actually occurred; the presence of a hammer alone is not enough.
+C) Is a finger or hand pressing a target supported by the surrounding surface,
+   without lifting it, striking it with a tool, or manipulating movable parts
+   within a grasp? A surface supports the target; do not assume it is bolted down.
+D) Is an already grasped object being moved or tilted as a whole through clear
+   space, without changing the working configuration of its movable parts,
+   acquiring/releasing the grasp, or entering a visibly tight target region?
+
+Answer:

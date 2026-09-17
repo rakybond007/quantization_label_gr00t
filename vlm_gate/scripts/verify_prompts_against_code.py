@@ -12,8 +12,6 @@
 import os
 import sys
 
-import numpy as np
-from PIL import Image
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -32,6 +30,8 @@ COSMOS = [
 
 
 def dummy(n):
+    import numpy as np
+    from PIL import Image
     return [Image.fromarray(np.zeros((64, 64, 3), dtype=np.uint8)) for _ in range(n)]
 
 
@@ -106,6 +106,8 @@ def main():
             bad.append(f"allex: 문항 줄이 전문에 없다 -- {s[:50]}")
     print(f"  allex v4c: SYSTEM 없음(라벨러가 안 보냄) · 라벨러 scripts/allex_litellm_run.py")
 
+    from dexjoco_v3_artifacts import verify
+    bad.extend(verify())
     return bad
 
 
@@ -122,6 +124,8 @@ def selftest():
       양성 대조: 한 글자 바꾼 전문은 반드시 걸려야 한다 (미탐 없음)
     """
     import shutil, tempfile
+    from dexjoco_v3_artifacts import selftest as dex_selftest
+    dex_selftest()
     base = main()
     if base:
         print("  [자기검사] 음성 대조 실패 -- 손대지 않은 전문이 어긋난다고 나온다:")
@@ -158,6 +162,20 @@ def selftest():
 
 if __name__ == "__main__":
     import sys as _s
+    if "--benchmark" in _s.argv:
+        import argparse
+        p = argparse.ArgumentParser()
+        p.add_argument("--benchmark", choices=["dexjoco"], required=True)
+        p.add_argument("--selftest", action="store_true")
+        args = p.parse_args()
+        from dexjoco_v3_artifacts import verify, selftest as dex_selftest
+        errors = verify()
+        if errors:
+            raise SystemExit("\n".join(errors))
+        if args.selftest:
+            dex_selftest()
+        print("DexJoCo: 48 runtime snapshots and 6 artifacts match; common ASK matches all 3 benchmarks")
+        raise SystemExit(0)
     if "--selftest" in _s.argv:
         print("=== 검증기 자기 검사")
         if not selftest():

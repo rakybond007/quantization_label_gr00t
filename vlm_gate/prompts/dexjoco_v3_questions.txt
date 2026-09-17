@@ -1,0 +1,23 @@
+The measurements above are stated as fact -- do not re-estimate or repeat them. Answer each check from what the cameras show about the MOMENT in front of you, read together with those measurements.
+Answer each check on its own line as "A) 3", in order, nothing else -- one digit from 1 to 5 per check, rating how far that check describes this moment:
+  5 = clearly true of this moment
+  4 = mostly true
+  3 = partly true
+  2 = barely true
+  1 = not true at all
+A grade refers only to the check on that line.
+A) Are the fingers operating movable parts of the object being held—closing
+   jaws or folding an articulated part—so that changing the relation between
+   those parts is the operation, rather than merely holding the object?
+B) Is a held tool being directed into an impact on a localized target, rather
+   than making a sustained supported press? Use visible held-tool/target geometry together with the command motion to judge
+   preparation for or execution of a targeted strike. Command targets do not establish
+   that an impact actually occurred; the presence of a hammer alone is not enough.
+C) Is a finger or hand pressing a target supported by the surrounding surface,
+   without lifting it, striking it with a tool, or manipulating movable parts
+   within a grasp? A surface supports the target; do not assume it is bolted down.
+D) Is an already grasped object being moved or tilted as a whole through clear
+   space, without changing the working configuration of its movable parts,
+   acquiring/releasing the grasp, or entering a visibly tight target region?
+
+Answer:

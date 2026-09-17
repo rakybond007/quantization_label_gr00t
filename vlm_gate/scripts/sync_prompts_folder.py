@@ -195,6 +195,8 @@ def build():
         files[f"{name}_{ver}_sign_weight.txt"] = (
             f"NGRADE {getattr(M, 'NGRADE', '?')}   questions {len(sign)}\n\n" + tbl + "\n")
         rows.append((name, ver, where, sha(g), sha(q), wmod))
+    from dexjoco_v3_artifacts import artifacts
+    files.update(artifacts())
     return files, rows
 
 
@@ -250,15 +252,20 @@ def readme(rows):
             "자가집계 계열은 `_tmp/selfagg_bias/` 의 편향 연구용이다 -- 등급 문항으로",
             "라벨을 만든 경로와 **다른 질문 형태**다.", "",
             "최종은 위 표의 `<벤치>_<판>_*.txt` 뿐이다.", ""]
-    return "\n".join(out)
+    return "\n".join(out) + "\n## DexJoCo v3\n\n추가된 USER-only 프롬프트: [dexjoco_v3_README.md](dexjoco_v3_README.md).\n원본은 `scripts/dexjoco_v3_checks.py`; `--benchmark dexjoco`로 별도 생성·검증 가능.\n"
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true", help="어긋나면 종료코드 1")
+    ap.add_argument("--benchmark", choices=["all", "dexjoco"], default="all")
     a = ap.parse_args()
-    files, rows = build()
-    files["README.md"] = readme(rows)
+    if a.benchmark == "dexjoco":
+        from dexjoco_v3_artifacts import artifacts
+        files = artifacts()
+    else:
+        files, rows = build()
+        files["README.md"] = readme(rows)
     os.makedirs(OUT, exist_ok=True)
     bad = []
     for n, body in sorted(files.items()):

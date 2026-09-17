@@ -69,3 +69,8 @@ build_messages` 가 이렇게 만든다:
 라벨을 만든 경로와 **다른 질문 형태**다.
 
 최종은 위 표의 `<벤치>_<판>_*.txt` 뿐이다.
+
+## DexJoCo v3
+
+추가된 USER-only 프롬프트: [dexjoco_v3_README.md](dexjoco_v3_README.md).
+원본은 `scripts/dexjoco_v3_checks.py`; `--benchmark dexjoco`로 별도 생성·검증 가능.
