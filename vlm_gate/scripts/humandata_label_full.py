@@ -181,7 +181,7 @@ def nearest_phase(f, pm):
     return pm[k] if abs(k - f) <= 8 else None
 
 
-def collect(ds, done):
+def collect(ds, done, batch=int(os.environ.get("HD_BATCH", "6"))):
     R = f"{ROOT}/{ds}/lerobot"
     info = json.load(open(f"{R}/meta/info.json"))
     instr = {}
@@ -190,11 +190,18 @@ def collect(ds, done):
         t = [x for x in d.get("tasks", []) if isinstance(x, str) and len(x.split()) > 1]
         if t:
             instr[d["episode_index"]] = t[0]
+    # **에피 batch 개씩 모아 내보내는 제너레이터다.** batch 기본값이 6 인 이유:
+    # 이 계정의 cgroup 메모리 한도가 4 GiB 다
+    # (/sys/fs/cgroup/user.slice/user-<uid>.slice/memory.max). 20에피를 모으면
+    # 디코딩 버퍼와 PNG 가 겹쳐 RSS 가 튀고, 다른 파이썬이 같이 떠 있으면 OOM 킬러가
+    # 조용히 죽인다(트레이스백 없이 SIGKILL -- 2026-09-16~17 에 네 번). 전에는 데이터셋 전체(101 +
+    # 51 에피)를 다 디코딩한 뒤에야 첫 요청을 보냈고, 그동안 로그인 노드에서 33분
+    # 넘게 아무것도 안 나오다가 죽었다(2026-09-16~17 에 세 번). 지금은 20에피마다
+    # 바로 보내고 프레임을 버린다 -- 메모리도 그만큼만 든다.
     jobs = []
+    nsent = 0
     for ep in sorted(instr):
-        # **상한은 디코딩 전에 건다.** 아래에서 영상을 열기 때문에, 다 모은 뒤
-        # 자르면 프로브가 전량과 같은 메모리·시간을 쓴다(실제로 그래서 죽었다).
-        if _LIMIT and len(jobs) >= _LIMIT:
+        if _LIMIT and nsent + len(jobs) >= _LIMIT:
             break
         ch = ep // info["chunks_size"]
         try:
@@ -228,8 +235,12 @@ def collect(ds, done):
                 x = D.descriptors(a, f, dataset=ds)
                 jobs.append((ds, ep, f, [frames[("scene", f)], frames[("wrist", f)]],
                              D.facts_text(x), instr[ep], x, nearest_phase(f, pm)))
-    return jobs
-
+        if len(jobs) >= batch:
+            yield jobs
+            nsent += len(jobs)
+            jobs = []
+    if jobs:
+        yield jobs
 
 def run(job):
     ds, ep, f, imgs, fx, instr, x, ph = job
@@ -279,15 +290,16 @@ def main():
     # 동안 아무것도 안 쓰이고, 중간에 끊기면 그때까지 뽑은 프레임이 다 날아간다.
     fh = open(fp, "a")
     for ds in ("pnp_task", "long_horizon_task"):
-        j = collect(ds, done)
-        # **HD_LIMIT 은 앞에서 자른다.** collect 가 에피 순서대로 쌓으므로 같은 값을
-        # 주면 두 팔이 같은 (ds, ep, f) 를 본다 -- 문구 변경만 분리해 재려면 필요하다.
-        print(f"[{ds}] 남은 청크 {len(j)}", flush=True)
-        with ThreadPoolExecutor(CONC) as ex:
-            for r in ex.map(run, j):
+        print(f"[{ds}] 시작", flush=True)
+        ex = ThreadPoolExecutor(CONC)
+        for batch in collect(ds, done):
+            for r in ex.map(run, batch):
                 fh.write(json.dumps(r, ensure_ascii=False) + "\n")
-                fh.flush()
-        print(f"[{ds}] 완료 · 누적 {STAT['n']} · ${STAT['cost']:.2f}", flush=True)
+            fh.flush()
+            print(f"  [{ds}] 누적 {STAT['n']:,} · ${STAT['cost']:.2f} · "
+                  f"{STAT['n']/max(time.time()-STAT['t0'],1e-9):.1f} req/s", flush=True)
+        ex.shutdown()
+        print(f"[{ds}] 완료 · 누적 {STAT['n']:,} · ${STAT['cost']:.2f}", flush=True)
     fh.close()
     el = time.time() - STAT["t0"]
     print(f"완료 {STAT['n']} · 실패 {STAT['bad']} · ${STAT['cost']:.2f} · "

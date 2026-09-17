@@ -1,0 +1,19 @@
+human_data v3 — 부호·가중
+
+**가중은 잠정이다.** 안전쪽 B:C 는 libero 의 8:4 를 물려받았고 위험쪽은 균등이다.
+human_data 에는 배속 사다리가 없으므로 적합 근거는 국면 분리와 tau 뿐이다.
+
+  A  GRASP_CLOSING    감점  0.500
+  B  ROOMY_TARGET     가점  0.667
+  C  HAND_OFF         가점  0.333
+  D  STILL_LOWERING   감점  0.500
+
+  위험쪽 합 1.000 · 안전쪽 합 1.000
+  NGRADE 5 · conf = (1 + Σ_safe w·g − Σ_risk w·g)/2, g=(등급−1)/(NGRADE−1)
+
+v1 -> v2 -> v3 대응
+  v1 A(작고 고정된 자리) · v1 E(붙들 필요 없는 일)  -> 버림 (4등급이상 0.5% / 0.0%)
+  v1 B 파지 순간      -> A GRASP_CLOSING
+  v1 C 넉넉한 자리    -> B ROOMY_TARGET
+  v1 D 이미 놓였음    -> C HAND_OFF   (v3 에서 '손이 이미 벌어졌는가' 로 다시 씀)
+  v1 F 쥔 채 내려놓기 -> D STILL_LOWERING
