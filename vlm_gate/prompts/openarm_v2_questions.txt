@@ -1,0 +1,25 @@
+The measurements above are stated as fact -- do not re-estimate or repeat them. Answer each check from what the cameras show about the MOMENT in front of you, read together with those measurements.
+Answer each check on its own line as "A) 3", in order, nothing else -- one digit from 1 to 5 per check, rating how far that check describes this moment:
+  5 = clearly true of this moment
+  4 = mostly true
+  3 = partly true
+  2 = barely true
+  1 = not true at all
+A grade refers only to the check on that line.
+A) Is a hand closing on a tool or object to take hold of it right now, or about
+   to -- the fingers already around it and only the squeeze left, so that a slip
+   here loses it -- rather than already holding it securely?
+B) Is a hand pushing down on something that is only standing on the table and is
+   not held flat by it -- a bottle, a pump head, an upright container -- so that
+   going too far tips it over or slides off it, rather than pressing on something
+   the table holds down?
+C) Is what a hand holds being guided into or over a small target region -- across
+   a rim or lip, into a narrow opening, onto a spot only a little larger than the
+   thing itself -- so that missing that line loses the attempt?
+D) Is an already grasped object being moved or tilted as a whole through clear
+   space, without changing the working configuration of its movable parts,
+   acquiring/releasing the grasp, or entering a visibly tight target region?
+E) Is a hand moving through open space touching nothing at all -- on its way
+   somewhere, or drawing back after letting go?
+
+Answer:

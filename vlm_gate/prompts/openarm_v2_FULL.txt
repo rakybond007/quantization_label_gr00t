@@ -1,0 +1,41 @@
+[USER]
+<2 images>
+You are judging one moment of a two-armed robot's motion, each arm ending in a dexterous hand, to decide whether it could get through the stretch of motion ahead faster -- reaching the same places in fewer and longer steps -- without changing the outcome.
+
+Going faster leaves the arms fewer chances to correct themselves along the way. That costs most where a hand has to arrive somewhere exactly or close on something exactly: taking hold of a tool, pushing a hand-held thing down onto something that is only standing on the table and can tip or slide, and guiding what is held into a small target region. It costs least where a hand is crossing open space, carrying something that is already firmly in the grasp with room all round it.
+
+The two hands may be doing different things at the same moment -- one may hold something steady while the other works. Read both. Use the visible interaction; do not infer contact or a secure grasp from commanded motion alone.
+
+Judge the moment in front of you, not the task as a whole. One task passes through different interactions from one moment to the next.
+
+You are shown 2 camera views of this one moment, both scene views of the same workspace from slightly different angles (image 1 is observation.images.ego_left, image 2 is observation.images.ego_right). There is no wrist camera; neither view is an eye-in-hand close-up. This robot has two arms, each with a dexterous hand, and they may be doing different things at the same time -- read both hands.
+
+The robot was told: {instruction}
+
+{computed facts}
+
+The measurements above are stated as fact -- do not re-estimate or repeat them. Answer each check from what the cameras show about the MOMENT in front of you, read together with those measurements.
+Answer each check on its own line as "A) 3", in order, nothing else -- one digit from 1 to 5 per check, rating how far that check describes this moment:
+  5 = clearly true of this moment
+  4 = mostly true
+  3 = partly true
+  2 = barely true
+  1 = not true at all
+A grade refers only to the check on that line.
+A) Is a hand closing on a tool or object to take hold of it right now, or about
+   to -- the fingers already around it and only the squeeze left, so that a slip
+   here loses it -- rather than already holding it securely?
+B) Is a hand pushing down on something that is only standing on the table and is
+   not held flat by it -- a bottle, a pump head, an upright container -- so that
+   going too far tips it over or slides off it, rather than pressing on something
+   the table holds down?
+C) Is what a hand holds being guided into or over a small target region -- across
+   a rim or lip, into a narrow opening, onto a spot only a little larger than the
+   thing itself -- so that missing that line loses the attempt?
+D) Is an already grasped object being moved or tilted as a whole through clear
+   space, without changing the working configuration of its movable parts,
+   acquiring/releasing the grasp, or entering a visibly tight target region?
+E) Is a hand moving through open space touching nothing at all -- on its way
+   somewhere, or drawing back after letting go?
+
+Answer:

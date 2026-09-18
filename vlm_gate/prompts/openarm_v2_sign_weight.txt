@@ -1,0 +1,21 @@
+openarm v2 — 부호·가중
+
+**가중은 잠정이다.** 실측에 맞춘 적이 없다. 양쪽 합만 1 로 맞췄다.
+openarm 에는 배속 사다리가 없으므로 적합 근거는 국면 분리뿐이다.
+
+  A  TOOL_GRASP     감점  0.40
+  B  PRESS_FREE     감점  0.30
+  C  FINE_TARGET    감점  0.30
+  D  CARRY_CLEAR    가점  0.60
+  E  OPEN_SPACE     가점  0.40
+
+  위험쪽 합 1.00 · 안전쪽 합 1.00
+  NGRADE 5 · conf = (1 + Σ_safe w·g − Σ_risk w·g)/2, g=(등급−1)/4
+
+dexjoco v3 -> openarm v2 대응 (v1 은 v3 를 VIEW 만 고쳐 그대로 쓴 판)
+  v3 A 가동부 조작   감점 -> 버림. 4등급 0건 (강체 도구뿐)
+  v3 B 작은 표적 타격 감점 -> 버림. 4등급 0건 (쓸기는 타격이 아니라 밀기)
+  v3 C 받쳐진 누름   가점 -> **부호를 뒤집어** B PRESS_FREE 감점으로. 실제로 켜지는
+                           곳이 자유롭게 서 있는 세제 펌프를 누르는 순간이다
+  v3 D 트인 운반     가점 -> D CARRY_CLEAR **글자까지 그대로** (비교 축 고정)
+  (신설) A TOOL_GRASP 감점 · C FINE_TARGET 감점 · E OPEN_SPACE 가점

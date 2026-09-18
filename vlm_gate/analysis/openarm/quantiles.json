@@ -1,0 +1,86 @@
+{
+ "dustpan": {
+  "left_arm_tertile": [
+   0.00134,
+   0.00541
+  ],
+  "right_arm_tertile": [
+   0.00362,
+   0.0092
+  ],
+  "left_hand_tertile": [
+   0.00319,
+   0.00471
+  ],
+  "right_hand_tertile": [
+   0.00325,
+   0.00693
+  ],
+  "k2": [
+   0.0202,
+   0.0288,
+   0.0404,
+   0.0614
+  ],
+  "k3": [
+   0.0253,
+   0.0361,
+   0.0509,
+   0.0762
+  ],
+  "n_windows": 1935,
+  "decel_q25": 0.7182,
+  "left_hand_closed": 0.179,
+  "left_hand_range": [
+   0.0,
+   0.526
+  ],
+  "right_hand_closed": 0.329,
+  "right_hand_range": [
+   0.0,
+   0.968
+  ]
+ },
+ "scrub": {
+  "left_arm_tertile": [
+   0.00489,
+   0.01329
+  ],
+  "right_arm_tertile": [
+   0.00193,
+   0.00811
+  ],
+  "left_hand_tertile": [
+   0.00402,
+   0.00565
+  ],
+  "right_hand_tertile": [
+   0.00242,
+   0.00387
+  ],
+  "k2": [
+   0.0338,
+   0.0477,
+   0.0613,
+   0.0869
+  ],
+  "k3": [
+   0.0424,
+   0.0592,
+   0.0749,
+   0.1066
+  ],
+  "n_windows": 2141,
+  "decel_q25": 0.6895,
+  "left_hand_closed": 0.617,
+  "left_hand_range": [
+   0.0,
+   1.142
+  ],
+  "right_hand_closed": 0.063,
+  "right_hand_range": [
+   0.0,
+   0.348
+  ]
+ }
+}
