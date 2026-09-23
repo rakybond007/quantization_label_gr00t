@@ -6,9 +6,14 @@
     prompts/libero_v3d.txt       (35줄)
     prompts/humandata_v3.txt     (35줄)
     prompts/openarm_v2.txt       (41줄)
-    prompts/allex_v1v2v3v4.txt   (35줄, HF 배달본 prehj/allex-ratio-labels-v1v2v3v4 에서)
-    prompts/dexjoco_v3.txt       (38줄, HF 배달본 prehj/dexjoco-vlm-labels-Astra 에서)
-    sync_prompts.sh              넷은 vlm_gate/output 에서, 둘은 HF 에서 다시 받는다
+    prompts/allex_v4c.txt        (35줄)
+    prompts/dexjoco_v3.txt       (38줄)
+    sync_prompts.sh              vlm_gate/prompts/<벤치>_<판>_FULL.txt 에서 복사 · --check 로 대조
+
+**정본은 `vlm_gate/prompts/*_FULL.txt` 다.** 그 폴더는 `scripts/sync_prompts_folder.py` 가
+각 checks .py 의 GUIDANCE/ASK 에서 생성하고, 판정기가 실제로 받는 전문(SYSTEM +
+이미지 + 지시문 + 계산 사실 + view_note + 문항)을 순서 그대로 담는다. 여기 사본은
+Overleaf 에 폴더째 올리려고 둔 것이고, `output/` 이나 HF 를 따로 보지 않는다.
 
 ## 왜 이미지가 아니라 tex 인가
 
@@ -54,4 +59,6 @@ tcolorbox · fvextra · algpseudocode 는 모두 TeX Live 에 있어 Overleaf �
 
 ## 프롬프트가 바뀌면
 
-`bash sync_prompts.sh` 로 다시 복사한다. 여기 있는 txt 를 손으로 고치지 않는다.
+먼저 `python scripts/sync_prompts_folder.py` 로 정본 모음을 갱신하고, 그다음
+`bash sync_prompts.sh` 로 여기를 맞춘다. `bash sync_prompts.sh --check` 가 어긋남을
+잡는다. 여기 있는 txt 를 손으로 고치지 않는다.
