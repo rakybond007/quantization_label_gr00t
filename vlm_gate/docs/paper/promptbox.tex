@@ -1,0 +1,31 @@
+% 프롬프트 상자 -- 프리앰블에서 \input{promptbox}
+%
+% 원문 파일을 \VerbatimInput 으로 그대로 읽는다. 논문에 옮겨 적지 않으므로 실제
+% 라벨링에 쓴 문구와 갈라질 수 없다. fvextra 가 fancyvrb 를 대신한다: 프롬프트 한
+% 줄이 400~580자라 줄 접기(breaklines)가 필수인데, 그 옵션은 fancyvrb 가 아니라
+% fvextra 에 있다.
+\usepackage[most]{tcolorbox}
+\usepackage{fvextra}
+
+\definecolor{promptrule}{HTML}{3D5A80}
+\definecolor{promptback}{HTML}{F7F9FB}
+
+% \begin{promptbox}[추가옵션]{제목} ... \end{promptbox}
+\newtcolorbox{promptbox}[2][]{%
+  breakable, enhanced, sharp corners,
+  colback=promptback, colframe=promptrule, boxrule=0.6pt,
+  left=5pt, right=5pt, top=6pt, bottom=4pt,
+  fonttitle=\small\bfseries, title={#2},
+  attach boxed title to top left={xshift=6pt, yshift=-2.2pt},
+  boxed title style={colback=promptrule, sharp corners, boxrule=0pt,
+                     left=4pt, right=4pt, top=1.5pt, bottom=1.5pt},
+  #1}
+
+% 본문: 등폭, 작게, 줄바꿈은 원문 그대로, 긴 줄은 상자 폭에서 접는다.
+\fvset{fontsize=\scriptsize, fontfamily=tt, breaklines=true, breakanywhere=true,
+       breakindent=0pt, xleftmargin=0pt, baselinestretch=0.95}
+
+% 부록에서:
+%   \begin{promptbox}{RoboCasa (v22)}
+%     \VerbatimInput{prompts/robocasa_v22.txt}
+%   \end{promptbox}

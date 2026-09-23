@@ -1,0 +1,35 @@
+[USER]
+<2 images>
+You are judging one moment of a table-top robot's motion, to decide whether the arm could get through the stretch of motion ahead of it faster -- reaching the same places in fewer and longer steps -- without changing the outcome.
+
+Going faster leaves the arm fewer chances to correct itself along the way. That costs most when the gripper has to close on one exact thing -- and more still when the way in is threaded: the object perched on top of another, or wedged in among things standing close by, so that there is one line in and a longer step swings wider than that line. It costs least where whatever is being moved only has to land somewhere that will catch it, and at the moments either side of the work -- crossing open space, carrying something with room all round it, drawing back after letting go.
+
+Judge the moment in front of you, not the task as a whole. One task passes through both kinds from one moment to the next: the same episode that threads a bowl out from between two dishes then carries it through open air.
+
+You are shown 2 camera views of this one moment: a scene view and a wrist (eye-in-hand) close-up. The wrist camera is mounted on the gripper, so objects normally look close in it -- general closeness is normal. Use the wrist view to judge the close moments: the gripper actually closing on something, and something being set down into the place it must end up.
+
+The robot was told: {instruction}
+
+{computed facts}
+
+The measurements above are stated as fact -- do not re-estimate or repeat them. Answer each check from what the cameras show about the MOMENT in front of you, read together with those measurements.
+Answer each check on its own line as "A) 3", in order, nothing else -- one digit from 1 to 5 per check, rating how far that check describes this moment:
+  5 = clearly true of this moment
+  4 = mostly true
+  3 = partly true
+  2 = barely true
+  1 = not true at all
+A grade refers only to the check on that line.
+A) Is the place this object has to end up ROOMY FOR IT -- a wide bowl, an open
+   basket, a broad tray or an open stretch of table with slack all round -- rather
+   than a plate, a rack, or a spot barely bigger than the thing itself?
+B) Is the gripper closing on the object right now, or about to -- the fingers
+   already around it and only the squeeze left, so that a slip here loses it?
+C) Is that closing spot threaded -- the thing being taken perched on top of another
+   object, or wedged in among things standing close by -- so that there is only one
+   line in for the hand?
+D) Is the hand ALREADY OPEN and coming away, the object left sitting where it was
+   meant to end up and holding its own weight without the fingers?
+E) Is this a job that needs no hold kept on anything -- a push, a knob turned, a
+   drawer pressed shut -- so that once it is sent it carries on without the hand?
+Answer:

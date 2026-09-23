@@ -1,0 +1,30 @@
+% 문항 구성 절차 -- 부록용. 프리앰블: \usepackage{algorithm,algpseudocode}
+\begin{algorithm}[t]
+\caption{Question-set construction for one dataset. A single probe set is fixed up
+front and reused by every revision, so two revisions differ only in wording.}
+\label{alg:prompt}
+\begin{algorithmic}[1]
+\Require dataset $D$; guidance $G$; view description $V$; per-chunk computed facts $F$;
+  candidate questions $Q$ with signs $s_q\in\{+1,-1\}$ and weights $w_q$
+\State $S \gets \textproc{FixedProbe}(D)$; \quad $A \gets \textproc{Anchors}(S)$
+  \Comment{anchors: identified phases only}
+\Repeat
+  \State $P \gets \textproc{Assemble}(G, V, F, Q)$ \Comment{review the assembled prompt end to end}
+  \State $L \gets \textproc{Label}(P, S)$ \Comment{one integer grade per question and chunk}
+  \ForAll{$q \in Q$}
+    \State $r_q \gets \Pr[\text{grade}_q \ge 3]$ \Comment{firing rate}
+    \State drop $q$ if $r_q \approx 0$ on every phase; keep it if $r_q$ is low but concentrated on its phase
+  \EndFor
+  \State $c \gets \tfrac{1}{2}\bigl(1 + \sum_q s_q w_q g_q\bigr)$, \;
+    $g_q = \tfrac{\text{grade}_q - 1}{N_{\text{grade}} - 1}$
+    \Comment{$\sum_{s_q=+1} w_q = \sum_{s_q=-1} w_q = 1$}
+  \State $a \gets \textproc{PairedAUC}(c, A)$ with a bootstrap interval
+  \State accept $Q$ if $a$ improves beyond the interval, otherwise revert
+    \Comment{a change inside the interval is noise}
+  \State $Q \gets \textproc{Reword}(Q)$ for the defects found in step 4
+\Until{no defect remains and $a$ has stopped improving}
+\State freeze $\{s_q, w_q\}$; \quad $L_D \gets \textproc{Label}(P, D)$ \Comment{full pass}
+\State \textproc{Verify}$(L_D|_S, L)$ \Comment{re-label agreement on $S$}
+\State \Return $P$, $L_D$
+\end{algorithmic}
+\end{algorithm}
