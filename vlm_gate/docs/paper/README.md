@@ -6,18 +6,23 @@
     prompts/libero_v3d.txt       (35줄)
     prompts/humandata_v3.txt     (35줄)
     prompts/openarm_v2.txt       (41줄)
-    sync_prompts.sh              vlm_gate/output/*/PROMPT.txt 에서 위 4개를 다시 복사
+    prompts/allex_v1v2v3v4.txt   (35줄, HF 배달본 prehj/allex-ratio-labels-v1v2v3v4 에서)
+    prompts/dexjoco_v3.txt       (38줄, HF 배달본 prehj/dexjoco-vlm-labels-Astra 에서)
+    sync_prompts.sh              넷은 vlm_gate/output 에서, 둘은 HF 에서 다시 받는다
 
 ## 왜 이미지가 아니라 tex 인가
 
-프롬프트 4종은 35~41줄 · 2.6~3.2 KB · 순수 ASCII 라 그대로 조판된다. 이미지로 넣으면
+프롬프트 6종은 35~41줄 · 2.5~3.2 KB 라 그대로 조판된다(dexjoco 에 em-dash 두 개가
+있을 뿐 나머지는 순수 ASCII). 이미지로 넣으면
 검색·복사가 안 되고, 확대하면 흐려지고, 접근성 점검에서 감점이고, **무엇보다 실제
 라벨링에 쓴 문구와 논문이 갈라진다.** `\VerbatimInput` 으로 원문 파일을 그대로 읽으면
 갈라질 수가 없다 -- 프롬프트가 기여인 논문에서 이것이 가장 중요하다.
 
 한 줄이 400~580자라 줄 접기가 필수다. 그 옵션(`breaklines`)은 fancyvrb 가 아니라
-**fvextra** 에 있다. `promptbox.tex` 가 fvextra 를 부른다. 3.3in 단폭(2단 논문 폭)에서
-컴파일해 overfull 0 을 확인했다.
+**fvextra** 에 있다. `breakanywhere` 는 쓰지 않는다 -- 글자 중간에서 끊으면 UTF-8
+다바이트 문자가 바이트 단위로 쪼개져 컴파일이 죽는다(dexjoco 의 em-dash 에서 실제로
+그랬다). 공백에서만 끊어도 3.3in 단폭(2단 논문 폭)에서 6종 모두 overfull 0 이고, 합쳐서
+약 7쪽이다.
 
 ## Overleaf 에서
 

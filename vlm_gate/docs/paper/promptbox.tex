@@ -21,8 +21,11 @@
                      left=4pt, right=4pt, top=1.5pt, bottom=1.5pt},
   #1}
 
-% 본문: 등폭, 작게, 줄바꿈은 원문 그대로, 긴 줄은 상자 폭에서 접는다.
-\fvset{fontsize=\scriptsize, fontfamily=tt, breaklines=true, breakanywhere=true,
+% 본문: 등폭, 작게, 줄바꿈은 원문 그대로, 긴 줄은 상자 폭에서 공백 기준으로 접는다.
+% breakanywhere 는 쓰지 않는다 -- 글자 중간에서 끊으면 UTF-8 다바이트 문자(dexjoco 의
+% em-dash)가 바이트 단위로 쪼개져 "Invalid UTF-8 byte sequence" 로 죽는다. 프롬프트는
+% 산문이라 공백에서만 끊어도 충분하다(3.3in 에서 overfull 0 확인).
+\fvset{fontsize=\scriptsize, fontfamily=tt, breaklines=true,
        breakindent=0pt, xleftmargin=0pt, baselinestretch=0.95}
 
 % 부록에서:
