@@ -1,16 +1,26 @@
-% 문항 구성 절차 -- 부록용. 프리앰블: \usepackage{algorithm,algpseudocode}
-\begin{algorithm}[t]
-\caption{Question-set construction for one dataset. A single probe set is fixed up
-front and reused by every revision, so two revisions differ only in wording.}
-\label{alg:prompt}
+% 문항 구성 절차 -- 부록용. 알고리즘이 아니라 **절차(protocol)** 다: 사람이 문구를
+% 고치고 VLM 이 채점한다. 그래서 Algorithm 플로트가 아니라 Procedure 플로트로 만들고,
+% 사람이 하는 단계에 [manual] 을 붙인다. algorithmic 표기는 루프가 읽히라고 남긴다.
+%
+% 프리앰블:
+%   \usepackage{algorithm,algpseudocode}
+%   \usepackage{newfloat}
+%   \DeclareFloatingEnvironment[fileext=lop,listname={List of Procedures},
+%                               name=Procedure,placement=tbp]{procedure}
+\newcommand{\manual}{\textsc{[manual]}}
+\begin{procedure}[t]
+\caption{Pseudo-code of the question-set construction protocol. A single probe set is
+fixed up front and reused by every revision, so two revisions differ only in wording.
+Steps marked \manual{} are done by a person; the rest are scripted.}
+\label{proc:prompt}
 \begin{algorithmic}[1]
 \Require dataset $D$; guidance $G$; view description $V$; per-chunk computed facts $F$;
   candidate questions $Q$ with signs $s_q\in\{+1,-1\}$ and weights $w_q$
 \State $S \gets \textproc{FixedProbe}(D)$; \quad $A \gets \textproc{Anchors}(S)$
-  \Comment{anchors: identified phases only}
+  \Comment{anchors from identified phases only}
 \Repeat
-  \State $P \gets \textproc{Assemble}(G, V, F, Q)$ \Comment{review the assembled prompt end to end}
-  \State $L \gets \textproc{Label}(P, S)$ \Comment{one integer grade per question and chunk}
+  \State $P \gets \textproc{Assemble}(G, V, F, Q)$; read $P$ end to end \Comment{\manual}
+  \State $L \gets \textproc{Label}(P, S)$ \Comment{VLM: one integer grade per question and chunk}
   \ForAll{$q \in Q$}
     \State $r_q \gets \Pr[\text{grade}_q \ge 3]$ \Comment{firing rate}
     \State drop $q$ if $r_q \approx 0$ on every phase; keep it if $r_q$ is low but concentrated on its phase
@@ -21,10 +31,10 @@ front and reused by every revision, so two revisions differ only in wording.}
   \State $a \gets \textproc{PairedAUC}(c, A)$ with a bootstrap interval
   \State accept $Q$ if $a$ improves beyond the interval, otherwise revert
     \Comment{a change inside the interval is noise}
-  \State $Q \gets \textproc{Reword}(Q)$ for the defects found in step 4
+  \State reword the questions behind the defects found in step 3 \Comment{\manual}
 \Until{no defect remains and $a$ has stopped improving}
 \State freeze $\{s_q, w_q\}$; \quad $L_D \gets \textproc{Label}(P, D)$ \Comment{full pass}
 \State \textproc{Verify}$(L_D|_S, L)$ \Comment{re-label agreement on $S$}
 \State \Return $P$, $L_D$
 \end{algorithmic}
-\end{algorithm}
+\end{procedure}

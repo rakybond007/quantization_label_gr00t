@@ -1,7 +1,7 @@
 # 논문 부록용 프롬프트 자료
 
     promptbox.tex                프리앰블용 상자 정의 (tcolorbox breakable + fvextra)
-    prompt_construction_alg.tex  문항 구성 절차 수도알고리즘 (algorithm + algpseudocode, 30줄)
+    prompt_construction_alg.tex  문항 구성 절차 -- Procedure 플로트 안의 수도코드 (algpseudocode)
     prompts/robocasa_v22.txt     라벨링에 실제로 쓴 프롬프트 전문 (40줄)
     prompts/libero_v3d.txt       (35줄)
     prompts/humandata_v3.txt     (35줄)
@@ -24,7 +24,18 @@
 1. 이 디렉터리의 `promptbox.tex`, `prompt_construction_alg.tex`, `prompts/*.txt` 를
    프로젝트에 올린다. **`prompts/` 폴더 구조를 그대로** 둔다 -- `\VerbatimInput` 의
    경로는 main.tex 기준 상대경로다.
-2. 프리앰블에 `\input{promptbox}` 와 `\usepackage{algorithm,algpseudocode}`.
+2. 프리앰블에 `\input{promptbox}` 와
+
+       \usepackage{algorithm,algpseudocode}
+       \usepackage{newfloat}
+       \DeclareFloatingEnvironment[fileext=lop,listname={List of Procedures},
+                                   name=Procedure,placement=tbp]{procedure}
+
+   **Algorithm 이 아니라 Procedure 플로트다.** 사람이 문구를 고치고 VLM 이 채점하는
+   절차라 알고리즘이라고 부르면 형식성을 과장한다. 캡션에 "pseudo-code of the
+   protocol" 이라고 밝히고 수동 단계에 `[manual]` 을 붙였다. 본문에서는
+   `Procedure~\ref{proc:prompt}` 로 가리킨다. 논문에 진짜 알고리즘이 있어도 번호가
+   섞이지 않는다.
 3. 부록에서
 
        \begin{promptbox}{RoboCasa (v22)}
