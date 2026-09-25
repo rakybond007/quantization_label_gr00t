@@ -11,7 +11,7 @@ a handful of concrete checks that a camera can answer -- is the gripper closing 
 its target right now, is the approach threaded through nearby objects, is the
 object already resting where it belongs, is the arm carrying something through open
 space -- each graded on a 1--5 scale, signed as a risk or a safety cue, and weighted;
-the confidence is the signed, normalised sum $c=\tfrac12\bigl(1+\sum_q s_q w_q g_q\bigr)$
+the confidence is the signed, normalised sum $c=\frac{1}{2}\bigl(1+\sum_q s_q w_q g_q\bigr)$
 with $g_q=(\mathrm{grade}_q-1)/4$ and the weights on each side summing to one. The
 wording of these checks was drafted and revised interactively with
 \textbf{Claude Opus~5} (Anthropic). The model was given the definition of the target
