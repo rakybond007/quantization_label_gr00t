@@ -1,0 +1,52 @@
+% 부록: 문항 구성 과정과 실제 라벨링 -- 줄글 판 (Procedure 플로트 대신 쓴다).
+% 본문에서 \ref{app:prompt} 로 가리키고, 프롬프트 전문은 promptbox 로 이어서 넣는다.
+% 프리앰블에 필요한 것 없음. 모델 이름은 실제로 쓴 것 그대로다.
+\subsection{How the question sets were written}
+\label{app:prompt}
+
+The label we need is a judgement, not a measurement: whether the stretch of motion
+ahead of a given moment could be executed in fewer, longer steps without changing
+the outcome. Rather than asking a VLM this question directly, we decomposed it into
+a handful of concrete checks that a camera can answer -- is the gripper closing on
+its target right now, is the approach threaded through nearby objects, is the
+object already resting where it belongs, is the arm carrying something through open
+space -- each graded on a 1--5 scale, signed as a risk or a safety cue, and weighted;
+the confidence is the signed, normalised sum $c=\tfrac12\bigl(1+\sum_q s_q w_q g_q\bigr)$
+with $g_q=(\mathrm{grade}_q-1)/4$ and the weights on each side summing to one. The
+wording of these checks was drafted and revised interactively with
+\textbf{Claude Opus~5} (Anthropic). The model was given the definition of the target
+above, the phase structure of each benchmark's tasks (reach, grasp, carry, place,
+retreat, derived from gripper events), sampled demonstration frames at chunk
+boundaries together with the per-chunk quantities the prompt later states as facts
+(whether the gripper opens, closes or stays put in the window, the direction and
+speed of motion relative to the dataset's own speed distribution, and whether the
+arm is decelerating to a stop), a small set of chunks we had graded by eye, and, as revisions accumulated, the per-phase
+firing rate of every check and the closed-loop retention of each phase under
+compression. Its job was to turn observed failure modes into wording -- a check
+that fired on the approach as well as on the grasp was narrowed to ``the fingers
+already around it and only the squeeze left''; a check that never fired on any phase
+was dropped; benchmark-specific hazards (a mug on a rack, a bowl threaded out from
+between two dishes, an object reached into a microwave) were written into the
+guidance rather than left to the grader -- and to keep the text within what a
+single image pair can support. Every revision was re-graded on the same fixed probe
+set and accepted only if the paired ranking of anchor chunks improved beyond its
+bootstrap interval, so that changes inside the noise were not kept. The result is
+one prompt per benchmark (35--41 lines each, reproduced verbatim below); they share
+the same instruction skeleton and differ in the guidance paragraph and in which
+four to six checks are asked.
+
+The full datasets were then labelled with \textbf{Gemini~3.8~Flash} through the
+Gemini API. Each demonstration was cut into 16-frame chunks; for every chunk the
+grader received the camera views of the chunk's first frame (scene and wrist views
+for LIBERO, the two agent views and the wrist view for RoboCasa), the task
+instruction, the computed facts for that chunk, and the question set, and returned
+one integer grade per check (the API exposes no token probabilities, so the grades
+are the model's argmax choice). Confidence was computed from the grades with the
+frozen signs and weights, attached to the chunk's frames as a per-frame target by
+interpolating between chunk anchors, and frames outside the labelled span were
+masked out of the confidence loss. The fixed probe set was graded again inside
+the full pass and compared with its grades from the last revision round, to confirm
+that the labels were stable under re-sampling. At roughly \$3 per thousand chunks,
+labelling RoboCasa (7{,}200 episodes, 131k chunks) and LIBERO (1{,}693 episodes,
+16k chunks) cost a few hundred dollars in total, and the same pipeline was reused
+unchanged for the real-robot datasets.

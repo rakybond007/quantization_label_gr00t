@@ -2,6 +2,7 @@
 
     promptbox.tex                프리앰블용 상자 정의 (tcolorbox breakable + fvextra)
     prompt_construction_alg.tex  문항 구성 절차 -- Procedure 플로트 안의 수도코드 (algpseudocode)
+    prompt_construction_prose.tex  같은 내용의 줄글 판 (두 문단, 프리앰블 불필요) -- 논문에는 이쪽을 쓴다
     prompts/robocasa_v22.txt     라벨링에 실제로 쓴 프롬프트 전문 (40줄)
     prompts/libero_v3d.txt       (35줄)
     prompts/humandata_v3.txt     (35줄)
